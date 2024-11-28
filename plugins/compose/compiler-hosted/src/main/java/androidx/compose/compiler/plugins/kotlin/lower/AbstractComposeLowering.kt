@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.backend.jvm.ir.isInlineClassType
 import org.jetbrains.kotlin.builtins.PrimitiveType
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.fir.declarations.utils.klibSourceFile
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
@@ -1313,7 +1314,7 @@ abstract class AbstractComposeLowering(
         // boxed, then we don't want to unnecessarily _unbox_ it. Note that if Kotlin allows for
         // an overridden equals method of inline classes in the future, we may have to avoid the
         // boxing in a different way.
-        val expr = value.unboxValueIfInline()
+        val expr = value.unboxValueIfInline().ordinalIfEnum()
         val type = expr.type
         val stability = stabilityInferencer.stabilityOf(value)
 
@@ -1342,6 +1343,31 @@ abstract class AbstractComposeLowering(
             }
             irMethodCall(currentComposer, descriptor).also {
                 it.putValueArgument(0, expr)
+            }
+        }
+    }
+
+    private val enumOrdinal =
+        context.irBuiltIns.enumClass.owner.properties.single { it.name.asString() == "ordinal" }.getter!!
+
+    private val enumLiteClassId = ClassId.fromString("com/google/protobuf/Internal/EnumLite")
+
+    private fun IrExpression.ordinalIfEnum(): IrExpression {
+        val cls = type.classOrNull?.owner
+        return when (cls?.kind) {
+            ClassKind.ENUM_CLASS, ClassKind.ENUM_ENTRY -> {
+                val function = if (cls.superTypes.any { it.classOrNull?.owner?.classId == enumLiteClassId }) {
+                    cls.functions.single { it.name.asString() == "getNumber" }
+                } else {
+                    enumOrdinal
+                }
+                irCall(
+                    function.symbol,
+                    dispatchReceiver = this
+                )
+            }
+            else -> {
+                this
             }
         }
     }
