@@ -17,7 +17,6 @@
 package androidx.compose.compiler.plugins.kotlin.k2
 
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
-import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirCallableReferenceAccessChecker
@@ -44,11 +43,11 @@ object ComposableCallableReferenceChecker : FirCallableReferenceAccessChecker(Mp
         // and depend on details of the frontend resolution.
         val kind = expression.resolvedType.functionTypeKind(context.session)
         if (kind == ComposableFunction || kind == KComposableFunction) {
-            reporter.reportOn(
-                expression.source,
-                ComposeErrors.COMPOSABLE_FUNCTION_REFERENCE,
-                context
-            )
+//            reporter.reportOn(
+//                expression.source,
+//                ComposeErrors.COMPOSABLE_FUNCTION_REFERENCE,
+//                context
+//            )
         }
     }
 }

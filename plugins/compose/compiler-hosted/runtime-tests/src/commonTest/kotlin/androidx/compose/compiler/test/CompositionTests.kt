@@ -313,3 +313,4 @@ fun EnumParameter(enum: TestComposeEnum) {
 fun EnumParameterLambda(enum: () -> TestComposeEnum) {
     Text(enum().name)
 }
+

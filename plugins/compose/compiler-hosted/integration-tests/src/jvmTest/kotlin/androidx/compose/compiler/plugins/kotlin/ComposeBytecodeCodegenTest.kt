@@ -894,4 +894,26 @@ class ComposeBytecodeCodegenTest(useFir: Boolean) : AbstractCodegenTest(useFir) 
 
         assertEquals(newBytecode.sanitize(), oldBytecode.sanitize())
     }
+
+    @Test
+    fun test() {
+        assumeTrue(useFir)
+        testCompile(
+            """
+            import androidx.compose.runtime.*
+
+            fun test(int: Int = 0) {}
+            suspend fun testSuspend(int: Int) {}
+
+            @Composable fun AnotherTest() {
+                Test(::AnotherTest)
+//                println(::test.invoke())
+            }
+            
+            @Composable fun Test(content: @Composable () -> Unit) = content()
+        """,
+            dumpClasses = true
+        )
+    }
 }
+

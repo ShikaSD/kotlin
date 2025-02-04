@@ -96,6 +96,11 @@ class ComposeIrGenerationExtension(
             }
         }
 
+        if (useK2) {
+            ComposableFunctionReferenceLowering(pluginContext, metrics, stabilityInferencer, featureFlags)
+                .lower(moduleFragment)
+        }
+
         if (pluginContext.platform.isNative()) {
             AddHiddenFromObjCLowering(
                 pluginContext,
