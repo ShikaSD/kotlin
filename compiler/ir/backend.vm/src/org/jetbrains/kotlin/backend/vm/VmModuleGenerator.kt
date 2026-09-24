@@ -84,6 +84,7 @@ private val RUNTIME_THROWABLES = mapOf(
  */
 class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String) {
     private val module = VmModule(moduleName)
+    private lateinit var fragment: IrModuleFragment
     private val runtimeClasses = hashMapOf<String, Int>()
     private val runtimeSelectors = hashMapOf<String, Int>()
     private val functionSymbols = hashMapOf<IrFunctionSymbol, VmFunctionSymbol>()
@@ -98,6 +99,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     private val functionOwners = hashMapOf<IrFunctionSymbol, VmOwner>()
 
     fun generate(fragment: IrModuleFragment): VmModule {
+        this.fragment = fragment
         val functions = mutableListOf<IrFunction>()
         val classes = mutableListOf<IrClass>()
         val fileMembers = mutableMapOf<IrFile, FileMembers>()
@@ -175,8 +177,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
                 field.initializer == null -> VmGlobalStart.Zero
                 else -> VmGlobalStart.Owned(owner!!)
             }
-            val name = sanitized(field.correspondingPropertySymbol?.owner?.fqNameWhenAvailable?.asString() ?: field.name.asString())
-            globals[field.symbol] = declareGlobal(name, vmType(field.type) ?: unsupported("a Unit property"), start)
+            globals[field.symbol] = declareGlobal(globalName(field), vmType(field.type) ?: unsupported("a Unit property"), start)
         }
         if (owner == null) return null
         members.functions.forEach { functionOwners[it.symbol] = owner }
@@ -241,11 +242,10 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
             for (declaration in entry.value) {
                 if (declaration.kind == ClassKind.ENUM_CLASS) {
                     for (enumEntry in declaration.declarations.filterIsInstance<IrEnumEntry>()) {
-                        val name = "${declaration.vmName}::${enumEntry.name.asString()}"
-                        enumEntries[enumEntry.symbol] = declareGlobal(name, anyType, VmGlobalStart.Owned(owner))
+                        enumEntries[enumEntry.symbol] = declareGlobal(enumEntryName(enumEntry), anyType, VmGlobalStart.Owned(owner))
                     }
                 } else {
-                    objectInstances[declaration.symbol] = declareGlobal("${declaration.vmName}::INSTANCE", anyType, VmGlobalStart.Owned(owner))
+                    objectInstances[declaration.symbol] = declareGlobal(instanceName(declaration), anyType, VmGlobalStart.Owned(owner))
                 }
             }
             val symbol = declareInitializer("${ownerClass.vmName}::init", owner)
@@ -253,13 +253,29 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         }
     }
 
-    internal fun enumEntryGlobal(entry: IrEnumEntry): Int =
-        enumEntries[entry.symbol] ?: unsupported("the enum entry ${entry.name} from another module")
+    private fun globalName(field: IrField): String =
+        sanitized(field.correspondingPropertySymbol?.owner?.fqNameWhenAvailable?.asString() ?: field.name.asString())
 
-    internal fun globalOf(field: IrField): Int = globals[field.symbol] ?: unsupported("the static field ${field.name} from another module")
+    private fun enumEntryName(entry: IrEnumEntry): String = "${entry.parentAsClass.vmName}::${entry.name.asString()}"
 
-    internal fun objectInstance(declaration: IrClass): Int =
-        objectInstances[declaration.symbol] ?: unsupported("the object ${declaration.name} from another module")
+    private fun instanceName(declaration: IrClass): String = "${declaration.vmName}::INSTANCE"
+
+    internal fun enumEntryGlobal(entry: IrEnumEntry): Int = enumEntries.getOrPut(entry.symbol) {
+        importGlobal(entry, enumEntryName(entry), anyType) ?: unsupported("the enum entry ${entry.name} outside the VM modules")
+    }
+
+    internal fun globalOf(field: IrField): Int = globals.getOrPut(field.symbol) {
+        importGlobal(field, globalName(field), vmType(field.type) ?: unsupported("a Unit property"))
+            ?: unsupported("the static field ${field.name} outside the VM modules")
+    }
+
+    internal fun objectInstance(declaration: IrClass): Int = objectInstances.getOrPut(declaration.symbol) {
+        importGlobal(declaration, instanceName(declaration), anyType) ?: unsupported("the object ${declaration.name} outside the VM modules")
+    }
+
+    /** The global [name] of the VM module declaring [declaration], or null when no VM module does. */
+    private fun importGlobal(declaration: IrDeclaration, name: String, type: VmType): Int? =
+        vmModuleOf(declaration)?.let { owner -> declareGlobal(name, type, VmGlobalStart.Imported(owner)) }
 
     /** The owner whose initializer a static call to [function] runs first, if any. */
     internal fun ownerOf(function: IrFunction): VmOwner? = functionOwners[function.symbol]
@@ -317,6 +333,17 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         block.instructions += VmInstruction.Call(equal, VmCallee.Virtual(equalsSelector), listOf(result, ok))
         block.terminator = VmTerminator.Return(equal)
         return entry
+    }
+
+    /**
+     * The VM module holding [declaration] when another Kotlin module declares it: the one the VM backend compiled that
+     * module into, named as the module is. Null for this module's declarations, and for the standard library's and
+     * Java's, which no VM module holds yet.
+     */
+    private fun vmModuleOf(declaration: IrDeclaration): String? {
+        val kotlinModule = declaration.fileOrNull?.module ?: return null
+        if (kotlinModule == fragment || kotlinModule == irBuiltIns.anyClass.owner.fileOrNull?.module) return null
+        return kotlinModule.name.asStringStripSpecialMarkers()
     }
 
     private fun runtimeClass(name: String): Int = runtimeClasses.getOrPut(name) {
@@ -416,7 +443,11 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
 
     // Classes.
 
-    internal fun classIndex(declaration: IrClass): Int? = classIndices[declaration.symbol]
+    /** The class standing for [declaration]: this module's, or one imported from the VM module declaring it. */
+    internal fun classIndex(declaration: IrClass): Int? = classIndices[declaration.symbol] ?: vmModuleOf(declaration)?.let { owner ->
+        module.classes += VmClass(declaration.vmName, null, emptyList(), isOpen = false, isAbstract = false, VmClassKind.Imported(owner))
+        (module.classes.size - 1).also { classIndices[declaration.symbol] = it }
+    }
 
     /** The class a type test or cast against [type] names, or null for `Any`, which every object is. */
     internal fun testedClass(type: IrType): Int? {
@@ -426,7 +457,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         RUNTIME_TYPES[type.classFqName?.asString()]?.let { return runtimeClass(it) }
         val declaration = type.classOrNull?.owner ?: unsupported("a type test against ${type.render()}")
         return classIndex(declaration) ?: runtimeThrowable(declaration)
-            ?: unsupported("a type test against ${type.render()} from another module")
+            ?: unsupported("a type test against ${type.render()} outside the VM modules")
     }
 
     private fun IrClass.superClass(): IrClass? =
@@ -448,7 +479,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
             superClass.isEnumBase() -> listOf(LayoutField("name", stringType, null), LayoutField("ordinal", VmType.I64, null))
             runtimeThrowable(superClass) != null -> listOf(LayoutField("message", stringType, null), LayoutField("cause", anyType, null))
             classIndex(superClass) != null -> fieldLayout(superClass)
-            else -> unsupported("the superclass ${superClass.name} from another module")
+            else -> unsupported("the superclass ${superClass.name} outside the VM modules")
         }
         inherited + declaration.declarations.mapNotNull {
             val field = when (it) {
@@ -462,7 +493,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
 
     internal fun fieldIndex(field: IrField): Int {
         val owner = field.parentAsClass
-        if (classIndex(owner) == null) unsupported("the field ${field.name} of ${owner.name} from another module")
+        if (classIndex(owner) == null) unsupported("the field ${field.name} of ${owner.name}")
         return fieldLayout(owner).indexOfFirst { it.declared == field }
     }
 
@@ -480,7 +511,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
 
     private fun classDefinition(declaration: IrClass): VmClass {
         val interfaces = declaration.superTypes.mapNotNull { it.classOrNull?.owner }.filter { it.isInterface }.map {
-            classIndex(it) ?: unsupported("the supertype ${it.name} from another module")
+            classIndex(it) ?: unsupported("the supertype ${it.name} outside the VM modules")
         }
         if (declaration.isInterface) {
             return VmClass(declaration.vmName, null, interfaces, isOpen = true, isAbstract = true, VmClassKind.Interface)
@@ -490,7 +521,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
             superClass == null || superClass.isAny() -> runtimeClass("Any")
             superClass.isEnumBase() -> runtimeClass("java.lang.Enum")
             runtimeThrowable(superClass) != null -> runtimeThrowable(superClass)!!
-            else -> classIndex(superClass) ?: unsupported("the superclass ${superClass.name} from another module")
+            else -> classIndex(superClass) ?: unsupported("the superclass ${superClass.name} outside the VM modules")
         }
         val fields = fieldLayout(declaration).map { VmField(it.name, it.type) }
         val isAbstract = declaration.modality == Modality.ABSTRACT || declaration.modality == Modality.SEALED
@@ -527,8 +558,11 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
                     throwableToString(declaration)
                 }
                 implementation.parentClassOrNull?.isAny() != true -> {
-                    if (implementation.symbol !in definedFunctions) unsupported("inheriting ${implementation.render()} from another module")
-                    functionSymbol(implementation)
+                    if (implementation.symbol !in definedFunctions) {
+                        importFunction(implementation) ?: unsupported("inheriting ${implementation.render()} outside the VM modules")
+                    } else {
+                        functionSymbol(implementation)
+                    }
                 }
                 implementation.name.asString() == "toString" && !isAbstract -> defaultToString(declaration)
                 else -> continue // Answered by the runtime's `Any`.
@@ -633,7 +667,15 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         if (root.parentClassOrNull?.isAny() == true) return runtimeSelector(root.name.asString())
         if (root.parentClassOrNull?.let(::runtimeThrowable) != null) return throwableSelector(root.name.asString())
         if (!root.isOverridable()) return null
-        return selectors[root.symbol] ?: unsupported("overriding ${root.render()} from another module")
+        return selectors[root.symbol] ?: importSelector(root) ?: unsupported("overriding ${root.render()} outside the VM modules")
+    }
+
+    /** The selector [root] declares in the VM module declaring it, or null when no VM module does. */
+    private fun importSelector(root: IrSimpleFunction): Int? {
+        val owner = vmModuleOf(root) ?: return null
+        val symbol = functionSymbol(root)
+        module.selectors += VmSelector(symbol.name, owner, classIndex(root.parentAsClass)!!, symbol.paramTypes.drop(1), symbol.returnType)
+        return (module.selectors.size - 1).also { selectors[root.symbol] = it }
     }
 
     /** How a call reaches [callee]: by selector when it may be overridden, directly otherwise. */
@@ -663,9 +705,20 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     }
 
     internal fun staticTarget(callee: IrFunction): CallTarget {
-        if (callee.symbol !in definedFunctions) unsupported("a call to ${callee.render()} outside the module")
-        val symbol = functionSymbol(callee)
+        val symbol = if (callee.symbol in definedFunctions) {
+            functionSymbol(callee)
+        } else {
+            importFunction(callee) ?: unsupported("a call to ${callee.render()} outside the VM modules")
+        }
         return CallTarget(VmCallee.Static(symbol), symbol)
+    }
+
+    /** [function] as the VM module declaring it defines it, imported, or null when no VM module does. */
+    private fun importFunction(function: IrFunction): VmFunctionSymbol? {
+        val owner = vmModuleOf(function) ?: return null
+        val symbol = functionSymbol(function)
+        if (module.imports.none { it.symbol == symbol }) module.imports += VmImport(owner, symbol)
+        return symbol
     }
 
     /**
@@ -702,6 +755,8 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         else function.fqNameWhenAvailable?.asString() ?: function.name.asString()
         val hash = signatureHash(function.symbol.signature)
         val name = sanitized(if (hash == null) base else "${base}_${java.lang.Long.toHexString(hash)}")
+        // Another module's function is named as that module names it, which only a public signature makes stable.
+        if (vmModuleOf(function) != null) return if (hash == null) unsupported("naming ${function.render()} of another module") else name
         if (usedFunctionNames.add(name)) return name
         return generateSequence(1) { it + 1 }.map { "${name}_$it" }.first(usedFunctionNames::add)
     }

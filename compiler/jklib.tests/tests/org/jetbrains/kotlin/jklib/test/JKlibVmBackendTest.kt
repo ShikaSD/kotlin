@@ -27,15 +27,22 @@ class JKlibVmBackendTest {
 
     private data class Compilation(val output: String, val exitCode: ExitCode)
 
-    private fun compile(tempDir: File, source: String): Compilation {
-        val sourceFile = File(tempDir, "box.kt").apply { writeText(source.trimIndent()) }
-        val args = listOf(
-            sourceFile.path,
-            "-d", File(tempDir, "main.klib").path,
-            "-module-name", "main",
+    /** Compiles the module [name] from [files] against the modules named by [dependencies], compiled before it. */
+    private fun compile(
+        tempDir: File,
+        files: Map<String, String>,
+        name: String = "main",
+        dependencies: List<String> = emptyList(),
+    ): Compilation {
+        val sources = File(tempDir, name).apply { mkdirs() }
+        val paths = files.map { file -> File(sources, file.key).apply { writeText(file.value.trimIndent()) }.path }
+        val klibs = listOf(stdlibKlib) + dependencies.map { File(tempDir, "$it.klib").path }
+        val args = paths + listOf(
+            "-d", File(tempDir, "$name.klib").path,
+            "-module-name", name,
             "-no-stdlib",
-            "-Xklib=$stdlibKlib",
-            "-Xvm-output=${File(tempDir, "main.vir").path}",
+            "-Xklib=${klibs.joinToString(File.pathSeparator)}",
+            "-Xvm-output=${File(tempDir, "$name.vir").path}",
         )
         // A stream of this compilation's own: capturing System.err would race the other tests running in parallel.
         val messages = ByteArrayOutputStream()
@@ -43,16 +50,29 @@ class JKlibVmBackendTest {
         return Compilation(messages.toString(), exitCode)
     }
 
+    private fun compile(tempDir: File, source: String): Compilation = compile(tempDir, mapOf("box.kt" to source))
+
     /** Compiles [source], links it against the VM runtime and runs it, returning what `box()` answered. */
-    private fun runBox(tempDir: File, source: String): Boolean {
+    private fun runBox(tempDir: File, source: String): Boolean = runBox(tempDir, listOf(mapOf("box.kt" to source)))
+
+    /**
+     * Compiles each of [modules], a module's files by name, against the ones before it, links them against the VM
+     * runtime and runs them. The last module is `main`, holding `box()`; the others are `lib0`, `lib1` and so on.
+     */
+    private fun runBox(tempDir: File, modules: List<Map<String, String>>): Boolean {
         val repo = System.getenv("KOTLIN_VM_REPO")
         assumeTrue(repo != null, "KOTLIN_VM_REPO names no VM checkout to run on")
-        val (output, exitCode) = compile(tempDir, source)
-        assertEquals(ExitCode.OK, exitCode) { "Compilation failed: $output" }
+        val names = modules.indices.map { if (it == modules.lastIndex) "main" else "lib$it" }
+        modules.forEachIndexed { index, files ->
+            val compilation = compile(tempDir, files, names[index], names.take(index))
+            assertEquals(ExitCode.OK, compilation.exitCode) { "Compilation of ${names[index]} failed: ${compilation.output}" }
+        }
 
         val container = File(tempDir, "main.vmc").path
         val runtime = File(repo, "runtime/src/runtime.ir").path
-        run(File(repo, "target/debug/link_ir"), container, File(tempDir, "main.vir").path, runtime)
+        // The VM starts from the first module's first function: `main`'s entry.
+        val virs = names.asReversed().map { File(tempDir, "$it.vir").path }
+        run(File(repo, "target/debug/link_ir"), container, *virs.toTypedArray(), runtime)
         val result = run(File(repo, "target/debug/execute"), container)
         return result.lines().any { it == "r0 = 1" }
     }
@@ -1192,5 +1212,170 @@ class JKlibVmBackendTest {
             fun box(): String = if (box(true) === box(true) && box(true) !== box(false)) "OK" else "fail"
         """
         assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testCallsAFunctionOfAnotherModule(@TempDir tempDir: File) {
+        val lib = """fun greeting(suffix: String) = "O" + suffix"""
+        val main = """fun box(): String = greeting("K")"""
+        assertTrue(runBox(tempDir, listOf(mapOf("lib.kt" to lib), mapOf("main.kt" to main))))
+    }
+
+    /** The property's initializer is the other module's to run, on the first call to its getter. */
+    @Test
+    fun testReadsATopLevelPropertyOfAnotherModule(@TempDir tempDir: File) {
+        val lib = """
+            fun join(a: String, b: String) = a + b
+            val computed = join("O", "K")
+        """
+        val main = """fun box(): String = computed"""
+        assertTrue(runBox(tempDir, listOf(mapOf("lib.kt" to lib), mapOf("main.kt" to main))))
+    }
+
+    @Test
+    fun testConstructsAClassOfAnotherModule(@TempDir tempDir: File) {
+        val lib = """
+            class Box(val value: String) {
+                fun twice() = value + value
+            }
+        """
+        val main = """fun box(): String = if (Box("OK").twice() == "OKOK") "OK" else "fail" """
+        assertTrue(runBox(tempDir, listOf(mapOf("lib.kt" to lib), mapOf("main.kt" to main))))
+    }
+
+    /** The subclass lays out its superclass's fields first, private ones included, as the other module lays them out. */
+    @Test
+    fun testSubclassesAClassOfAnotherModule(@TempDir tempDir: File) {
+        val lib = """
+            open class Base(private val first: String) {
+                fun first() = first
+            }
+        """
+        val main = """
+            class Derived(val second: String) : Base("O")
+
+            fun box(): String = Derived("K").let { it.first() + it.second }
+        """
+        assertTrue(runBox(tempDir, listOf(mapOf("lib.kt" to lib), mapOf("main.kt" to main))))
+    }
+
+    @Test
+    fun testOverridesAMethodOfAnotherModule(@TempDir tempDir: File) {
+        val lib = """
+            open class Greeter {
+                open fun greet() = "fail"
+            }
+
+            fun greet(greeter: Greeter) = greeter.greet()
+        """
+        val main = """
+            class Custom : Greeter() {
+                override fun greet() = "OK"
+            }
+
+            fun box(): String = greet(Custom())
+        """
+        assertTrue(runBox(tempDir, listOf(mapOf("lib.kt" to lib), mapOf("main.kt" to main))))
+    }
+
+    @Test
+    fun testInheritsAMethodOfAnotherModule(@TempDir tempDir: File) {
+        val lib = """
+            abstract class Named {
+                abstract val name: String
+                open fun describe() = "O" + name
+            }
+        """
+        val main = """
+            class K : Named() {
+                override val name = "K"
+            }
+
+            fun box(): String {
+                val named: Named = K()
+                return named.describe()
+            }
+        """
+        assertTrue(runBox(tempDir, listOf(mapOf("lib.kt" to lib), mapOf("main.kt" to main))))
+    }
+
+    @Test
+    fun testImplementsAnInterfaceOfAnotherModule(@TempDir tempDir: File) {
+        val lib = """
+            interface Source {
+                fun next(): String
+            }
+
+            fun twice(source: Source) = source.next() + source.next()
+        """
+        val main = """
+            class Letters : Source {
+                private var count = 0
+                override fun next() = if (count++ == 0) "O" else "K"
+            }
+
+            fun box(): String = twice(Letters())
+        """
+        assertTrue(runBox(tempDir, listOf(mapOf("lib.kt" to lib), mapOf("main.kt" to main))))
+    }
+
+    @Test
+    fun testTypeTestAgainstAClassOfAnotherModule(@TempDir tempDir: File) {
+        val lib = """
+            open class Animal
+            class Cat : Animal()
+        """
+        val main = """
+            fun isAnimal(x: Any) = x is Animal
+            fun isCat(x: Any) = x is Cat
+
+            fun box(): String = if (isAnimal(Cat()) && isCat(Cat()) && !isCat(Animal()) && !isAnimal("x")) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, listOf(mapOf("lib.kt" to lib), mapOf("main.kt" to main))))
+    }
+
+    @Test
+    fun testUsesAnObjectOfAnotherModule(@TempDir tempDir: File) {
+        val lib = """
+            object Registry {
+                var count = 0
+            }
+        """
+        val main = """
+            fun box(): String {
+                Registry.count++
+                Registry.count++
+                return if (Registry.count == 2) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, listOf(mapOf("lib.kt" to lib), mapOf("main.kt" to main))))
+    }
+
+    @Test
+    fun testUsesAnEnumOfAnotherModule(@TempDir tempDir: File) {
+        val lib = """enum class Answer { NO, OK }"""
+        val main = """
+            fun box(): String = when (val answer = Answer.OK) {
+                Answer.NO -> "fail"
+                Answer.OK -> answer.name
+            }
+        """
+        assertTrue(runBox(tempDir, listOf(mapOf("lib.kt" to lib), mapOf("main.kt" to main))))
+    }
+
+    /** A module two levels down is imported from directly, by the module that declares what is used. */
+    @Test
+    fun testUsesAModuleThroughAnother(@TempDir tempDir: File) {
+        val base = """open class Base { open fun value() = "fail" }"""
+        val middle = """open class Middle : Base() { override fun value() = "OK" }"""
+        val main = """
+            class Last : Middle()
+
+            fun box(): String {
+                val base: Base = Last()
+                return base.value()
+            }
+        """
+        assertTrue(runBox(tempDir, listOf(mapOf("base.kt" to base), mapOf("middle.kt" to middle), mapOf("main.kt" to main))))
     }
 }

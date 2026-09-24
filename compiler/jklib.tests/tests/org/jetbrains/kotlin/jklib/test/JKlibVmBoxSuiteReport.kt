@@ -31,9 +31,9 @@ import java.util.concurrent.TimeUnit
 class JKlibVmBoxSuiteReport {
     private val boxRoot = KtTestUtil.getTestDataFileLocatedInCompilerTestData("codegen/box")
 
-    /** Directives a test needs something for that the VM backend cannot have yet: several files, reflection, a JDK. */
+    /** Directives a test needs something for that the VM backend cannot have yet: reflection, a JDK, Java sources. */
     private val inapplicable = listOf(
-        "// FILE:", "// MODULE:", "// TARGET_BACKEND:", "// FULL_JDK", "// WITH_REFLECT", "// WITH_COROUTINES",
+        "// TARGET_BACKEND:", "// FULL_JDK", "// WITH_REFLECT", "// WITH_COROUTINES",
         "// JVM_TARGET", "// ENABLE_JVM_PREVIEW", "// IGNORE_BACKEND: ANY",
     )
 
@@ -45,7 +45,62 @@ class JKlibVmBoxSuiteReport {
 
     private enum class Outcome { PASS, WRONG_RESULT, RUNTIME_ERROR, LINK_ERROR, UNSUPPORTED, FRONTEND_ERROR, TIMEOUT }
 
-    private class Result(val test: String, val withStdlib: Boolean, val outcome: Outcome, val detail: String)
+    private class Result(val test: String, val withStdlib: Boolean, val shape: Shape, val outcome: Outcome, val detail: String)
+
+    /** How a test's sources are split, which the report counts separately. */
+    private enum class Shape { ONE_FILE, FILES, MODULES }
+
+    private class TestModule(val name: String, val dependencies: List<String>, val friends: List<String>) {
+        val files = mutableListOf<Pair<String, StringBuilder>>()
+    }
+
+    /**
+     * The test's modules, dependencies first, each with its files, as `// MODULE: name(dependencies)(friends)` and
+     * `// FILE: name` split it; text before a module's first file goes to a file of its own, named as the test for the
+     * first module. Null for a test the
+     * backend cannot compile: one with a file that is not Kotlin, or a multiplatform module, which the directive's
+     * third group names the common modules of.
+     */
+    private fun modules(text: String, defaultFile: String = "main.kt"): List<TestModule>? {
+        val modules = mutableListOf<TestModule>()
+        val lines = text.lines()
+        // Directives above a test's first module are the test's, not a module's of their own.
+        val firstModule = lines.indexOfFirst { it.startsWith("// MODULE:") }
+        if (firstModule > 0) return modules(lines.drop(firstModule).joinToString("\n"), defaultFile)
+        for (line in lines) {
+            val module = Regex("""^// MODULE: ([\w-]+)(?:\(([^)]*)\))?(?:\(([^)]*)\))?(\(.*)?$""").find(line)
+            val file = Regex("""^// FILE: (\S+)""").find(line)
+            when {
+                module != null -> {
+                    val [_, name, dependencies, friends, rest] = module.groupValues
+                    if (rest.isNotEmpty()) return null
+                    fun names(list: String) = list.split(',').map { it.trim() }.filter { it.isNotEmpty() }
+                    modules += TestModule(name, names(dependencies), names(friends))
+                }
+                file != null -> {
+                    if (!file.groupValues[1].endsWith(".kt")) return null
+                    if (modules.isEmpty()) modules += TestModule("main", emptyList(), emptyList())
+                    modules.last().files += file.groupValues[1] to StringBuilder()
+                }
+                else -> {
+                    if (modules.isEmpty()) modules += TestModule("main", emptyList(), emptyList())
+                    val current = modules.last()
+                    if (current.files.isEmpty()) current.files += (if (modules.size == 1) defaultFile else "${current.name}.kt") to StringBuilder()
+                    current.files.last().second.appendLine(line)
+                }
+            }
+        }
+        val byName = modules.associateBy { it.name }
+        if (modules.any { module -> (module.dependencies + module.friends).any { it !in byName } }) return null
+        val ordered = LinkedHashSet<TestModule>()
+        fun visit(module: TestModule) {
+            if (module in ordered) return
+            (module.dependencies + module.friends).forEach { visit(byName.getValue(it)) }
+            ordered += module
+        }
+        modules.forEach(::visit)
+        return ordered.toList()
+    }
 
     @Test
     fun report() {
@@ -55,7 +110,7 @@ class JKlibVmBoxSuiteReport {
         val root = if (suite == "1") boxRoot else File(boxRoot, suite!!)
         val tests = root.walkTopDown().filter { it.isFile && it.extension == "kt" }.sorted().filter { file ->
             val text = file.readText()
-            inapplicable.none { it in text } && !excludesJvm(text)
+            inapplicable.none { it in text } && !excludesJvm(text) && modules(text) != null
         }.toList()
 
         val pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
@@ -76,7 +131,9 @@ class JKlibVmBoxSuiteReport {
             val keep = System.getenv("KOTLIN_VM_BOX_KEEP")
             if (keep != null && result.outcome in setOf(Outcome.WRONG_RESULT, Outcome.RUNTIME_ERROR, Outcome.LINK_ERROR)) {
                 val base = File(keep, result.test.replace('/', '_').removeSuffix(".kt")).apply { parentFile.mkdirs() }
-                File(dir, "main.vir").takeIf { it.exists() }?.copyTo(File("${base.path}.vir"), overwrite = true)
+                dir.listFiles { file -> file.extension == "vir" }!!.forEach { vir ->
+                    vir.copyTo(File("${base.path}.${vir.nameWithoutExtension}.vir"), overwrite = true)
+                }
                 File("${base.path}.kt").writeText(prepared(test.readText()))
             }
             return result
@@ -89,44 +146,60 @@ class JKlibVmBoxSuiteReport {
         val name = test.relativeTo(boxRoot).path
         val text = test.readText()
         val withStdlib = "// WITH_STDLIB" in text
-        run {
-            val vir = File(dir, "main.vir")
-            val source = File(dir, test.name).apply { writeText(prepared(text)) }
-            val args = arrayOf(
-                source.path, "-d", File(dir, "main.klib").path, "-module-name", "main", "-no-stdlib",
-                "-Xklib=${ForTestCompileRuntime.jklibStdlibForTests().path}", "-Xvm-output=${vir.path}",
+        val modules = modules(text, test.name)!!
+        val shape = when {
+            modules.size > 1 -> Shape.MODULES
+            modules.single().files.size > 1 -> Shape.FILES
+            else -> Shape.ONE_FILE
+        }
+        fun result(outcome: Outcome, detail: String) = Result(name, withStdlib, shape, outcome, detail)
+
+        val stdlib = ForTestCompileRuntime.jklibStdlibForTests().path
+        fun klib(module: String) = File(dir, "$module.klib").path
+        for (module in modules) {
+            val sources = File(dir, module.name).apply { mkdirs() }
+            val paths = module.files.map { file ->
+                File(sources, file.first).apply { parentFile.mkdirs() }.apply { writeText(prepared(file.second.toString())) }.path
+            }
+            val args = listOfNotNull(
+                *paths.toTypedArray(), "-d", klib(module.name), "-module-name", module.name, "-no-stdlib",
+                "-Xklib=${(listOf(stdlib) + (module.dependencies + module.friends).distinct().map(::klib)).joinToString(File.pathSeparator)}",
+                module.friends.takeIf { it.isNotEmpty() }?.let { friends -> "-friend-modules=${friends.joinToString(File.pathSeparator) { klib(it) }}" },
+                "-Xvm-output=${File(dir, "${module.name}.vir").path}",
                 *languageFeatures(text).map { "-XXLanguage:$it" }.toTypedArray(),
             )
             val messages = ByteArrayOutputStream()
             val exitCode = try {
-                K2JKlibCompiler().exec(PrintStream(messages), *args)
+                K2JKlibCompiler().exec(PrintStream(messages), *args.toTypedArray())
             } catch (e: Throwable) {
-                return Result(name, withStdlib, Outcome.FRONTEND_ERROR, "compiler crashed: ${e.javaClass.simpleName}")
+                return result(Outcome.FRONTEND_ERROR, "compiler crashed: ${e.javaClass.simpleName}")
             }
             if (exitCode != ExitCode.OK) {
                 val output = messages.toString()
                 val unsupported = Regex("the VM backend does not support (.*?) yet").find(output)?.groupValues?.get(1)
                 return if (unsupported != null) {
-                    Result(name, withStdlib, Outcome.UNSUPPORTED, blocker(unsupported))
+                    result(Outcome.UNSUPPORTED, blocker(unsupported))
                 } else {
                     val error = output.lineSequence().firstOrNull { "error:" in it }?.substringAfter("error: ") ?: ""
-                    Result(name, withStdlib, Outcome.FRONTEND_ERROR, error.replace(Regex(" on receiver of type .*"), "").take(120))
+                    result(Outcome.FRONTEND_ERROR, error.replace(Regex(" on receiver of type .*"), "").take(120))
                 }
             }
+        }
 
-            val container = File(dir, "main.vmc").path
-            val link = exec(File(repo, "target/debug/link_ir"), container, vir.path, File(repo, "runtime/src/runtime.ir").path)
-                ?: return Result(name, withStdlib, Outcome.TIMEOUT, "link")
-            if (link.first != 0) {
-                return Result(name, withStdlib, Outcome.LINK_ERROR, lastMessage(link.second).take(200))
-            }
-            val execute = exec(File(repo, "target/debug/execute"), container)
-                ?: return Result(name, withStdlib, Outcome.TIMEOUT, "execute")
-            return when {
-                execute.second.lines().any { it == "r0 = 1" } -> Result(name, withStdlib, Outcome.PASS, "")
-                execute.first == 0 -> Result(name, withStdlib, Outcome.WRONG_RESULT, "")
-                else -> Result(name, withStdlib, Outcome.RUNTIME_ERROR, lastMessage(execute.second).take(160))
-            }
+        // The VM starts from the first module's first function, which is the entry the module holding `box` has.
+        val entry = modules.lastOrNull { module -> module.files.any { Regex("""fun box\(\)""").containsMatchIn(it.second) } }
+            ?: return result(Outcome.FRONTEND_ERROR, "no box function")
+        val virs = (listOf(entry) + (modules - entry)).map { File(dir, "${it.name}.vir").path }
+        val container = File(dir, "main.vmc").path
+        val link = exec(File(repo, "target/debug/link_ir"), container, *virs.toTypedArray(), File(repo, "runtime/src/runtime.ir").path)
+            ?: return result(Outcome.TIMEOUT, "link")
+        if (link.first != 0) return result(Outcome.LINK_ERROR, lastMessage(link.second).take(200))
+        val execute = exec(File(repo, "target/debug/execute"), container)
+            ?: return result(Outcome.TIMEOUT, "execute")
+        return when {
+            execute.second.lines().any { it == "r0 = 1" } -> result(Outcome.PASS, "")
+            execute.first == 0 -> result(Outcome.WRONG_RESULT, "")
+            else -> result(Outcome.RUNTIME_ERROR, lastMessage(execute.second).take(160))
         }
     }
 
@@ -185,6 +258,7 @@ class JKlibVmBoxSuiteReport {
         summary("All", results)
         summary("Without WITH_STDLIB", results.filter { !it.withStdlib })
         summary("With WITH_STDLIB", results.filter { it.withStdlib })
+        for (shape in Shape.entries) summary("$shape without WITH_STDLIB", results.filter { !it.withStdlib && it.shape == shape })
 
         for (outcome in listOf(Outcome.UNSUPPORTED, Outcome.FRONTEND_ERROR, Outcome.LINK_ERROR, Outcome.RUNTIME_ERROR)) {
             appendLine()
@@ -202,7 +276,7 @@ class JKlibVmBoxSuiteReport {
         for (outcome in listOf(Outcome.WRONG_RESULT, Outcome.RUNTIME_ERROR, Outcome.LINK_ERROR, Outcome.TIMEOUT)) {
             appendLine()
             appendLine("All $outcome:")
-            results.filter { it.outcome == outcome }.forEach { appendLine("  ${it.test}  ${it.detail}") }
+            results.filter { it.outcome == outcome }.forEach { appendLine("  ${it.test}  ${it.shape}  ${it.detail}") }
         }
     }
 }
