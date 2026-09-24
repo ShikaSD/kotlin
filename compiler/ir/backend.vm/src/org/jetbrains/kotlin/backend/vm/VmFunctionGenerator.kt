@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.constructedClass
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.ir.util.render
@@ -43,13 +44,27 @@ internal class VmFunctionGenerator private constructor(
     private val loops = hashMapOf<IrLoop, LoopTargets>()
     private val returnableBlocks = hashMapOf<IrReturnTargetSymbol, ReturnableBlock>()
 
-    /** The block being generated into, or null right after a terminator. */
-    private var current: VmBlock? = function.newBlock()
+    /** The head handler protecting a block created now, by creation order, or null outside every `try`. */
+    private var protection: Int? = null
 
-    private class LoopTargets(val continueTarget: VmBlock, val breakTarget: VmBlock)
+    /** How many `try` regions enclose each handler, by creation order; see [renumberHandlers]. */
+    private val handlerDepths = mutableListOf<Int>()
+    private var tryDepth = 0
+
+    /** The `finally` blocks around the code being generated, innermost last. */
+    private val finallyFrames = mutableListOf<FinallyFrame>()
+
+    /** A `finally` body, and the protection and depth around its `try`, which are what it runs under. */
+    private class FinallyFrame(val body: IrExpression, val protection: Int?, val tryDepth: Int)
+
+    /** The block being generated into, or null right after a terminator. */
+    private var current: VmBlock? = newBlock()
+
+    /** A loop's jump targets, and how many `finally` blocks enclosed the loop. */
+    private class LoopTargets(val continueTarget: VmBlock, val breakTarget: VmBlock, val finallyDepth: Int)
 
     /** An inlined body: a `return` to it leaves its value in [result] and jumps to [exit]. */
-    private class ReturnableBlock(val exit: VmBlock, val result: VmValue?)
+    private class ReturnableBlock(val exit: VmBlock, val result: VmValue?, val finallyDepth: Int)
 
     /** The object a constructor initializes, which it takes before its declared parameters. */
     private val constructed: VmValue? = (irFunction as? IrConstructor)?.let { constructor ->
@@ -72,8 +87,33 @@ internal class VmFunctionGenerator private constructor(
         }
         // Only a Unit function falls off its end; any other open block here is unreachable.
         if (current != null) terminate(VmTerminator.Return(function.symbol.returnType?.let { constant(it, 0) }))
+        return finish()
+    }
+
+    private fun finish(): VmFunction {
+        renumberHandlers()
         return function
     }
+
+    /**
+     * The VM requires a handler's `next` to name a later handler, which is what makes every chain end. Handlers are
+     * created outermost first, so they are renumbered deepest first: a clause then precedes its siblings after it and
+     * every clause of the regions enclosing it.
+     */
+    private fun renumberHandlers() {
+        val order = function.handlers.indices.sortedWith(compareByDescending<Int> { handlerDepths[it] }.thenBy { it })
+        val renumbered = IntArray(order.size)
+        order.forEachIndexed { new, old -> renumbered[old] = new }
+        val handlers = function.handlers.toList()
+        function.handlers.clear()
+        for (old in order) {
+            val handler = handlers[old]
+            function.handlers += VmHandler(handler.catchClass, handler.block, handler.exception, handler.next?.let { renumbered[it] })
+        }
+        for (block in function.blocks) block.protectedBy = block.protectedBy?.let { renumbered[it] }
+    }
+
+    private fun newBlock(): VmBlock = function.newBlock(protection)
 
     /** The body of a file's initializer: each field's initializer stored to its global, in declaration order. */
     private fun generateFileInitializer(fields: List<IrField>): VmFunction {
@@ -81,7 +121,7 @@ internal class VmFunctionGenerator private constructor(
             emit(VmInstruction.StoreGlobal(gen.globalOf(field), operand(field.initializer!!.expression)))
         }
         terminate(VmTerminator.Return(null))
-        return function
+        return finish()
     }
 
     /**
@@ -103,7 +143,7 @@ internal class VmFunctionGenerator private constructor(
             }
         }
         terminate(VmTerminator.Return(null))
-        return function
+        return finish()
     }
 
     private fun createEnumEntry(entry: IrEnumEntry, ordinal: Int) {
@@ -134,7 +174,7 @@ internal class VmFunctionGenerator private constructor(
             VmFunctionGenerator(gen, null, symbol, owner = null).generateFileInitializer(fields)
     }
 
-    private fun block(): VmBlock = current ?: function.newBlock().also { current = it }
+    private fun block(): VmBlock = current ?: newBlock().also { current = it }
 
     private fun emit(instruction: VmInstruction) {
         block().instructions += instruction
@@ -195,13 +235,23 @@ internal class VmFunctionGenerator private constructor(
         is IrWhileLoop -> whileLoop(expression)
         is IrDoWhileLoop -> doWhileLoop(expression)
         is IrBreak -> {
-            terminate(VmTerminator.Jump(loopTargets(expression).breakTarget.index))
+            val targets = loopTargets(expression)
+            runFinallyBlocksDownTo(targets.finallyDepth)
+            jumpTo(targets.breakTarget)
             null
         }
         is IrContinue -> {
-            terminate(VmTerminator.Jump(loopTargets(expression).continueTarget.index))
+            val targets = loopTargets(expression)
+            runFinallyBlocksDownTo(targets.finallyDepth)
+            jumpTo(targets.continueTarget)
             null
         }
+        is IrThrow -> {
+            terminate(VmTerminator.Throw(operand(expression.value)))
+            null
+        }
+        is IrTry -> tryExpression(expression)
+        is IrStringConcatenation -> concatenation(expression)
         is IrReturnableBlock -> returnableBlock(expression)
         is IrContainerExpression -> container(expression)
         is IrCall -> call(expression)
@@ -229,6 +279,7 @@ internal class VmFunctionGenerator private constructor(
             } else {
                 emit(VmInstruction.LoadField(dst, operand(receiver), gen.fieldIndex(field)))
             }
+            field.correspondingPropertySymbol?.owner?.takeIf { it.isLateinit }?.let { throwIfUninitialized(dst, it) }
             dst
         }
         is IrSetField -> {
@@ -262,6 +313,7 @@ internal class VmFunctionGenerator private constructor(
             } else {
                 operand(expression.value)
             }
+            runFinallyBlocksDownTo(0)
             terminate(VmTerminator.Return(value))
             return
         }
@@ -271,17 +323,112 @@ internal class VmFunctionGenerator private constructor(
         } else {
             emit(VmInstruction.Copy(block.result, operand(expression.value)))
         }
+        runFinallyBlocksDownTo(block.finallyDepth)
         jumpTo(block.exit)
+    }
+
+    /**
+     * Runs, innermost first, each `finally` a jump leaves: every one enclosing the code but not its target, which
+     * [depth] of them enclose. Each runs as its own `try`'s surroundings do, so an exception in it is not caught by the
+     * handler that runs it on an exception.
+     */
+    private fun runFinallyBlocksDownTo(depth: Int) {
+        if (finallyFrames.size <= depth || current == null) return
+        val frames = finallyFrames.toList()
+        val savedProtection = protection
+        val savedTryDepth = tryDepth
+        for (index in frames.lastIndex downTo depth) {
+            val frame = frames[index]
+            while (finallyFrames.size > index) finallyFrames.removeAt(finallyFrames.lastIndex)
+            protection = frame.protection
+            tryDepth = frame.tryDepth
+            startBlock(newBlock())
+            expression(frame.body)
+        }
+        finallyFrames.clear()
+        finallyFrames += frames
+        protection = savedProtection
+        tryDepth = savedTryDepth
     }
 
     private fun returnableBlock(expression: IrReturnableBlock): VmValue? {
         val result = gen.vmType(expression.type)?.let(::newValue)
-        val exit = function.newBlock()
-        returnableBlocks[expression.symbol] = ReturnableBlock(exit, result)
+        val exit = newBlock()
+        returnableBlocks[expression.symbol] = ReturnableBlock(exit, result, finallyFrames.size)
         val value = container(expression)
         if (result != null && value != null) emit(VmInstruction.Copy(result, value))
         startBlock(exit)
         return result
+    }
+
+    private fun tryExpression(expression: IrTry): VmValue? {
+        val result = gen.vmType(expression.type)?.let(::newValue)
+        val join = newBlock()
+        val finally = expression.finallyExpression
+        if (finally == null) {
+            tryCatch(expression, result, join)
+            current = join
+            return result
+        }
+
+        // `try { try { A } catch { B } } catch (t: Throwable) { F; throw t }`, with `F` on every way out besides.
+        val outerProtection = protection
+        val outerDepth = tryDepth
+        val normalExit = newBlock()
+        val rethrow = newBlock()
+        val exception = newValue(VmType.Ref(gen.throwableClass))
+        tryDepth++
+        val catchAll = addHandler(gen.throwableClass, exception, rethrow, next = outerProtection)
+        protection = catchAll
+        finallyFrames += FinallyFrame(finally, outerProtection, outerDepth)
+        tryCatch(expression, result, normalExit)
+        finallyFrames.removeAt(finallyFrames.lastIndex)
+        protection = outerProtection
+        tryDepth = outerDepth
+
+        current = normalExit
+        expression(finally)
+        jumpTo(join)
+        current = rethrow
+        expression(finally)
+        terminate(VmTerminator.Throw(exception))
+        current = join
+        return result
+    }
+
+    /** The `try` body and its `catch` clauses, each leaving its value in [result] and jumping to [exit]. */
+    private fun tryCatch(expression: IrTry, result: VmValue?, exit: VmBlock) {
+        val outer = protection
+        tryDepth++
+        val clauses = expression.catches.map { catch ->
+            val catchClass = gen.testedClass(catch.catchParameter.type) ?: gen.throwableClass
+            val exception = newValue(VmType.Ref(catchClass))
+            values[catch.catchParameter.symbol] = exception
+            val block = newBlock()
+            Clause(catch, addHandler(catchClass, exception, block, next = outer))
+        }
+        // Clauses are tried in order, then whatever encloses the `try`.
+        clauses.zipWithNext { clause, next -> function.handlers[clause.handler].next = next.handler }
+        if (clauses.isNotEmpty()) protection = clauses.first().handler
+        startBlock(newBlock())
+        branchResult(expression.tryResult, result)
+        jumpTo(exit)
+        protection = outer
+        tryDepth--
+
+        for (clause in clauses) {
+            current = function.blocks[function.handlers[clause.handler].block]
+            branchResult(clause.catch.result, result)
+            jumpTo(exit)
+        }
+    }
+
+    private class Clause(val catch: IrCatch, val handler: Int)
+
+    private fun addHandler(catchClass: Int, exception: VmValue, block: VmBlock, next: Int?): Int {
+        function.handlers += VmHandler(catchClass, block.index, exception, next)
+        handlerDepths += tryDepth
+        return function.handlers.lastIndex
     }
 
     private fun loopTargets(jump: IrBreakContinue): LoopTargets = loops[jump.loop] ?: unsupported("a jump out of an inlined lambda")
@@ -320,13 +467,13 @@ internal class VmFunctionGenerator private constructor(
 
     private fun whenExpression(expression: IrWhen): VmValue? {
         val result = gen.vmType(expression.type)?.let(::newValue)
-        val join = function.newBlock()
+        val join = newBlock()
         for (branch in expression.branches) {
-            val body = function.newBlock()
+            val body = newBlock()
             if (branch is IrElseBranch) {
                 startBlock(body)
             } else {
-                val next = function.newBlock()
+                val next = newBlock()
                 terminate(VmTerminator.Branch(operand(branch.condition), body.index, next.index))
                 current = body
                 branchResult(branch.result, result)
@@ -351,10 +498,10 @@ internal class VmFunctionGenerator private constructor(
     }
 
     private fun whileLoop(loop: IrWhileLoop): VmValue? {
-        val header = function.newBlock()
-        val body = function.newBlock()
-        val exit = function.newBlock()
-        loops[loop] = LoopTargets(continueTarget = header, breakTarget = exit)
+        val header = newBlock()
+        val body = newBlock()
+        val exit = newBlock()
+        loops[loop] = LoopTargets(continueTarget = header, breakTarget = exit, finallyDepth = finallyFrames.size)
         startBlock(header)
         terminate(VmTerminator.Branch(operand(loop.condition), body.index, exit.index))
         current = body
@@ -365,10 +512,10 @@ internal class VmFunctionGenerator private constructor(
     }
 
     private fun doWhileLoop(loop: IrDoWhileLoop): VmValue? {
-        val body = function.newBlock()
-        val condition = function.newBlock()
-        val exit = function.newBlock()
-        loops[loop] = LoopTargets(continueTarget = condition, breakTarget = exit)
+        val body = newBlock()
+        val condition = newBlock()
+        val exit = newBlock()
+        loops[loop] = LoopTargets(continueTarget = condition, breakTarget = exit, finallyDepth = finallyFrames.size)
         startBlock(body)
         loop.body?.let(::expression)
         startBlock(condition)
@@ -422,9 +569,92 @@ internal class VmFunctionGenerator private constructor(
         return newValue(VmType.Ref(tested)).also { emit(VmInstruction.RefCast(it, value, tested)) }
     }
 
+    /**
+     * A string template, or `+` on strings: each piece's `toString` in turn. A constant piece is formatted here; a number
+     * computed at run time needs formatting the runtime does not have yet.
+     */
+    private fun concatenation(expression: IrStringConcatenation): VmValue {
+        var result: VmValue? = null
+        for (argument in expression.arguments) {
+            if (argument is IrConst && argument.kind != IrConstKind.Null) {
+                val text = newValue(gen.stringType)
+                emit(VmInstruction.StringConstant(text, argument.value.toString()))
+                result = result?.let { plus(it, text) } ?: text
+                continue
+            }
+            if (argument.type.isPrimitiveType()) unsupported("formatting ${argument.type.render()} into a string")
+            val start = result ?: newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, "")) }
+            result = plus(start, operand(argument))
+        }
+        return result ?: newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, "")) }
+    }
+
+    private fun plus(string: VmValue, other: VmValue): VmValue =
+        newValue(gen.stringType).also { emit(VmInstruction.Call(it, VmCallee.Static(gen.stringPlus), listOf(string, other))) }
+
+    /** `String.plus(Any?)`: [string] then [argument]'s `toString`. */
+    private fun plus(string: VmValue, argument: IrExpression): VmValue {
+        if (argument.type.isPrimitiveType()) unsupported("boxing ${argument.type.render()} into kotlin.Any?")
+        return plus(string, operand(argument))
+    }
+
+    /** Throws a new instance of the runtime class [className], with [message]. */
+    private fun throwNew(className: String, message: VmValue?) {
+        val classIndex = gen.runtimeClassNamed(className)
+        val exception = newValue(VmType.Ref(classIndex)).also { emit(VmInstruction.NewObject(it, classIndex)) }
+        initThrowable(exception, message, cause = null)
+        terminate(VmTerminator.Throw(exception))
+    }
+
+    private fun initThrowable(exception: VmValue, message: VmValue?, cause: VmValue?) {
+        val args = listOf(exception, message ?: constant(gen.stringType, 0), cause ?: constant(gen.anyType, 0))
+        emit(VmInstruction.Call(null, VmCallee.Static(gen.throwableInit), args))
+    }
+
+    /**
+     * Runs one of the JVM's `Throwable` constructors, which take a message, a cause or both, on [exception]. The one
+     * taking only a cause makes the message the cause's `toString`, or null for a null cause.
+     */
+    private fun constructThrowable(exception: VmValue, constructor: IrConstructor, args: List<VmValue>) {
+        var message: VmValue? = null
+        var cause: VmValue? = null
+        constructor.parameters.forEachIndexed { index, parameter ->
+            when {
+                parameter.type.isString() || parameter.type.isNullableString() -> message = args[index]
+                gen.testedClass(parameter.type) == gen.throwableClass -> cause = args[index]
+                else -> unsupported("the constructor ${constructor.render()}")
+            }
+        }
+        val causeOnly = cause
+        if (message == null && causeOnly != null) {
+            val described = newValue(gen.stringType)
+            val present = newBlock()
+            val join = newBlock()
+            emit(VmInstruction.Constant(described, 0))
+            terminate(VmTerminator.Branch(isNull(causeOnly), join.index, present.index))
+            current = present
+            emit(VmInstruction.Call(described, VmCallee.Virtual(gen.toStringSelector), listOf(causeOnly)))
+            startBlock(join)
+            message = described
+        }
+        initThrowable(exception, message, cause)
+    }
+
+    /** A `lateinit` property holds null until it is assigned, and reading it before then throws. */
+    private fun throwIfUninitialized(value: VmValue, property: IrProperty) {
+        val fail = newBlock()
+        val next = newBlock()
+        terminate(VmTerminator.Branch(isNull(value), fail.index, next.index))
+        current = fail
+        val message = newValue(gen.stringType)
+        emit(VmInstruction.StringConstant(message, "lateinit property ${property.name.asString()} has not been initialized"))
+        throwNew("UninitializedPropertyAccessException", message)
+        current = next
+    }
+
     private fun throwIfNull(value: VmValue) {
-        val fail = function.newBlock()
-        val next = function.newBlock()
+        val fail = newBlock()
+        val next = newBlock()
         terminate(VmTerminator.Branch(isNull(value), fail.index, next.index))
         current = fail
         val exception = newValue(VmType.Ref(gen.nullPointerClass)).also { emit(VmInstruction.NewObject(it, gen.nullPointerClass)) }
@@ -435,9 +665,9 @@ internal class VmFunctionGenerator private constructor(
     /** `as?`: the value when it is an instance of the non-null [type], null otherwise. */
     private fun safeCast(value: VmValue, type: IrType): VmValue {
         val result = newValue(gen.anyType)
-        val instance = function.newBlock()
-        val other = function.newBlock()
-        val join = function.newBlock()
+        val instance = newBlock()
+        val other = newBlock()
+        val join = newBlock()
         terminate(VmTerminator.Branch(instanceOf(value, type.makeNotNull()), instance.index, other.index))
         current = instance
         emit(VmInstruction.Copy(result, value))
@@ -467,8 +697,13 @@ internal class VmFunctionGenerator private constructor(
     /** Allocates the object, then runs the constructor on it with the arguments already evaluated. */
     private fun constructorCall(call: IrConstructorCall): VmValue {
         val constructor = call.symbol.owner
-        val classIndex = gen.classIndex(constructor.constructedClass) ?: unsupported("constructing ${constructor.constructedClass.name}")
         val args = call.arguments.map { operand(it ?: unsupported("a default argument")) }
+        gen.runtimeThrowable(constructor.constructedClass)?.let { throwable ->
+            val exception = newValue(VmType.Ref(throwable)).also { emit(VmInstruction.NewObject(it, throwable)) }
+            constructThrowable(exception, constructor, args)
+            return exception
+        }
+        val classIndex = gen.classIndex(constructor.constructedClass) ?: unsupported("constructing ${constructor.constructedClass.name}")
         val obj = newValue(VmType.Ref(classIndex)).also { emit(VmInstruction.NewObject(it, classIndex)) }
         emit(VmInstruction.Call(null, gen.staticTarget(constructor).callee, listOf(obj) + args))
         return obj
@@ -481,6 +716,10 @@ internal class VmFunctionGenerator private constructor(
         // the runtime declares neither.
         if (with(gen) { constructor.constructedClass.isAny() || constructor.constructedClass.isEnumBase() }) return
         val args = call.arguments.map { operand(it ?: unsupported("a default argument")) }
+        if (gen.runtimeThrowable(constructor.constructedClass) != null) {
+            constructThrowable(constructed!!, constructor, args)
+            return
+        }
         emit(VmInstruction.Call(null, gen.staticTarget(constructor).callee, listOf(constructed!!) + args))
     }
 
@@ -514,6 +753,13 @@ internal class VmFunctionGenerator private constructor(
             builtIns.eqeqeqSymbol -> binary(VmBinaryOp.EQ, operand(args[0]), operand(args[1]))
             builtIns.eqeqSymbol -> equals(args[0], args[1])
             builtIns.booleanNotSymbol -> not(operand(args[0]))
+            // `!!`.
+            builtIns.checkNotNullSymbol -> operand(args[0]).also(::throwIfNull)
+            // An exhaustive `when` that matched nothing: only a class changed since compilation gets here.
+            builtIns.noWhenBranchMatchedExceptionSymbol -> {
+                throwNew("NoWhenBranchMatchedException", message = null)
+                return Intrinsic(null)
+            }
             in builtIns.ieee754equalsFunByOperandType.values -> compare(Comparison.EQ, args[0], args[1])
             in builtIns.lessFunByOperandType.values -> compare(Comparison.LT, args[0], args[1])
             in builtIns.lessOrEqualFunByOperandType.values -> compare(Comparison.LE, args[0], args[1])
@@ -521,6 +767,16 @@ internal class VmFunctionGenerator private constructor(
             in builtIns.greaterOrEqualFunByOperandType.values -> compare(Comparison.GE, args[0], args[1])
             else -> {
                 enumMember(callee, args)?.let { return Intrinsic(it) }
+                when (callee.fqNameWhenAvailable?.asString()) {
+                    // What the frontend calls when an exhaustive `when` matches nothing; the message is the JVM's.
+                    "kotlin.internal.throwNoWhenBranchMatchedException" -> {
+                        val prefix = newValue(gen.stringType)
+                        emit(VmInstruction.StringConstant(prefix, "No branch matched for subject: "))
+                        throwNew("NoWhenBranchMatchedException", plus(prefix, args[0]))
+                        return Intrinsic(null)
+                    }
+                    "kotlin.String.plus" -> return Intrinsic(plus(operand(args[0]), args[1]))
+                }
                 val owner = callee.parentClassOrNull?.defaultType
                 if (callee.body != null || owner == null || !owner.isPrimitiveType()) return null
                 primitiveMember(callee, owner.getPrimitiveType()!!, args)
@@ -598,9 +854,9 @@ internal class VmFunctionGenerator private constructor(
         val lhs = operand(lhsExpression)
         val rhs = operand(rhsExpression)
         val result = newValue(VmType.I64)
-        val lhsNull = function.newBlock()
-        val call = function.newBlock()
-        val join = function.newBlock()
+        val lhsNull = newBlock()
+        val call = newBlock()
+        val join = newBlock()
         terminate(VmTerminator.Branch(isNull(lhs), lhsNull.index, call.index))
         current = lhsNull
         emit(VmInstruction.Copy(result, isNull(rhs)))

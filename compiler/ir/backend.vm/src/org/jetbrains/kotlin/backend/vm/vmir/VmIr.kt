@@ -98,7 +98,7 @@ class VmFunction(val symbol: VmFunctionSymbol, val owner: VmOwner?) {
         VmBlock(blocks.size, protectedBy).also { blocks += it }
 }
 
-class VmBlock(val index: Int, val protectedBy: Int?) {
+class VmBlock(val index: Int, var protectedBy: Int?) {
     val instructions = mutableListOf<VmInstruction>()
 
     /** Null only while the block is still being generated. */
@@ -106,7 +106,7 @@ class VmBlock(val index: Int, val protectedBy: Int?) {
 }
 
 /** A `catch` clause. [next] is the clause tried when this one does not match, and must be a later one. */
-class VmHandler(val catchClass: Int, val block: Int, val exception: VmValue, val next: Int?)
+class VmHandler(val catchClass: Int, val block: Int, val exception: VmValue, var next: Int?)
 
 sealed interface VmInstruction {
     class Constant(val dst: VmValue, val bits: Long) : VmInstruction

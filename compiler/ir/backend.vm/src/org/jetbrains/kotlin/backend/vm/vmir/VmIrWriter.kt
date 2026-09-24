@@ -325,13 +325,14 @@ private class ModuleEncoder(private val module: VmModule) {
         varint(function.handlers.size)
         varint(function.entry)
         function.handlers.forEachIndexed { index, handler ->
-            require(handler.next == null || handler.next > index) {
+            val next = handler.next
+            require(next == null || next > index) {
                 "${function.symbol.name}: handler $index must link to a later handler"
             }
             varint(handler.catchClass)
             varint(handler.block)
             value(handler.exception)
-            optional(handler.next)
+            optional(next)
         }
         for (block in function.blocks) {
             optional(block.protectedBy)

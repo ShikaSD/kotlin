@@ -34,6 +34,33 @@ internal fun unsupported(what: String): Nothing = throw VmCodegenException("the 
 const val VM_RUNTIME_MODULE = "vm.runtime"
 
 /**
+ * The JVM's throwables the runtime implements, by the runtime class standing for each. The Kotlin names are the
+ * standard library's own classes; its other exceptions are aliases of the Java ones. The VM raises the runtime classes
+ * under `vm.` names itself, which is what makes a `catch` of the JVM class catch the VM's failure.
+ */
+private val RUNTIME_THROWABLES = mapOf(
+    "kotlin.Throwable" to "Throwable",
+    "java.lang.Throwable" to "Throwable",
+    "java.lang.Exception" to "Exception",
+    "java.lang.Error" to "Error",
+    "java.lang.AssertionError" to "AssertionError",
+    "java.lang.RuntimeException" to "RuntimeException",
+    "java.lang.IllegalStateException" to "IllegalStateException",
+    "java.lang.IllegalArgumentException" to "IllegalArgumentException",
+    "java.lang.NumberFormatException" to "NumberFormatException",
+    "java.lang.UnsupportedOperationException" to "UnsupportedOperationException",
+    "java.lang.IndexOutOfBoundsException" to "IndexOutOfBoundsException",
+    "java.util.NoSuchElementException" to "NoSuchElementException",
+    "kotlin.NoWhenBranchMatchedException" to "NoWhenBranchMatchedException",
+    "kotlin.UninitializedPropertyAccessException" to "UninitializedPropertyAccessException",
+    "java.lang.NullPointerException" to "vm.NullReference",
+    "java.lang.ArithmeticException" to "vm.DivisionByZero",
+    "java.lang.ClassCastException" to "vm.ClassCast",
+    "java.lang.ArrayIndexOutOfBoundsException" to "vm.ArrayIndexOutOfBounds",
+    "java.lang.StringIndexOutOfBoundsException" to "vm.StringIndexOutOfBounds",
+)
+
+/**
  * Generates one VM module from a linked, unlowered IR module fragment.
  *
  * Covers top-level functions and classes over primitives and string literals; anything else is reported through
@@ -69,7 +96,6 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
                 when (declaration) {
                     is IrSimpleFunction -> if (!declaration.isOnlyInlined()) members.functions += declaration
                     is IrProperty -> {
-                        if (declaration.isLateinit) unsupported("the lateinit property ${declaration.name}")
                         members.properties += declaration
                         listOfNotNull(declaration.getter, declaration.setter).filterTo(members.functions) { !it.isOnlyInlined() }
                     }
@@ -293,6 +319,13 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     /** The class the VM raises for a null dereference, which Kotlin throws for a failed null check too. */
     internal val nullPointerClass: Int get() = runtimeClass("vm.NullReference")
 
+    internal val throwableClass: Int get() = runtimeClass("Throwable")
+
+    /** A runtime class by the name the runtime declares it under. */
+    internal fun runtimeClassNamed(name: String): Int = runtimeClass(name)
+
+    internal val toStringSelector: Int get() = runtimeSelector("toString")
+
     /** A selector the runtime declares on `Any`, as it declares it. */
     private fun runtimeSelector(name: String): Int = runtimeSelectors.getOrPut(name) {
         val any = runtimeClass("Any")
@@ -300,12 +333,40 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
             "equals" -> VmSelector(name, VM_RUNTIME_MODULE, any, listOf(anyType), VmType.I64)
             "hashCode" -> VmSelector(name, VM_RUNTIME_MODULE, any, emptyList(), VmType.I64)
             "toString" -> VmSelector(name, VM_RUNTIME_MODULE, any, emptyList(), stringType)
+            "message" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("Throwable"), emptyList(), stringType)
+            "cause" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("Throwable"), emptyList(), anyType)
             else -> error("The runtime declares no selector $name on Any")
         }
         module.selectors.size - 1
     }
 
     internal val equalsSelector: Int get() = runtimeSelector("equals")
+
+    /** The runtime class implementing [declaration], one of [RUNTIME_THROWABLES], or null for any other class. */
+    internal fun runtimeThrowable(declaration: IrClass): Int? =
+        RUNTIME_THROWABLES[declaration.fqNameWhenAvailable?.asString()]?.let(::runtimeClass)
+
+    /** The runtime function storing what one of the JVM's `Throwable` constructors takes. */
+    internal val throwableInit: VmFunctionSymbol by lazy {
+        runtimeFunction("Throwable::init", listOf(anyType, stringType, anyType), null)
+    }
+
+    /** Kotlin's `String.plus(Any?)`; see `@String::plus` in the runtime. */
+    internal val stringPlus: VmFunctionSymbol by lazy { runtimeFunction("String::plus", listOf(stringType, anyType), stringType) }
+
+    private fun runtimeFunction(name: String, params: List<VmType>, returnType: VmType?): VmFunctionSymbol {
+        val symbol = VmFunctionSymbol(name, params, returnType)
+        if (module.imports.none { it.symbol == symbol }) module.imports += VmImport(VM_RUNTIME_MODULE, symbol)
+        return symbol
+    }
+
+    /** The runtime selector a member of `Throwable` dispatches through, by the member's Kotlin or Java name. */
+    private fun throwableSelector(name: String): Int? = when (name) {
+        "<get-message>", "getMessage", "getLocalizedMessage" -> runtimeSelector("message")
+        "<get-cause>", "getCause" -> runtimeSelector("cause")
+        "toString" -> runtimeSelector("toString")
+        else -> null
+    }
 
     /** How a value of [type] is held, or null for a type with no values to hold: `Unit` and `Nothing`. */
     internal fun vmType(type: IrType): VmType? {
@@ -332,7 +393,8 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         if (type.isAny() || type.isNullableAny()) return null
         if (type.isString() || type.isNullableString()) return runtimeClass("vm.String")
         val declaration = type.classOrNull?.owner ?: unsupported("a type test against ${type.render()}")
-        return classIndex(declaration) ?: unsupported("a type test against ${type.render()} from another module")
+        return classIndex(declaration) ?: runtimeThrowable(declaration)
+            ?: unsupported("a type test against ${type.render()} from another module")
     }
 
     private fun IrClass.superClass(): IrClass? =
@@ -352,6 +414,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         val inherited = when {
             superClass == null || superClass.isAny() -> emptyList()
             superClass.isEnumBase() -> listOf(LayoutField("name", stringType, null), LayoutField("ordinal", VmType.I64, null))
+            runtimeThrowable(superClass) != null -> listOf(LayoutField("message", stringType, null), LayoutField("cause", anyType, null))
             classIndex(superClass) != null -> fieldLayout(superClass)
             else -> unsupported("the superclass ${superClass.name} from another module")
         }
@@ -394,6 +457,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         val superIndex = when {
             superClass == null || superClass.isAny() -> runtimeClass("Any")
             superClass.isEnumBase() -> runtimeClass("Enum")
+            runtimeThrowable(superClass) != null -> runtimeThrowable(superClass)!!
             else -> classIndex(superClass) ?: unsupported("the superclass ${superClass.name} from another module")
         }
         val fields = fieldLayout(declaration).map { VmField(it.name, it.type) }
@@ -419,6 +483,11 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
             val implementationSymbol = when {
                 // Answered by the runtime's `Enum`, or by `Any` through it.
                 implementation.parentClassOrNull?.isEnumBase() == true -> continue
+                // Answered by the runtime's throwable, except its name, which only the class's own code has.
+                implementation.parentClassOrNull?.let(::runtimeThrowable) != null -> {
+                    if (implementation.name.asString() != "toString" || isAbstract) continue
+                    throwableToString(declaration)
+                }
                 implementation.parentClassOrNull?.isAny() != true -> {
                     if (implementation.symbol !in definedFunctions) unsupported("inheriting ${implementation.render()} from another module")
                     functionSymbol(implementation)
@@ -438,11 +507,27 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         return methods.toList()
     }
 
+    /** `Name: message`, for a throwable whose `toString` is still `Throwable`'s; see `@Throwable::describe`. */
+    private fun throwableToString(declaration: IrClass): VmFunctionSymbol = defaultToStrings.getOrPut(declaration.symbol) {
+        val symbol = VmFunctionSymbol("${declaration.vmName}::toString", listOf(anyType), stringType)
+        val describe = runtimeFunction("Throwable::describe", listOf(anyType, stringType), stringType)
+        val function = VmFunction(symbol, owner = null)
+        val self = function.newValue(anyType)
+        function.params += self
+        val name = function.newValue(stringType)
+        val result = function.newValue(stringType)
+        val block = function.newBlock()
+        block.instructions += VmInstruction.StringConstant(name, declaration.jvmName)
+        block.instructions += VmInstruction.Call(result, VmCallee.Static(describe), listOf(self, name))
+        block.terminator = VmTerminator.Return(result)
+        module.functions += function
+        symbol
+    }
+
     /** `Name@hash`, for a class whose `toString` is still `Any`'s; see `@Any::defaultToString` in the runtime. */
     private fun defaultToString(declaration: IrClass): VmFunctionSymbol = defaultToStrings.getOrPut(declaration.symbol) {
         val symbol = VmFunctionSymbol("${declaration.vmName}::toString", listOf(anyType), stringType)
-        val helper = VmFunctionSymbol("Any::defaultToString", listOf(stringType, VmType.I64), stringType)
-        if (module.imports.none { it.symbol == helper }) module.imports += VmImport(VM_RUNTIME_MODULE, helper)
+        val helper = runtimeFunction("Any::defaultToString", listOf(stringType, VmType.I64), stringType)
 
         val function = VmFunction(symbol, owner = null)
         val self = function.newValue(anyType)
@@ -482,6 +567,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     /** The selector dispatching a call to [root], or null when nothing can override it. */
     private fun selectorOf(root: IrSimpleFunction): Int? {
         if (root.parentClassOrNull?.isAny() == true) return runtimeSelector(root.name.asString())
+        if (root.parentClassOrNull?.let(::runtimeThrowable) != null) return throwableSelector(root.name.asString())
         if (!root.isOverridable()) return null
         return selectors[root.symbol] ?: unsupported("overriding ${root.render()} from another module")
     }
@@ -490,8 +576,16 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     internal fun callTarget(callee: IrSimpleFunction, isSuperCall: Boolean): CallTarget {
         if (callee.dispatchReceiverParameter == null) return staticTarget(callee)
         val root = callee.roots().first()
-        if (!isSuperCall && callee.isOverridable()) return CallTarget(VmCallee.Virtual(selectorOf(root)!!), functionSymbol(root))
+        if (!isSuperCall && callee.isOverridable()) {
+            val selector = selectorOf(root) ?: unsupported("calling ${root.render()}")
+            return CallTarget(VmCallee.Virtual(selector), functionSymbol(root))
+        }
         val implementation = callee.resolveFakeOverride() ?: unsupported("calling the abstract ${callee.render()}")
+        if (implementation.parentClassOrNull?.let(::runtimeThrowable) != null) {
+            val selector = throwableSelector(implementation.name.asString())
+            if (isSuperCall || selector == null) unsupported("calling ${implementation.render()}")
+            return CallTarget(VmCallee.Virtual(selector), functionSymbol(implementation))
+        }
         if (implementation.parentClassOrNull?.isEnumBase() == true) {
             val name = implementation.name.asString()
             if (isSuperCall || name !in setOf("toString", "equals", "hashCode")) unsupported("calling ${implementation.render()}")

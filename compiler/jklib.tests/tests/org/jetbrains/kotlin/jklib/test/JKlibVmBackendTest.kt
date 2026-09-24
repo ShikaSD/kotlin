@@ -663,4 +663,280 @@ class JKlibVmBackendTest {
         """
         assertTrue(runBox(tempDir, source))
     }
+
+    @Test
+    fun testThrowAndCatch(@TempDir tempDir: File) {
+        val source = """
+            fun checked(x: Int): Int {
+                if (x < 0) throw IllegalArgumentException("negative")
+                return x
+            }
+
+            fun box(): String {
+                try {
+                    checked(-1)
+                } catch (e: IllegalArgumentException) {
+                    return if (e.message == "negative") "OK" else "fail: message"
+                }
+                return "fail: nothing thrown"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testFirstMatchingCatchClauseWins(@TempDir tempDir: File) {
+        val source = """
+            fun classify(e: Throwable): Int = try {
+                throw e
+            } catch (x: IllegalStateException) {
+                1
+            } catch (x: RuntimeException) {
+                2
+            } catch (x: Throwable) {
+                3
+            }
+
+            fun box(): String {
+                val ok = classify(IllegalStateException()) == 1 && classify(IllegalArgumentException()) == 2 && classify(Error()) == 3
+                return if (ok) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** The VM raises its own classes for these, and they are the JVM classes a Kotlin program catches. */
+    @Test
+    fun testImplicitErrorsAreCaughtAsJvmClasses(@TempDir tempDir: File) {
+        val source = """
+            fun divide(a: Int, b: Int) = a / b
+
+            fun box(): String {
+                var caught = 0
+                try {
+                    divide(1, 0)
+                } catch (e: ArithmeticException) {
+                    caught++
+                }
+                val absent: Any? = null
+                try {
+                    absent!!
+                } catch (e: NullPointerException) {
+                    caught++
+                }
+                return if (caught == 2) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testFinallyRunsOnNormalExit(@TempDir tempDir: File) {
+        val source = """
+            var log = 0
+
+            fun box(): String {
+                try {
+                    log += 1
+                } finally {
+                    log += 10
+                }
+                return if (log == 11) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testFinallyRunsWhenAnExceptionPassesThrough(@TempDir tempDir: File) {
+        val source = """
+            var log = 0
+
+            fun fail() {
+                try {
+                    throw IllegalStateException()
+                } finally {
+                    log += 10
+                }
+            }
+
+            fun box(): String {
+                try {
+                    fail()
+                } catch (e: IllegalStateException) {
+                    log += 1
+                }
+                return if (log == 11) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testFinallyRunsOnReturnAfterTheValueIsComputed(@TempDir tempDir: File) {
+        val source = """
+            var log = 0
+
+            fun value(): Int {
+                try {
+                    return log + 5
+                } finally {
+                    log = 100
+                }
+            }
+
+            fun box(): String = if (value() == 5 && log == 100) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testFinallyRunsOnBreak(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                var log = 0
+                while (true) {
+                    try {
+                        break
+                    } finally {
+                        log += 1
+                    }
+                }
+                return if (log == 1) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testTryIsAnExpression(@TempDir tempDir: File) {
+        val source = """
+            fun parse(ok: Boolean): Int = if (ok) 42 else throw NumberFormatException()
+
+            fun box(): String {
+                val good = try { parse(true) } catch (e: NumberFormatException) { -1 }
+                val bad = try { parse(false) } catch (e: NumberFormatException) { -1 }
+                return if (good == 42 && bad == -1) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testCustomExceptionClass(@TempDir tempDir: File) {
+        val source = """
+            class MyError(val code: Int) : RuntimeException("custom")
+
+            fun box(): String {
+                try {
+                    throw MyError(7)
+                } catch (e: RuntimeException) {
+                    val ok = e is MyError && e.code == 7 && e.message == "custom" && e.toString() == "MyError: custom"
+                    return if (ok) "OK" else "fail"
+                }
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testCauseOnlyConstructorTakesTheCauseAsMessage(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val cause = IllegalStateException("inner")
+                val outer = RuntimeException(cause)
+                val ok = outer.cause === cause && outer.message == "java.lang.IllegalStateException: inner"
+                return if (ok) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testExhaustiveWhenOverEnum(@TempDir tempDir: File) {
+        val source = """
+            enum class Color { RED, GREEN }
+
+            fun code(c: Color) = when (c) {
+                Color.RED -> 1
+                Color.GREEN -> 2
+            }
+
+            fun box(): String = if (code(Color.RED) == 1 && code(Color.GREEN) == 2) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testLateinitPropertyThrowsUntilAssigned(@TempDir tempDir: File) {
+        val source = """
+            class Holder {
+                lateinit var name: String
+            }
+
+            fun box(): String {
+                val holder = Holder()
+                val message = try {
+                    holder.name
+                } catch (e: UninitializedPropertyAccessException) {
+                    e.message
+                }
+                holder.name = "set"
+                val ok = message == "lateinit property name has not been initialized" && holder.name == "set"
+                return if (ok) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testStringPlus(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val nothing: Any? = null
+                return if ("a" + "b" == "ab" && "x" + nothing == "xnull") "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testStringTemplateOfReferencesAndConstants(@TempDir tempDir: File) {
+        val source = """
+            class Named {
+                override fun toString() = "named"
+            }
+
+            fun box(): String {
+                val n = Named()
+                val s = "${'$'}n is ${'$'}{2}nd, not ${'$'}{null}"
+                return if (s == "named is 2nd, not null") "OK" else s
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** The inner `try` does not catch, so its `finally` runs, and then the outer `catch`. */
+    @Test
+    fun testInnerFinallyRunsBeforeOuterCatch(@TempDir tempDir: File) {
+        val source = """
+            var log = ""
+
+            fun box(): String {
+                try {
+                    try {
+                        throw IllegalStateException()
+                    } catch (e: IllegalArgumentException) {
+                        log += "wrong"
+                    } finally {
+                        log += "f"
+                    }
+                } catch (e: IllegalStateException) {
+                    log += "c"
+                }
+                return if (log == "fc") "OK" else log
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
 }
