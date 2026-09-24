@@ -77,10 +77,10 @@ class JKlibVmBackendTest {
 
     @Test
     fun testUnsupportedDeclarationIsReported(@TempDir tempDir: File) {
-        val (output, exitCode) = compile(tempDir, "object Registry")
+        val (output, exitCode) = compile(tempDir, "enum class Color { RED }")
 
         assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
-        assertTrue(output.contains("the VM backend does not support the object Registry")) { output }
+        assertTrue(output.contains("the VM backend does not support the enum class Color")) { output }
     }
 
     @Test
@@ -444,5 +444,139 @@ class JKlibVmBackendTest {
 
         assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
         assertTrue(output.contains("the VM backend does not support")) { output }
+    }
+
+    @Test
+    fun testTopLevelVarWithConstantStart(@TempDir tempDir: File) {
+        val source = """
+            var count = 5
+
+            fun bump() {
+                count++
+            }
+
+            fun box(): String {
+                bump()
+                bump()
+                return if (count == 7) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testTopLevelPropertiesInitializeInDeclarationOrder(@TempDir tempDir: File) {
+        val source = """
+            val a = compute()
+            val b = a * 10
+
+            fun compute() = 6 * 7
+
+            fun box(): String = if (a == 42 && b == 420) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testFileInitializerRunsOnce(@TempDir tempDir: File) {
+        val source = """
+            var calls = 0
+            val value = sideEffect()
+
+            fun sideEffect(): Int {
+                calls++
+                return 3
+            }
+
+            fun box(): String = if (value + value == 6 && calls == 1) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testObjectIsASingleton(@TempDir tempDir: File) {
+        val source = """
+            object Counter {
+                var n = 0
+                fun next(): Int {
+                    n++
+                    return n
+                }
+            }
+
+            fun box(): String {
+                Counter.next()
+                return if (Counter.next() == 2 && Counter === Counter) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** The instance is stored before its constructor runs, so the constructor can reach it. */
+    @Test
+    fun testObjectSeesItselfDuringConstruction(@TempDir tempDir: File) {
+        val source = """
+            object Self {
+                val me: Any = Self
+            }
+
+            fun box(): String = if (Self.me === Self) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testCompanionObject(@TempDir tempDir: File) {
+        val source = """
+            class Temperature(val celsius: Int) {
+                companion object {
+                    val zero = Temperature(0)
+                    fun of(celsius: Int) = Temperature(celsius)
+                }
+            }
+
+            fun box(): String = if (Temperature.of(5).celsius == 5 && Temperature.zero.celsius == 0) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** As on the JVM, where the companion is the outer class's static, creating the outer class creates it. */
+    @Test
+    fun testCompanionIsCreatedWithTheOuterClass(@TempDir tempDir: File) {
+        val source = """
+            var created = 0
+
+            class Outer {
+                companion object {
+                    init {
+                        created++
+                    }
+                }
+            }
+
+            fun box(): String {
+                val before = created
+                Outer()
+                return if (before == 0 && created == 1) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** As a call to a facade class's static does on the JVM, a call to the file's function runs its initializer. */
+    @Test
+    fun testCallingAFileFunctionRunsItsInitializer(@TempDir tempDir: File) {
+        val source = """
+            var initialized = 0
+            val marker = mark()
+
+            fun mark(): Int {
+                initialized = 1
+                return 0
+            }
+
+            fun box(): String = if (initialized == 1) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
     }
 }

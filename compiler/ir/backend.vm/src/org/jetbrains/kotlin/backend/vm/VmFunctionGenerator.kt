@@ -25,8 +25,17 @@ import org.jetbrains.kotlin.ir.util.render
  * Code after a jump is generated into a block nothing branches to rather than skipped, so an expression never has to
  * ask whether it is reachable.
  */
-internal class VmFunctionGenerator(private val gen: VmModuleGenerator, private val irFunction: IrFunction) {
-    private val function = VmFunction(gen.functionSymbol(irFunction), owner = null)
+internal class VmFunctionGenerator private constructor(
+    private val gen: VmModuleGenerator,
+    /** Null for a function only the VM has, such as a file's initializer. */
+    private val irFunction: IrFunction?,
+    symbol: VmFunctionSymbol,
+    owner: VmOwner?,
+) {
+    constructor(gen: VmModuleGenerator, irFunction: IrFunction) :
+            this(gen, irFunction, gen.functionSymbol(irFunction), gen.ownerOf(irFunction))
+
+    private val function = VmFunction(symbol, owner)
     private val values = hashMapOf<IrValueSymbol, VmValue>()
     private val loops = hashMapOf<IrLoop, LoopTargets>()
     private val returnableBlocks = hashMapOf<IrReturnTargetSymbol, ReturnableBlock>()
@@ -48,6 +57,7 @@ internal class VmFunctionGenerator(private val gen: VmModuleGenerator, private v
     }
 
     fun generate(): VmFunction {
+        val irFunction = irFunction!!
         for (parameter in irFunction.parameters) {
             val value = function.newValue(gen.vmType(parameter.type)!!)
             function.params += value
@@ -60,6 +70,21 @@ internal class VmFunctionGenerator(private val gen: VmModuleGenerator, private v
         // Only a Unit function falls off its end; any other open block here is unreachable.
         if (current != null) terminate(VmTerminator.Return(function.symbol.returnType?.let { constant(it, 0) }))
         return function
+    }
+
+    /** The body of a file's initializer: each field's initializer stored to its global, in declaration order. */
+    private fun generateFileInitializer(fields: List<IrField>): VmFunction {
+        for (field in fields) {
+            emit(VmInstruction.StoreGlobal(gen.globalOf(field), operand(field.initializer!!.expression)))
+        }
+        terminate(VmTerminator.Return(null))
+        return function
+    }
+
+    companion object {
+        /** Unowned, as every initializer is; see `objectInitializer` in [VmModuleGenerator]. */
+        fun fileInitializer(gen: VmModuleGenerator, symbol: VmFunctionSymbol, fields: List<IrField>): VmFunction =
+            VmFunctionGenerator(gen, null, symbol, owner = null).generateFileInitializer(fields)
     }
 
     private fun block(): VmBlock = current ?: function.newBlock().also { current = it }
@@ -143,25 +168,41 @@ internal class VmFunctionGenerator(private val gen: VmModuleGenerator, private v
             null
         }
         is IrGetField -> {
-            val obj = operand(expression.receiver ?: unsupported("the static field ${expression.symbol.owner.name}"))
-            newValue(vmType(expression.type)).also { emit(VmInstruction.LoadField(it, obj, gen.fieldIndex(expression.symbol.owner))) }
+            val field = expression.symbol.owner
+            val receiver = expression.receiver
+            val dst = newValue(vmType(field.type))
+            if (receiver == null) {
+                emit(VmInstruction.LoadGlobal(dst, gen.globalOf(field)))
+            } else {
+                emit(VmInstruction.LoadField(dst, operand(receiver), gen.fieldIndex(field)))
+            }
+            dst
         }
         is IrSetField -> {
-            val obj = operand(expression.receiver ?: unsupported("the static field ${expression.symbol.owner.name}"))
-            emit(VmInstruction.StoreField(obj, gen.fieldIndex(expression.symbol.owner), operand(expression.value)))
+            val field = expression.symbol.owner
+            val receiver = expression.receiver
+            if (receiver == null) {
+                emit(VmInstruction.StoreGlobal(gen.globalOf(field), operand(expression.value)))
+            } else {
+                val obj = operand(receiver)
+                emit(VmInstruction.StoreField(obj, gen.fieldIndex(field), operand(expression.value)))
+            }
             null
         }
         is IrTypeOperatorCall -> typeOperator(expression)
         is IrGetObjectValue -> {
-            if (!expression.type.isUnit()) unsupported("the object ${expression.symbol.owner.render()}")
-            null
+            if (expression.type.isUnit()) {
+                null
+            } else {
+                newValue(gen.anyType).also { emit(VmInstruction.LoadGlobal(it, gen.objectInstance(expression.symbol.owner))) }
+            }
         }
         else -> unsupported("the expression ${expression.render()}")
     }
 
     private fun ret(expression: IrReturn) {
         val target = expression.returnTargetSymbol
-        if (target == irFunction.symbol) {
+        if (target == irFunction?.symbol) {
             val value = if (function.symbol.returnType == null) {
                 expression(expression.value)
                 null

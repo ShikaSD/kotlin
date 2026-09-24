@@ -12,7 +12,10 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.expressions.IrConst
+import org.jetbrains.kotlin.ir.expressions.IrConstKind
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.*
@@ -49,18 +52,30 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     private val fieldLayouts = hashMapOf<IrClassSymbol, List<IrField>>()
     private val selectors = hashMapOf<IrSimpleFunctionSymbol, Int>()
     private val defaultToStrings = hashMapOf<IrClassSymbol, VmFunctionSymbol>()
+    private val globals = hashMapOf<IrFieldSymbol, Int>()
+    private val objectInstances = hashMapOf<IrClassSymbol, Int>()
+    private val functionOwners = hashMapOf<IrFunctionSymbol, VmOwner>()
 
     fun generate(fragment: IrModuleFragment): VmModule {
         val functions = mutableListOf<IrFunction>()
         val classes = mutableListOf<IrClass>()
+        val fileMembers = mutableMapOf<IrFile, FileMembers>()
         for (file in fragment.files) {
+            val members = fileMembers.getOrPut(file) { FileMembers() }
             for (declaration in file.declarations) {
                 when (declaration) {
-                    is IrSimpleFunction -> if (!declaration.isOnlyInlined()) functions += declaration
+                    is IrSimpleFunction -> if (!declaration.isOnlyInlined()) members.functions += declaration
+                    is IrProperty -> {
+                        if (declaration.isLateinit) unsupported("the lateinit property ${declaration.name}")
+                        members.properties += declaration
+                        listOfNotNull(declaration.getter, declaration.setter).filterTo(members.functions) { !it.isOnlyInlined() }
+                    }
                     is IrClass -> collectClass(declaration, classes, functions)
+                    is IrTypeAlias -> {}
                     else -> unsupported("the declaration ${declaration.render()}")
                 }
             }
+            functions += members.functions
         }
         for (function in functions) {
             val isAbstract = function is IrSimpleFunction && function.modality == Modality.ABSTRACT
@@ -74,6 +89,8 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
             // Replaced once every class has an index, which supertypes and methods refer to.
             module.classes += VmClass(declaration.vmName, null, emptyList(), false, false, VmClassKind.Interface)
         }
+        val initializers = fileMembers.mapNotNull { declareFileGlobals(it.key, it.value) } +
+                declareObjectInstances(classes.filter { it.kind == ClassKind.OBJECT })
         for (declaration in classes) {
             for (function in declaration.memberFunctions()) {
                 if (!function.isFakeOverride && function.overriddenSymbols.isEmpty() && function.isOverridable()) {
@@ -89,15 +106,128 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         // The VM starts a program from its entry module's first function.
         functions.singleOrNull(::isBox)?.let { module.functions += boxEntry(it as IrSimpleFunction) }
         bodies.mapTo(module.functions) { VmFunctionGenerator(this, it).generate() }
+        initializers.forEach { it() }
         for (declaration in classes) {
             module.classes[classIndices.getValue(declaration.symbol)] = classDefinition(declaration)
         }
         return module
     }
 
+    private class FileMembers {
+        val functions = mutableListOf<IrSimpleFunction>()
+        val properties = mutableListOf<IrProperty>()
+    }
+
+    // Globals.
+
+    /**
+     * Declares a file's top-level properties as globals. A property whose initializer is a primitive constant starts as
+     * that constant; the rest are computed by the file's initializer, in declaration order. As on the JVM, where they are
+     * a facade class's statics, the initializer runs on the first use of the file: a load or store of one of those
+     * globals, or a call to one of its functions. Returns what generates the initializer, if the file needs one.
+     */
+    private fun declareFileGlobals(file: IrFile, members: FileMembers): (() -> Unit)? {
+        val fields = members.properties.mapNotNull { it.backingField }
+        val computed = fields.filter { it.initializer != null && constantStart(it) == null }
+        val owner = if (computed.isEmpty()) null else VmOwner.Class(fileOwner(file))
+        for (field in fields) {
+            val start = when {
+                constantStart(field) != null -> VmGlobalStart.Constant(constantStart(field)!!)
+                field.initializer == null -> VmGlobalStart.Zero
+                else -> VmGlobalStart.Owned(owner!!)
+            }
+            val name = sanitized(field.correspondingPropertySymbol?.owner?.fqNameWhenAvailable?.asString() ?: field.name.asString())
+            globals[field.symbol] = declareGlobal(name, vmType(field.type) ?: unsupported("a Unit property"), start)
+        }
+        if (owner == null) return null
+        members.functions.forEach { functionOwners[it.symbol] = owner }
+        val symbol = declareInitializer("${module.classes[owner.classIndex].name}::init", owner)
+        return { module.functions += VmFunctionGenerator.fileInitializer(this, symbol, computed) }
+    }
+
+    /** The bits a global starts as when its field's initializer is a constant a scalar global can hold. */
+    private fun constantStart(field: IrField): Long? {
+        val initializer = field.initializer?.expression as? IrConst ?: return null
+        if (vmType(field.type) is VmType.Ref) return null
+        return when (initializer.kind) {
+            IrConstKind.Boolean -> if (initializer.value as Boolean) 1L else 0L
+            IrConstKind.Char -> (initializer.value as Char).code.toLong()
+            IrConstKind.Byte, IrConstKind.Short, IrConstKind.Int, IrConstKind.Long -> (initializer.value as Number).toLong()
+            IrConstKind.Double -> (initializer.value as Double).toRawBits()
+            IrConstKind.Null, IrConstKind.String, IrConstKind.Float -> null
+        }
+    }
+
+    /** What stands for the file's facade class as the owner of its initializer: an interface nothing implements. */
+    private fun fileOwner(file: IrFile): Int {
+        val simpleName = file.fileEntry.name.substringAfterLast('/').removeSuffix(".kt").replaceFirstChar { it.uppercase() } + "Kt"
+        val packageName = file.packageFqName
+        val name = if (packageName.isRoot) simpleName else "${packageName.asString()}.$simpleName"
+        module.classes += VmClass(sanitized(name), null, emptyList(), isOpen = true, isAbstract = true, VmClassKind.Interface)
+        return module.classes.size - 1
+    }
+
+    private fun declareGlobal(name: String, type: VmType, start: VmGlobalStart): Int {
+        module.globals += VmGlobal(name, type, start)
+        return module.globals.size - 1
+    }
+
+    private fun declareInitializer(name: String, owner: VmOwner): VmFunctionSymbol {
+        val symbol = VmFunctionSymbol(name, emptyList(), null)
+        // Nothing tracks what an initializer depends on yet, so a reload would treat every one as unchanged.
+        module.initializers += VmInitializer(symbol, owner, fingerprint = 0)
+        return symbol
+    }
+
+    /**
+     * Declares each object's `INSTANCE` global and the initializer that creates it. The initializer stores the instance
+     * before running the constructor, so the constructor sees it. A companion's belongs to its outer class, as it is
+     * that class's static on the JVM: the outer class's first use creates it.
+     */
+    private fun declareObjectInstances(objects: List<IrClass>): List<() -> Unit> {
+        val byOwner = objects.groupBy { declaration ->
+            val outer = declaration.parent as? IrClass
+            if (declaration.isCompanion && outer != null) outer else declaration
+        }
+        return byOwner.map { entry ->
+            val ownerClass = entry.key
+            val owned = entry.value
+            val owner = VmOwner.Class(classIndices.getValue(ownerClass.symbol))
+            for (declaration in owned) {
+                objectInstances[declaration.symbol] = declareGlobal("${declaration.vmName}::INSTANCE", anyType, VmGlobalStart.Owned(owner))
+            }
+            val symbol = declareInitializer("${ownerClass.vmName}::init", owner)
+            return@map { module.functions += objectInitializer(symbol, owned) }
+        }
+    }
+
+    private fun objectInitializer(symbol: VmFunctionSymbol, objects: List<IrClass>): VmFunction {
+        // Unowned: an owned function is one whose calls run the initializer, and the VM alone calls this one.
+        val function = VmFunction(symbol, owner = null)
+        val block = function.newBlock()
+        for (declaration in objects) {
+            val classIndex = classIndices.getValue(declaration.symbol)
+            val instance = function.newValue(VmType.Ref(classIndex))
+            val constructor = declaration.primaryConstructor ?: unsupported("the object ${declaration.name} without a constructor")
+            block.instructions += VmInstruction.NewObject(instance, classIndex)
+            block.instructions += VmInstruction.StoreGlobal(objectInstances.getValue(declaration.symbol), instance)
+            block.instructions += VmInstruction.Call(null, staticTarget(constructor).callee, listOf(instance))
+        }
+        block.terminator = VmTerminator.Return(null)
+        return function
+    }
+
+    internal fun globalOf(field: IrField): Int = globals[field.symbol] ?: unsupported("the static field ${field.name} from another module")
+
+    internal fun objectInstance(declaration: IrClass): Int =
+        objectInstances[declaration.symbol] ?: unsupported("the object ${declaration.name} from another module")
+
+    /** The owner whose initializer a static call to [function] runs first, if any. */
+    internal fun ownerOf(function: IrFunction): VmOwner? = functionOwners[function.symbol]
+
     private fun collectClass(declaration: IrClass, classes: MutableList<IrClass>, functions: MutableList<IrFunction>) {
         when {
-            declaration.kind != ClassKind.CLASS && declaration.kind != ClassKind.INTERFACE ->
+            declaration.kind != ClassKind.CLASS && declaration.kind != ClassKind.INTERFACE && declaration.kind != ClassKind.OBJECT ->
                 unsupported("the ${declaration.kind.codeRepresentation ?: declaration.kind.name} ${declaration.name}")
             declaration.isInner -> unsupported("the inner class ${declaration.name}")
             declaration.isValue -> unsupported("the value class ${declaration.name}")
