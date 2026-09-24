@@ -30,6 +30,8 @@ sourceSets {
 
 projectTests {
     testData(project(":compiler").isolated, "testData/ir/irText")
+    // Read only by JKlibVmBoxSuiteReport, which runs when KOTLIN_VM_BOX_SUITE is set.
+    testData(project(":compiler").isolated, "testData/codegen/box")
     testData(rootProject.isolated, "third-party/mockJDKs/mockJDK")
 
     withJvmStdlibAndReflect()
