@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.backend.vm
 
 import org.jetbrains.kotlin.backend.vm.vmir.*
 import org.jetbrains.kotlin.builtins.PrimitiveType
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
@@ -16,7 +17,9 @@ import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.constructedClass
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
+import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.ir.util.render
+import org.jetbrains.kotlin.ir.util.resolveFakeOverride
 
 /**
  * Generates one function's body. A Kotlin variable is one VM value assigned as often as the variable is, since VM values
@@ -81,8 +84,52 @@ internal class VmFunctionGenerator private constructor(
         return function
     }
 
+    /**
+     * The body of a class's initializer: an enum class's entries, then the objects it owns. An entry gets its name and
+     * ordinal before its constructor runs, and is stored once it has run, as the JVM stores it.
+     */
+    private fun generateClassInitializer(parts: List<IrClass>): VmFunction {
+        for (declaration in parts) {
+            if (declaration.kind == ClassKind.ENUM_CLASS) {
+                declaration.declarations.filterIsInstance<IrEnumEntry>().forEachIndexed { ordinal, entry ->
+                    createEnumEntry(entry, ordinal)
+                }
+            } else {
+                val classIndex = gen.classIndex(declaration)!!
+                val constructor = declaration.primaryConstructor ?: unsupported("the object ${declaration.name} without a constructor")
+                val instance = newValue(VmType.Ref(classIndex)).also { emit(VmInstruction.NewObject(it, classIndex)) }
+                emit(VmInstruction.StoreGlobal(gen.objectInstance(declaration), instance))
+                emit(VmInstruction.Call(null, gen.staticTarget(constructor).callee, listOf(instance)))
+            }
+        }
+        terminate(VmTerminator.Return(null))
+        return function
+    }
+
+    private fun createEnumEntry(entry: IrEnumEntry, ordinal: Int) {
+        val call = entry.initializerExpression?.expression as? IrEnumConstructorCall
+            ?: unsupported("the enum entry ${entry.name} without a constructor call")
+        val constructor = call.symbol.owner
+        val classIndex = gen.classIndex(constructor.constructedClass)!!
+        val args = call.arguments.map { operand(it ?: unsupported("a default argument")) }
+        val instance = newValue(VmType.Ref(classIndex)).also { emit(VmInstruction.NewObject(it, classIndex)) }
+        val name = newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, entry.name.asString())) }
+        emit(VmInstruction.StoreField(instance, ENUM_NAME_FIELD, name))
+        emit(VmInstruction.StoreField(instance, ENUM_ORDINAL_FIELD, constant(VmType.I64, ordinal.toLong())))
+        emit(VmInstruction.Call(null, gen.staticTarget(constructor).callee, listOf(instance) + args))
+        emit(VmInstruction.StoreGlobal(gen.enumEntryGlobal(entry), instance))
+    }
+
     companion object {
-        /** Unowned, as every initializer is; see `objectInitializer` in [VmModuleGenerator]. */
+        /** Where the runtime's `Enum` lays out an entry's name and ordinal, ahead of every field an enum declares. */
+        private const val ENUM_NAME_FIELD = 0
+        private const val ENUM_ORDINAL_FIELD = 1
+
+        /** Unowned, as every initializer is. */
+        fun classInitializer(gen: VmModuleGenerator, symbol: VmFunctionSymbol, parts: List<IrClass>): VmFunction =
+            VmFunctionGenerator(gen, null, symbol, owner = null).generateClassInitializer(parts)
+
+        /** Unowned, as every initializer is: an owned function is one whose calls run the initializer. */
         fun fileInitializer(gen: VmModuleGenerator, symbol: VmFunctionSymbol, fields: List<IrField>): VmFunction =
             VmFunctionGenerator(gen, null, symbol, owner = null).generateFileInitializer(fields)
     }
@@ -163,6 +210,12 @@ internal class VmFunctionGenerator private constructor(
             delegatingConstructorCall(expression)
             null
         }
+        // Only an enum's or an entry's constructor delegates with one; an entry's creation is its class initializer's.
+        is IrEnumConstructorCall -> {
+            delegatingConstructorCall(expression)
+            null
+        }
+        is IrGetEnumValue -> newValue(gen.anyType).also { emit(VmInstruction.LoadGlobal(it, gen.enumEntryGlobal(expression.symbol.owner))) }
         is IrInstanceInitializerCall -> {
             instanceInitializers(expression.classSymbol.owner)
             null
@@ -422,11 +475,12 @@ internal class VmFunctionGenerator private constructor(
     }
 
     /** `super(...)` or `this(...)`: another constructor run on the object this one initializes. */
-    private fun delegatingConstructorCall(call: IrDelegatingConstructorCall) {
-        val constructor = call.symbol.owner
+    private fun delegatingConstructorCall(call: IrFunctionAccessExpression) {
+        val constructor = call.symbol.owner as IrConstructor
+        // `Any`'s constructor does nothing, and `Enum`'s name and ordinal are stored by whatever creates the entry, so
+        // the runtime declares neither.
+        if (with(gen) { constructor.constructedClass.isAny() || constructor.constructedClass.isEnumBase() }) return
         val args = call.arguments.map { operand(it ?: unsupported("a default argument")) }
-        // `Any`'s constructor does nothing, and the runtime declares none.
-        if (with(gen) { constructor.constructedClass.isAny() }) return
         emit(VmInstruction.Call(null, gen.staticTarget(constructor).callee, listOf(constructed!!) + args))
     }
 
@@ -466,12 +520,31 @@ internal class VmFunctionGenerator private constructor(
             in builtIns.greaterFunByOperandType.values -> compare(Comparison.GT, args[0], args[1])
             in builtIns.greaterOrEqualFunByOperandType.values -> compare(Comparison.GE, args[0], args[1])
             else -> {
+                enumMember(callee, args)?.let { return Intrinsic(it) }
                 val owner = callee.parentClassOrNull?.defaultType
                 if (callee.body != null || owner == null || !owner.isPrimitiveType()) return null
                 primitiveMember(callee, owner.getPrimitiveType()!!, args)
             }
         }
         return Intrinsic(value)
+    }
+
+    /** `Enum`'s final members, which read the fields every entry has, or null for any other callee. */
+    private fun enumMember(callee: IrSimpleFunction, args: List<IrExpression>): VmValue? {
+        val implementation = callee.resolveFakeOverride() ?: return null
+        if (with(gen) { implementation.parentClassOrNull?.isEnumBase() } != true) return null
+        return when (implementation.name.asString()) {
+            "<get-name>" -> newValue(gen.stringType).also { emit(VmInstruction.LoadField(it, operand(args[0]), ENUM_NAME_FIELD)) }
+            "<get-ordinal>" -> newValue(VmType.I64).also { emit(VmInstruction.LoadField(it, operand(args[0]), ENUM_ORDINAL_FIELD)) }
+            "compareTo" -> {
+                val lhs = operand(args[0])
+                val rhs = operand(args[1])
+                val left = newValue(VmType.I64).also { emit(VmInstruction.LoadField(it, lhs, ENUM_ORDINAL_FIELD)) }
+                val right = newValue(VmType.I64).also { emit(VmInstruction.LoadField(it, rhs, ENUM_ORDINAL_FIELD)) }
+                binary(VmBinaryOp.SUB, left, right)
+            }
+            else -> null
+        }
     }
 
     private fun not(value: VmValue): VmValue = binary(VmBinaryOp.EQ, value, constant(VmType.I64, 0))

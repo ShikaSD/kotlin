@@ -77,10 +77,10 @@ class JKlibVmBackendTest {
 
     @Test
     fun testUnsupportedDeclarationIsReported(@TempDir tempDir: File) {
-        val (output, exitCode) = compile(tempDir, "enum class Color { RED }")
+        val (output, exitCode) = compile(tempDir, "annotation class Marker")
 
         assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
-        assertTrue(output.contains("the VM backend does not support the enum class Color")) { output }
+        assertTrue(output.contains("the VM backend does not support the annotation class Marker")) { output }
     }
 
     @Test
@@ -576,6 +576,90 @@ class JKlibVmBackendTest {
             }
 
             fun box(): String = if (initialized == 1) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testEnumEntriesHaveNameAndOrdinal(@TempDir tempDir: File) {
+        val source = """
+            enum class Color { RED, GREEN }
+
+            fun box(): String {
+                val ok = Color.GREEN.ordinal == 1 && Color.RED.name == "RED" && Color.RED === Color.RED && Color.RED != Color.GREEN
+                return if (ok) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testEnumToStringIsItsName(@TempDir tempDir: File) {
+        val source = """
+            enum class Color { RED, GREEN }
+
+            fun describe(value: Any) = value.toString()
+
+            fun box(): String = if (describe(Color.GREEN) == "GREEN") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testEnumComparesByOrdinal(@TempDir tempDir: File) {
+        val source = """
+            enum class Size { SMALL, MEDIUM, LARGE }
+
+            fun box(): String = if (Size.SMALL < Size.LARGE && Size.LARGE.compareTo(Size.MEDIUM) == 1) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testEnumWithConstructorParametersAndMembers(@TempDir tempDir: File) {
+        val source = """
+            enum class Planet(val mass: Int) {
+                SMALL(1), BIG(100);
+
+                fun twice() = mass * 2
+            }
+
+            fun box(): String = if (Planet.BIG.twice() == 200 && Planet.SMALL.mass == 1) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testEnumEntryWithBody(@TempDir tempDir: File) {
+        val source = """
+            enum class Op {
+                PLUS {
+                    override fun apply(a: Int, b: Int) = a + b
+                },
+                TIMES {
+                    override fun apply(a: Int, b: Int) = a * b
+                };
+
+                abstract fun apply(a: Int, b: Int): Int
+            }
+
+            fun box(): String = if (Op.PLUS.apply(3, 4) == 7 && Op.TIMES.apply(3, 4) == 12 && Op.TIMES.ordinal == 1) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testWhenOverEnum(@TempDir tempDir: File) {
+        val source = """
+            enum class Color { RED, GREEN, BLUE }
+
+            fun code(c: Color) = when (c) {
+                Color.RED -> 1
+                Color.GREEN -> 2
+                else -> 3
+            }
+
+            fun box(): String = if (code(Color.RED) == 1 && code(Color.GREEN) == 2 && code(Color.BLUE) == 3) "OK" else "fail"
         """
         assertTrue(runBox(tempDir, source))
     }

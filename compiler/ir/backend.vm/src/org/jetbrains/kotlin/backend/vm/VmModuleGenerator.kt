@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.expressions.IrConstKind
+import org.jetbrains.kotlin.ir.expressions.IrSyntheticBody
+import org.jetbrains.kotlin.ir.symbols.IrEnumEntrySymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
@@ -49,11 +51,12 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     private val functionSymbols = hashMapOf<IrFunctionSymbol, VmFunctionSymbol>()
     private val definedFunctions = hashSetOf<IrFunctionSymbol>()
     private val classIndices = hashMapOf<IrClassSymbol, Int>()
-    private val fieldLayouts = hashMapOf<IrClassSymbol, List<IrField>>()
+    private val fieldLayouts = hashMapOf<IrClassSymbol, List<LayoutField>>()
     private val selectors = hashMapOf<IrSimpleFunctionSymbol, Int>()
     private val defaultToStrings = hashMapOf<IrClassSymbol, VmFunctionSymbol>()
     private val globals = hashMapOf<IrFieldSymbol, Int>()
     private val objectInstances = hashMapOf<IrClassSymbol, Int>()
+    private val enumEntries = hashMapOf<IrEnumEntrySymbol, Int>()
     private val functionOwners = hashMapOf<IrFunctionSymbol, VmOwner>()
 
     fun generate(fragment: IrModuleFragment): VmModule {
@@ -89,8 +92,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
             // Replaced once every class has an index, which supertypes and methods refer to.
             module.classes += VmClass(declaration.vmName, null, emptyList(), false, false, VmClassKind.Interface)
         }
-        val initializers = fileMembers.mapNotNull { declareFileGlobals(it.key, it.value) } +
-                declareObjectInstances(classes.filter { it.kind == ClassKind.OBJECT })
+        val initializers = fileMembers.mapNotNull { declareFileGlobals(it.key, it.value) } + declareClassGlobals(classes)
         for (declaration in classes) {
             for (function in declaration.memberFunctions()) {
                 if (!function.isFakeOverride && function.overriddenSymbols.isEmpty() && function.isOverridable()) {
@@ -180,42 +182,42 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     }
 
     /**
-     * Declares each object's `INSTANCE` global and the initializer that creates it. The initializer stores the instance
-     * before running the constructor, so the constructor sees it. A companion's belongs to its outer class, as it is
-     * that class's static on the JVM: the outer class's first use creates it.
+     * Declares the globals classes own and the initializer that creates them: each enum class's entries, then each
+     * object's `INSTANCE`. The enum's entries are its initializer's to create, as on the JVM, so a use of the class runs
+     * it. An object's instance is stored before its constructor runs, so the constructor sees it. A companion's belongs
+     * to its outer class, as it is that class's static on the JVM: creating the outer class creates the companion.
      */
-    private fun declareObjectInstances(objects: List<IrClass>): List<() -> Unit> {
-        val byOwner = objects.groupBy { declaration ->
+    private fun declareClassGlobals(classes: List<IrClass>): List<() -> Unit> {
+        val parts = LinkedHashMap<IrClass, MutableList<IrClass>>()
+        for (declaration in classes) {
             val outer = declaration.parent as? IrClass
-            if (declaration.isCompanion && outer != null) outer else declaration
+            when {
+                declaration.kind == ClassKind.ENUM_CLASS -> parts.getOrPut(declaration) { mutableListOf() }.add(0, declaration)
+                declaration.kind != ClassKind.OBJECT -> {}
+                declaration.isCompanion && outer != null -> parts.getOrPut(outer) { mutableListOf() } += declaration
+                else -> parts.getOrPut(declaration) { mutableListOf() } += declaration
+            }
         }
-        return byOwner.map { entry ->
+        return parts.map { entry ->
             val ownerClass = entry.key
-            val owned = entry.value
             val owner = VmOwner.Class(classIndices.getValue(ownerClass.symbol))
-            for (declaration in owned) {
-                objectInstances[declaration.symbol] = declareGlobal("${declaration.vmName}::INSTANCE", anyType, VmGlobalStart.Owned(owner))
+            for (declaration in entry.value) {
+                if (declaration.kind == ClassKind.ENUM_CLASS) {
+                    for (enumEntry in declaration.declarations.filterIsInstance<IrEnumEntry>()) {
+                        val name = "${declaration.vmName}::${enumEntry.name.asString()}"
+                        enumEntries[enumEntry.symbol] = declareGlobal(name, anyType, VmGlobalStart.Owned(owner))
+                    }
+                } else {
+                    objectInstances[declaration.symbol] = declareGlobal("${declaration.vmName}::INSTANCE", anyType, VmGlobalStart.Owned(owner))
+                }
             }
             val symbol = declareInitializer("${ownerClass.vmName}::init", owner)
-            return@map { module.functions += objectInitializer(symbol, owned) }
+            return@map { module.functions += VmFunctionGenerator.classInitializer(this, symbol, entry.value) }
         }
     }
 
-    private fun objectInitializer(symbol: VmFunctionSymbol, objects: List<IrClass>): VmFunction {
-        // Unowned: an owned function is one whose calls run the initializer, and the VM alone calls this one.
-        val function = VmFunction(symbol, owner = null)
-        val block = function.newBlock()
-        for (declaration in objects) {
-            val classIndex = classIndices.getValue(declaration.symbol)
-            val instance = function.newValue(VmType.Ref(classIndex))
-            val constructor = declaration.primaryConstructor ?: unsupported("the object ${declaration.name} without a constructor")
-            block.instructions += VmInstruction.NewObject(instance, classIndex)
-            block.instructions += VmInstruction.StoreGlobal(objectInstances.getValue(declaration.symbol), instance)
-            block.instructions += VmInstruction.Call(null, staticTarget(constructor).callee, listOf(instance))
-        }
-        block.terminator = VmTerminator.Return(null)
-        return function
-    }
+    internal fun enumEntryGlobal(entry: IrEnumEntry): Int =
+        enumEntries[entry.symbol] ?: unsupported("the enum entry ${entry.name} from another module")
 
     internal fun globalOf(field: IrField): Int = globals[field.symbol] ?: unsupported("the static field ${field.name} from another module")
 
@@ -227,7 +229,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
 
     private fun collectClass(declaration: IrClass, classes: MutableList<IrClass>, functions: MutableList<IrFunction>) {
         when {
-            declaration.kind != ClassKind.CLASS && declaration.kind != ClassKind.INTERFACE && declaration.kind != ClassKind.OBJECT ->
+            declaration.kind == ClassKind.ANNOTATION_CLASS ->
                 unsupported("the ${declaration.kind.codeRepresentation ?: declaration.kind.name} ${declaration.name}")
             declaration.isInner -> unsupported("the inner class ${declaration.name}")
             declaration.isValue -> unsupported("the value class ${declaration.name}")
@@ -236,14 +238,15 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         for (member in declaration.declarations) {
             when (member) {
                 is IrConstructor -> functions += member
-                is IrSimpleFunction -> if (!member.isFakeOverride && !member.isOnlyInlined()) functions += member
+                is IrSimpleFunction -> if (member.isGenerated()) functions += member
                 is IrProperty -> {
-                    if (!member.isFakeOverride) listOfNotNull(member.getter, member.setter).filterTo(functions) { !it.isFakeOverride }
+                    listOfNotNull(member.getter, member.setter).filterTo(functions) { it.isGenerated() }
                     if (member.backingField?.isStatic == true) unsupported("the static property ${member.name}")
                 }
                 is IrAnonymousInitializer -> if (member.isStatic) unsupported("a static initializer in ${declaration.name}")
                 is IrField -> if (member.isStatic) unsupported("the static field ${member.name}")
                 is IrClass -> collectClass(member, classes, functions)
+                is IrEnumEntry -> member.correspondingClass?.let { collectClass(it, classes, functions) }
                 else -> unsupported("the member ${member.render()}")
             }
         }
@@ -254,6 +257,12 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
      * body is never called, and one with a reified type parameter could not even be generated.
      */
     private fun IrSimpleFunction.isOnlyInlined(): Boolean = isInline
+
+    /**
+     * Whether the function gets code of its own: not a fake override, nor inlined everywhere, nor one of an enum's
+     * `values`, `valueOf` and `entries`, whose bodies the frontend leaves for a lowering to synthesize.
+     */
+    private fun IrSimpleFunction.isGenerated(): Boolean = !isFakeOverride && !isOnlyInlined() && body !is IrSyntheticBody
 
     private fun isBox(function: IrFunction): Boolean =
         function is IrSimpleFunction && function.name.asString() == "box" && function.dispatchReceiverParameter == null &&
@@ -327,31 +336,39 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     }
 
     private fun IrClass.superClass(): IrClass? =
-        superTypes.mapNotNull { it.classOrNull?.owner }.firstOrNull { it.kind == ClassKind.CLASS }
+        superTypes.mapNotNull { it.classOrNull?.owner }.firstOrNull { !it.isInterface }
 
     internal fun IrClass.isAny() = symbol == irBuiltIns.anyClass
 
+    /** `kotlin.Enum`, which the runtime's `Enum` implements. */
+    internal fun IrClass.isEnumBase() = symbol == irBuiltIns.enumClass
+
+    /** A field of a class's VM layout: one it declares, or one the runtime class it extends lays out. */
+    private class LayoutField(val name: String, val type: VmType, val declared: IrField?)
+
     /** The class's fields in the VM's layout: its superclass's, then its own. */
-    private fun fieldLayout(declaration: IrClass): List<IrField> = fieldLayouts.getOrPut(declaration.symbol) {
+    private fun fieldLayout(declaration: IrClass): List<LayoutField> = fieldLayouts.getOrPut(declaration.symbol) {
         val superClass = declaration.superClass()
         val inherited = when {
             superClass == null || superClass.isAny() -> emptyList()
+            superClass.isEnumBase() -> listOf(LayoutField("name", stringType, null), LayoutField("ordinal", VmType.I64, null))
             classIndex(superClass) != null -> fieldLayout(superClass)
             else -> unsupported("the superclass ${superClass.name} from another module")
         }
         inherited + declaration.declarations.mapNotNull {
-            when (it) {
+            val field = when (it) {
                 is IrProperty -> it.backingField
                 is IrField -> it
                 else -> null
-            }
+            } ?: return@mapNotNull null
+            LayoutField(field.name.asString(), vmType(field.type) ?: unsupported("a Unit field"), field)
         }
     }
 
     internal fun fieldIndex(field: IrField): Int {
         val owner = field.parentAsClass
         if (classIndex(owner) == null) unsupported("the field ${field.name} of ${owner.name} from another module")
-        return fieldLayout(owner).indexOf(field)
+        return fieldLayout(owner).indexOfFirst { it.declared == field }
     }
 
     /** The name the JVM gives the class, which its default `toString` shows. */
@@ -376,9 +393,10 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         val superClass = declaration.superClass()
         val superIndex = when {
             superClass == null || superClass.isAny() -> runtimeClass("Any")
+            superClass.isEnumBase() -> runtimeClass("Enum")
             else -> classIndex(superClass) ?: unsupported("the superclass ${superClass.name} from another module")
         }
-        val fields = fieldLayout(declaration).map { VmField(it.name.asString(), vmType(it.type) ?: unsupported("a Unit field")) }
+        val fields = fieldLayout(declaration).map { VmField(it.name, it.type) }
         val isAbstract = declaration.modality == Modality.ABSTRACT || declaration.modality == Modality.SEALED
         return VmClass(
             declaration.vmName, superIndex, interfaces,
@@ -396,7 +414,11 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         for (function in declaration.memberFunctions()) {
             // An abstract declaration resolves to itself, and leaves the selector to a subclass.
             val implementation = function.resolveFakeOverride()?.takeIf { it.modality != Modality.ABSTRACT } ?: continue
+            // Only an instance member answers a selector, which leaves out an enum's `values` and `valueOf`.
+            if (implementation.dispatchReceiverParameter == null) continue
             val implementationSymbol = when {
+                // Answered by the runtime's `Enum`, or by `Any` through it.
+                implementation.parentClassOrNull?.isEnumBase() == true -> continue
                 implementation.parentClassOrNull?.isAny() != true -> {
                     if (implementation.symbol !in definedFunctions) unsupported("inheriting ${implementation.render()} from another module")
                     functionSymbol(implementation)
@@ -470,6 +492,11 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         val root = callee.roots().first()
         if (!isSuperCall && callee.isOverridable()) return CallTarget(VmCallee.Virtual(selectorOf(root)!!), functionSymbol(root))
         val implementation = callee.resolveFakeOverride() ?: unsupported("calling the abstract ${callee.render()}")
+        if (implementation.parentClassOrNull?.isEnumBase() == true) {
+            val name = implementation.name.asString()
+            if (isSuperCall || name !in setOf("toString", "equals", "hashCode")) unsupported("calling ${implementation.render()}")
+            return CallTarget(VmCallee.Virtual(runtimeSelector(name)), functionSymbol(implementation))
+        }
         if (implementation.parentClassOrNull?.isAny() == true) {
             if (isSuperCall) unsupported("calling ${implementation.render()} through super")
             return CallTarget(VmCallee.Virtual(runtimeSelector(implementation.name.asString())), functionSymbol(implementation))
