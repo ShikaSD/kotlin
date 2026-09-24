@@ -40,9 +40,16 @@ import java.util.ArrayDeque
 //    OuterThisInInlineFunctionsSpecialAccessorLowering::class // for public inline only
 //    InlineCallCycleCheckerLowering::class // only on the first stage
 )
+/**
+ * @property substituteNonReifiedTypeParameters Whether a non-reified type parameter of the inlined function takes the
+ *  call site's type argument, as a reified one does, rather than being erased to its upper bound. For a backend that
+ *  would otherwise have to box a primitive argument through the erasure. An unchecked cast to such a parameter then
+ *  becomes a checked one.
+ */
 abstract class FunctionInlining(
     val context: LoweringContext,
     private val inlineFunctionResolver: InlineFunctionResolver,
+    private val substituteNonReifiedTypeParameters: Boolean = false,
 ) : IrTransformer<IrDeclaration>(), BodyLoweringPass {
     private val fileEntriesStack = ArrayDeque<IrFileEntry>()
 
@@ -96,7 +103,8 @@ abstract class FunctionInlining(
             context = context,
             currentFileEntry = fileEntriesStack.getLast(),
             currentFile = data.file,
-            parent = data as? IrDeclarationParent ?: data.parent
+            parent = data as? IrDeclarationParent ?: data.parent,
+            substituteNonReifiedTypeParameters = substituteNonReifiedTypeParameters,
         ).inline(expression, actualCallee)
     }
 }
@@ -110,7 +118,8 @@ private class CallInlining(
     private val context: LoweringContext,
     private val currentFileEntry: IrFileEntry,
     private val currentFile: IrFile,
-    private val parent: IrDeclarationParent
+    private val parent: IrDeclarationParent,
+    private val substituteNonReifiedTypeParameters: Boolean,
 ) {
     private val parents = (parent as? IrDeclaration)?.parentsWithSelf?.toSet() ?: setOf(parent)
 
@@ -143,9 +152,10 @@ private class CallInlining(
                 // This includes non-reified parameters of the inline function itself and some type parameters of the outer classes.
                 notAccessibleTypeParameters.filter { !it.isReified }.forEach { put(it.symbol, null) }
 
-                // Substitute reified type parameters with concrete type arguments
+                // Substitute reified type parameters with concrete type arguments, and the rest too if asked to.
                 for ([index, typeArgument] in callSite.typeArguments.withIndex()) {
-                    if (!callee.typeParameters[index].isReified || typeArgument == null) continue
+                    val substitute = substituteNonReifiedTypeParameters || callee.typeParameters[index].isReified
+                    if (!substitute || typeArgument == null) continue
                     put(callee.typeParameters[index].symbol, typeArgument)
                 }
 
