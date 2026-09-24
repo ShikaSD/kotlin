@@ -60,7 +60,7 @@ class JKlibVmBackendTest {
      * runtime and runs them. The last module is `main`, holding `box()`; the others are `lib0`, `lib1` and so on.
      */
     private fun runBox(tempDir: File, modules: List<Map<String, String>>): Boolean {
-        val repo = System.getenv("KOTLIN_VM_REPO")
+        val repo = System.getProperty("kotlin.vm.repo")
         assumeTrue(repo != null, "KOTLIN_VM_REPO names no VM checkout to run on")
         val names = modules.indices.map { if (it == modules.lastIndex) "main" else "lib$it" }
         modules.forEachIndexed { index, files ->

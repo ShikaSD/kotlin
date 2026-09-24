@@ -10,6 +10,7 @@ dependencies {
     testFixturesApi(testFixtures(project(":generators:test-generator")))
     testFixturesApi(testFixtures(project(":compiler:tests-integration")))
     testFixturesImplementation(project(":compiler:cli-jklib"))
+    testFixturesImplementation(project(":compiler:backend.vm"))
     testFixturesImplementation(project(":compiler:ir.serialization.jklib"))
 
     testFixturesApi("org.junit.jupiter:junit-jupiter")
@@ -30,8 +31,9 @@ sourceSets {
 
 projectTests {
     testData(project(":compiler").isolated, "testData/ir/irText")
-    // Read only by JKlibVmBoxSuiteReport, which runs when KOTLIN_VM_BOX_SUITE is set.
     testData(project(":compiler").isolated, "testData/codegen/box")
+    // The box tests expected to fail on the VM; see JKlibVmExpectedFailures.
+    testData(project.isolated, "testData")
     testData(rootProject.isolated, "third-party/mockJDKs/mockJDK")
 
     withJvmStdlibAndReflect()
@@ -48,6 +50,19 @@ projectTests {
             classpath.from(stdlibJvmIr.elements.map { it.filter { it.asFile.name.endsWith(".klib") } })
         }
         jvmArgumentProviders.add(klibProvider)
+
+        // The VM checkout the box tests link and run with, which they skip without. Its binaries and runtime are inputs,
+        // so a changed VM reruns them.
+        val vmRepository = providers.environmentVariable("KOTLIN_VM_REPO").orNull
+        if (vmRepository != null) {
+            systemProperty("kotlin.vm.repo", vmRepository)
+            inputs.files("$vmRepository/target/debug/link_ir", "$vmRepository/target/debug/execute", "$vmRepository/runtime/src/runtime.ir")
+                .withPropertyName("vmRepository")
+        }
+        if (providers.environmentVariable("KOTLIN_VM_BOX_UPDATE").orNull == "1") {
+            systemProperty("kotlin.vm.box.update", "true")
+            outputs.upToDateWhen { false }
+        }
     }
 
     testGenerator("org.jetbrains.kotlin.generators.tests.GenerateJklibTestsKt", generateTestsInBuildDirectory = true)
