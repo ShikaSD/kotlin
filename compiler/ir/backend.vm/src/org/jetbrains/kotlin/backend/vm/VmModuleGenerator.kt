@@ -38,6 +38,13 @@ const val VM_RUNTIME_MODULE = "vm.runtime"
  * standard library's own classes; its other exceptions are aliases of the Java ones. The VM raises the runtime classes
  * under `vm.` names itself, which is what makes a `catch` of the JVM class catch the VM's failure.
  */
+/** The standard library's types the runtime declares under the same simple name. */
+private val RUNTIME_TYPES = mapOf(
+    "kotlin.Number" to "Number",
+    "kotlin.Comparable" to "Comparable",
+    "kotlin.CharSequence" to "CharSequence",
+)
+
 private val RUNTIME_THROWABLES = mapOf(
     "kotlin.Throwable" to "Throwable",
     "java.lang.Throwable" to "Throwable",
@@ -68,8 +75,8 @@ private val RUNTIME_THROWABLES = mapOf(
  *
  * Every reference type but `String` is held as the runtime's `Any`: registers are untyped, and one type for all of them
  * keeps an override's signature equal to its selector's however its declared types narrow. A method takes its
- * signature from the declaration it overrides for the same reason, which leaves an override that turns a primitive
- * into a reference, and so needs a boxing bridge, as the one mismatch to report.
+ * signature from the declaration it overrides for the same reason; where the override declares a primitive and that
+ * declaration a reference, the method's own body unboxes and boxes, which is all a bridge would do.
  */
 class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String) {
     private val module = VmModule(moduleName)
@@ -351,6 +358,26 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         runtimeFunction("Throwable::init", listOf(anyType, stringType, anyType), null)
     }
 
+    /** The runtime's box for a primitive: its JVM class, holding the value in its only field. */
+    internal fun boxClass(kind: PrimitiveType): Int = runtimeClass(boxName(kind))
+
+    /** The runtime's `valueOf` for a primitive's box, which boxing calls. */
+    internal fun valueOf(kind: PrimitiveType): VmFunctionSymbol {
+        val value = if (kind == PrimitiveType.DOUBLE) VmType.F64 else VmType.I64
+        return runtimeFunction("${boxName(kind)}::valueOf", listOf(value), VmType.Ref(boxClass(kind)))
+    }
+
+    private fun boxName(kind: PrimitiveType): String = when (kind) {
+        PrimitiveType.INT -> "Integer"
+        PrimitiveType.LONG -> "Long"
+        PrimitiveType.SHORT -> "Short"
+        PrimitiveType.BYTE -> "Byte"
+        PrimitiveType.CHAR -> "Character"
+        PrimitiveType.BOOLEAN -> "Boolean"
+        PrimitiveType.DOUBLE -> "Double"
+        PrimitiveType.FLOAT -> unsupported("Float, which needs 32-bit floats in the VM")
+    }
+
     /** Kotlin's `String.plus(Any?)`; see `@String::plus` in the runtime. */
     internal val stringPlus: VmFunctionSymbol by lazy { runtimeFunction("String::plus", listOf(stringType, anyType), stringType) }
 
@@ -379,7 +406,6 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
                 PrimitiveType.INT, PrimitiveType.LONG -> VmType.I64
             }
         }
-        if (type.isNullablePrimitiveType()) unsupported("the boxed type ${type.render()}")
         if (type.isString() || type.isNullableString()) return stringType
         return anyType
     }
@@ -392,6 +418,8 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     internal fun testedClass(type: IrType): Int? {
         if (type.isAny() || type.isNullableAny()) return null
         if (type.isString() || type.isNullableString()) return runtimeClass("vm.String")
+        type.getPrimitiveType()?.let { return boxClass(it) }
+        RUNTIME_TYPES[type.classFqName?.asString()]?.let { return runtimeClass(it) }
         val declaration = type.classOrNull?.owner ?: unsupported("a type test against ${type.render()}")
         return classIndex(declaration) ?: runtimeThrowable(declaration)
             ?: unsupported("a type test against ${type.render()} from another module")
@@ -619,10 +647,8 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
                 val root = function.roots().first()
                 val params = types(root.parameters)
                 val returnType = vmType(root.returnType)
-                val own = types(function.parameters) + listOfNotNull(vmType(function.returnType))
-                if (own.map { it is VmType.Ref } != (params + listOfNotNull(returnType)).map { it is VmType.Ref }) {
-                    unsupported("a bridge from ${root.render()} to ${function.render()}")
-                }
+                // Where the override is primitive and the root a reference, the body boxes and unboxes; see
+                // [VmFunctionGenerator.generate].
                 VmFunctionSymbol(vmName(function), listOf(anyType) + params, returnType)
             }
             else -> VmFunctionSymbol(vmName(function), types(function.parameters), vmType(function.returnType))

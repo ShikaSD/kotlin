@@ -437,15 +437,6 @@ class JKlibVmBackendTest {
         assertTrue(runBox(tempDir, source))
     }
 
-    /** Boxing is not implemented yet, so a primitive reaching erased code is reported rather than miscompiled. */
-    @Test
-    fun testBoxingIsReported(@TempDir tempDir: File) {
-        val (output, exitCode) = compile(tempDir, """fun box(): String { val x: Any = 5; return if (x == 5) "OK" else "fail" }""")
-
-        assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
-        assertTrue(output.contains("the VM backend does not support")) { output }
-    }
-
     @Test
     fun testTopLevelVarWithConstantStart(@TempDir tempDir: File) {
         val source = """
@@ -935,6 +926,96 @@ class JKlibVmBackendTest {
                     log += "c"
                 }
                 return if (log == "fc") "OK" else log
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testPrimitiveHeldAsAny(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val x: Any = 5
+                return if (x == 5 && x is Int && (x as Int) + 1 == 6) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testNullablePrimitive(@TempDir tempDir: File) {
+        val source = """
+            fun find(present: Boolean): Int? = if (present) 3 else null
+
+            fun box(): String = if (find(true) == 3 && find(false) == null && find(true)!! + 1 == 4) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testGenericClassOverPrimitive(@TempDir tempDir: File) {
+        val source = """
+            class Box<T>(val value: T)
+
+            fun box(): String = if (Box(5).value + 1 == 6 && Box(2.5).value * 2 == 5.0) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** The override takes and returns `Int` where the interface's `T` is a reference, so its body unboxes and boxes. */
+    @Test
+    fun testOverrideTakingAPrimitiveForAGenericParameter(@TempDir tempDir: File) {
+        val source = """
+            interface Transform<T> {
+                fun apply(x: T): T
+            }
+
+            class Doubler : Transform<Int> {
+                override fun apply(x: Int) = x * 2
+            }
+
+            fun <T> applyTo(transform: Transform<T>, x: T): T = transform.apply(x)
+
+            fun box(): String = if (applyTo(Doubler(), 21) == 42 && Doubler().apply(4) == 8) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testTemplateFormatsPrimitives(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val n = 1
+                val s = "${'$'}{n + 1}, ${'$'}{n * 2.5}, ${'$'}{'c'}, ${'$'}{n > 0}, ${'$'}{-9L - n}"
+                return if (s == "2, 2.5, c, true, -10") "OK" else s
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testBoxedEqualityComparesClassAndValue(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val a: Any = 1000
+                val b: Any = 1000
+                val long: Any = 1000L
+                return if (a == b && a != long) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** Statically a `Double`, `==` is IEEE 754's; boxed, it is `Double.equals`, under which NaN equals itself. */
+    @Test
+    fun testDoubleEqualityOfPrimitivesAndBoxes(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val zero = 0.0
+                val nan = zero / zero
+                val boxed: Any = nan
+                val other: Any = nan
+                return if (nan != nan && boxed == other) "OK" else "fail"
             }
         """
         assertTrue(runBox(tempDir, source))

@@ -64,7 +64,7 @@ internal class VmFunctionGenerator private constructor(
     private class LoopTargets(val continueTarget: VmBlock, val breakTarget: VmBlock, val finallyDepth: Int)
 
     /** An inlined body: a `return` to it leaves its value in [result] and jumps to [exit]. */
-    private class ReturnableBlock(val exit: VmBlock, val result: VmValue?, val finallyDepth: Int)
+    private class ReturnableBlock(val exit: VmBlock, val result: VmValue?, val type: IrType, val finallyDepth: Int)
 
     /** The object a constructor initializes, which it takes before its declared parameters. */
     private val constructed: VmValue? = (irFunction as? IrConstructor)?.let { constructor ->
@@ -76,10 +76,14 @@ internal class VmFunctionGenerator private constructor(
 
     fun generate(): VmFunction {
         val irFunction = irFunction!!
-        for (parameter in irFunction.parameters) {
-            val value = function.newValue(gen.vmType(parameter.type)!!)
-            function.params += value
-            values[parameter.symbol] = value
+        // A parameter arrives as the signature says, which is the overridden declaration's: an override taking a
+        // primitive where that takes a reference gets a box. Reading it would unbox it anyway; unboxing it here does
+        // so once rather than at every read.
+        val paramTypes = function.symbol.paramTypes.drop(if (constructed != null) 1 else 0)
+        irFunction.parameters.forEachIndexed { index, parameter ->
+            val incoming = function.newValue(paramTypes[index])
+            function.params += incoming
+            values[parameter.symbol] = normalize(incoming, parameter.type)
         }
         when (val body = irFunction.body) {
             is IrBlockBody -> body.statements.forEach(::statement)
@@ -118,7 +122,7 @@ internal class VmFunctionGenerator private constructor(
     /** The body of a file's initializer: each field's initializer stored to its global, in declaration order. */
     private fun generateFileInitializer(fields: List<IrField>): VmFunction {
         for (field in fields) {
-            emit(VmInstruction.StoreGlobal(gen.globalOf(field), operand(field.initializer!!.expression)))
+            emit(VmInstruction.StoreGlobal(gen.globalOf(field), operandAs(field.initializer!!.expression, field.type)))
         }
         terminate(VmTerminator.Return(null))
         return finish()
@@ -151,7 +155,7 @@ internal class VmFunctionGenerator private constructor(
             ?: unsupported("the enum entry ${entry.name} without a constructor call")
         val constructor = call.symbol.owner
         val classIndex = gen.classIndex(constructor.constructedClass)!!
-        val args = call.arguments.map { operand(it ?: unsupported("a default argument")) }
+        val args = constructorArguments(call, constructor)
         val instance = newValue(VmType.Ref(classIndex)).also { emit(VmInstruction.NewObject(it, classIndex)) }
         val name = newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, entry.name.asString())) }
         emit(VmInstruction.StoreField(instance, ENUM_NAME_FIELD, name))
@@ -161,6 +165,9 @@ internal class VmFunctionGenerator private constructor(
     }
 
     companion object {
+        /** Where the runtime's boxes hold their value, their only field. */
+        private const val BOX_VALUE_FIELD = 0
+
         /** Where the runtime's `Enum` lays out an entry's name and ordinal, ahead of every field an enum declares. */
         private const val ENUM_NAME_FIELD = 0
         private const val ENUM_ORDINAL_FIELD = 1
@@ -206,7 +213,7 @@ internal class VmFunctionGenerator private constructor(
             is IrVariable -> {
                 val value = newValue(vmType(statement.type))
                 values[statement.symbol] = value
-                statement.initializer?.let { initializer -> emit(VmInstruction.Copy(value, operand(initializer))) }
+                statement.initializer?.let { initializer -> emit(VmInstruction.Copy(value, operandAs(initializer, statement.type))) }
             }
             is IrExpression -> expression(statement)
             else -> unsupported("the statement ${statement.render()}")
@@ -218,13 +225,55 @@ internal class VmFunctionGenerator private constructor(
     /** The value of [expression], which must have one: a placeholder when the expression never completes. */
     private fun operand(expression: IrExpression): VmValue = expression(expression) ?: newValue(vmType(expression.type))
 
+    /** The value of [expression] as a slot of [type] holds it, boxed or unboxed as the two differ. */
+    private fun operandAs(expression: IrExpression, type: IrType, slot: VmType? = gen.vmType(type)): VmValue =
+        coerce(operand(expression), expression.type, slot ?: vmType(type), type)
+
+    /**
+     * [value], of Kotlin type [from], as a slot of VM type [slot] and Kotlin type [to] holds it. A primitive in a
+     * reference's slot is boxed, and a reference in a primitive's slot unboxed; a null there throws, as on the JVM.
+     */
+    private fun coerce(value: VmValue, from: IrType, slot: VmType, to: IrType): VmValue {
+        val held = value.vmType()
+        return when {
+            held is VmType.Ref && slot !is VmType.Ref -> unbox(value, to)
+            held !is VmType.Ref && slot is VmType.Ref -> box(value, from)
+            else -> value
+        }
+    }
+
+    /**
+     * [value] as an expression of [type] is held. Only a reference can differ: the result of a call through a generic
+     * declaration, or of `!!` on a nullable primitive, whose type is a primitive.
+     */
+    private fun normalize(value: VmValue, type: IrType): VmValue {
+        val slot = gen.vmType(type) ?: return value
+        return if (value.vmType() is VmType.Ref && slot !is VmType.Ref) unbox(value, type) else value
+    }
+
+    private fun box(value: VmValue, type: IrType): VmValue {
+        val kind = type.getPrimitiveType() ?: error("Boxing a value of the non-primitive ${type.render()}")
+        val valueOf = gen.valueOf(kind)
+        return newValue(valueOf.returnType!!).also { emit(VmInstruction.Call(it, VmCallee.Static(valueOf), listOf(value))) }
+    }
+
+    /** A box's value: the cast fails for a box of another class, and the load for null. */
+    private fun unbox(value: VmValue, type: IrType): VmValue {
+        val kind = type.getPrimitiveType() ?: error("Unboxing into the non-primitive ${type.render()}")
+        val boxClass = gen.boxClass(kind)
+        val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.RefCast(it, value, boxClass)) }
+        return newValue(gen.vmType(type.makeNotNull())!!).also { emit(VmInstruction.LoadField(it, box, BOX_VALUE_FIELD)) }
+    }
+
     /** The value of [expression], or null when it has none: its type is `Unit` or `Nothing`. */
-    private fun expression(expression: IrExpression): VmValue? = when (expression) {
+    private fun expression(expression: IrExpression): VmValue? = rawExpression(expression)?.let { normalize(it, expression.type) }
+
+    private fun rawExpression(expression: IrExpression): VmValue? = when (expression) {
         is IrConst -> constant(expression)
         is IrGetValue -> getValue(expression)
         is IrSetValue -> {
-            val value = operand(expression.value)
-            emit(VmInstruction.Copy(values[expression.symbol] ?: unsupported("a captured variable"), value))
+            val variable = values[expression.symbol] ?: unsupported("a captured variable")
+            emit(VmInstruction.Copy(variable, operandAs(expression.value, expression.symbol.owner.type)))
             null
         }
         is IrReturn -> {
@@ -286,10 +335,10 @@ internal class VmFunctionGenerator private constructor(
             val field = expression.symbol.owner
             val receiver = expression.receiver
             if (receiver == null) {
-                emit(VmInstruction.StoreGlobal(gen.globalOf(field), operand(expression.value)))
+                emit(VmInstruction.StoreGlobal(gen.globalOf(field), operandAs(expression.value, field.type)))
             } else {
                 val obj = operand(receiver)
-                emit(VmInstruction.StoreField(obj, gen.fieldIndex(field), operand(expression.value)))
+                emit(VmInstruction.StoreField(obj, gen.fieldIndex(field), operandAs(expression.value, field.type)))
             }
             null
         }
@@ -307,11 +356,12 @@ internal class VmFunctionGenerator private constructor(
     private fun ret(expression: IrReturn) {
         val target = expression.returnTargetSymbol
         if (target == irFunction?.symbol) {
-            val value = if (function.symbol.returnType == null) {
+            val returnType = function.symbol.returnType
+            val value = if (returnType == null) {
                 expression(expression.value)
                 null
             } else {
-                operand(expression.value)
+                operandAs(expression.value, irFunction.returnType, returnType)
             }
             runFinallyBlocksDownTo(0)
             terminate(VmTerminator.Return(value))
@@ -321,7 +371,7 @@ internal class VmFunctionGenerator private constructor(
         if (block.result == null) {
             expression(expression.value)
         } else {
-            emit(VmInstruction.Copy(block.result, operand(expression.value)))
+            emit(VmInstruction.Copy(block.result, operandAs(expression.value, block.type)))
         }
         runFinallyBlocksDownTo(block.finallyDepth)
         jumpTo(block.exit)
@@ -354,9 +404,12 @@ internal class VmFunctionGenerator private constructor(
     private fun returnableBlock(expression: IrReturnableBlock): VmValue? {
         val result = gen.vmType(expression.type)?.let(::newValue)
         val exit = newBlock()
-        returnableBlocks[expression.symbol] = ReturnableBlock(exit, result, finallyFrames.size)
+        returnableBlocks[expression.symbol] = ReturnableBlock(exit, result, expression.type, finallyFrames.size)
         val value = container(expression)
-        if (result != null && value != null) emit(VmInstruction.Copy(result, value))
+        if (result != null && value != null) {
+            val last = expression.statements.last() as IrExpression
+            emit(VmInstruction.Copy(result, coerce(value, last.type, result.vmType(), expression.type)))
+        }
         startBlock(exit)
         return result
     }
@@ -411,14 +464,14 @@ internal class VmFunctionGenerator private constructor(
         clauses.zipWithNext { clause, next -> function.handlers[clause.handler].next = next.handler }
         if (clauses.isNotEmpty()) protection = clauses.first().handler
         startBlock(newBlock())
-        branchResult(expression.tryResult, result)
+        branchResult(expression.tryResult, result, expression.type)
         jumpTo(exit)
         protection = outer
         tryDepth--
 
         for (clause in clauses) {
             current = function.blocks[function.handlers[clause.handler].block]
-            branchResult(clause.catch.result, result)
+            branchResult(clause.catch.result, result, expression.type)
             jumpTo(exit)
         }
     }
@@ -476,12 +529,12 @@ internal class VmFunctionGenerator private constructor(
                 val next = newBlock()
                 terminate(VmTerminator.Branch(operand(branch.condition), body.index, next.index))
                 current = body
-                branchResult(branch.result, result)
+                branchResult(branch.result, result, expression.type)
                 jumpTo(join)
                 current = next
                 continue
             }
-            branchResult(branch.result, result)
+            branchResult(branch.result, result, expression.type)
             jumpTo(join)
             break
         }
@@ -489,11 +542,12 @@ internal class VmFunctionGenerator private constructor(
         return result
     }
 
-    private fun branchResult(expression: IrExpression, result: VmValue?) {
+    /** Generates [expression], leaving its value in [result], which holds values of [type]. */
+    private fun branchResult(expression: IrExpression, result: VmValue?, type: IrType) {
         if (result == null) {
             expression(expression)
         } else {
-            expression(expression)?.let { emit(VmInstruction.Copy(result, it)) }
+            expression(expression)?.let { emit(VmInstruction.Copy(result, coerce(it, expression.type, result.vmType(), type))) }
         }
     }
 
@@ -529,30 +583,20 @@ internal class VmFunctionGenerator private constructor(
             expression(expression.argument)
             null
         }
-        IrTypeOperator.IMPLICIT_CAST, IrTypeOperator.IMPLICIT_NOTNULL -> {
-            val from = expression.argument.type
-            val to = expression.typeOperand
-            if (vmType(from) != vmType(to) && (from.isPrimitiveType() || to.isPrimitiveType())) {
-                if (from.isPrimitiveType()) unsupported("boxing ${from.render()} into ${to.render()}")
-                unsupported("unboxing ${from.render()} into ${to.render()}")
-            }
-            operand(expression.argument)
-        }
-        IrTypeOperator.INSTANCEOF -> instanceOf(operand(expression.argument), expression.typeOperand)
-        IrTypeOperator.NOT_INSTANCEOF -> not(instanceOf(operand(expression.argument), expression.typeOperand))
-        IrTypeOperator.CAST -> cast(operand(expression.argument), expression.typeOperand)
-        IrTypeOperator.SAFE_CAST -> safeCast(operand(expression.argument), expression.typeOperand)
+        IrTypeOperator.IMPLICIT_CAST, IrTypeOperator.IMPLICIT_NOTNULL -> operandAs(expression.argument, expression.typeOperand)
+        IrTypeOperator.INSTANCEOF -> instanceOf(reference(expression.argument), expression.typeOperand)
+        IrTypeOperator.NOT_INSTANCEOF -> not(instanceOf(reference(expression.argument), expression.typeOperand))
+        IrTypeOperator.CAST -> cast(reference(expression.argument), expression.typeOperand)
+        IrTypeOperator.SAFE_CAST -> safeCast(reference(expression.argument), expression.typeOperand)
         else -> unsupported("the type operator ${expression.operator}")
     }
 
-    private fun referenceType(type: IrType): IrType {
-        if (type.isPrimitiveType() || type.isNullablePrimitiveType()) unsupported("a type test against the primitive ${type.render()}")
-        return type
-    }
+    /** The value of [expression] as a reference, boxed if it is a primitive: what a type test or cast reads. */
+    private fun reference(expression: IrExpression): VmValue = operandAs(expression, gen.irBuiltIns.anyNType, gen.anyType)
 
     /** Whether [value] is an instance of [type]: null is one only of a nullable type. */
     private fun instanceOf(value: VmValue, type: IrType): VmValue {
-        val tested = gen.testedClass(referenceType(type))
+        val tested = gen.testedClass(type)
         val isInstance = if (tested == null) {
             not(isNull(value))
         } else {
@@ -563,7 +607,7 @@ internal class VmFunctionGenerator private constructor(
 
     /** `as`: the VM's cast lets null through, so a cast to a non-null type checks for it first. */
     private fun cast(value: VmValue, type: IrType): VmValue {
-        val tested = gen.testedClass(referenceType(type))
+        val tested = gen.testedClass(type)
         if (!type.isMarkedNullable()) throwIfNull(value)
         if (tested == null) return value
         return newValue(VmType.Ref(tested)).also { emit(VmInstruction.RefCast(it, value, tested)) }
@@ -582,9 +626,8 @@ internal class VmFunctionGenerator private constructor(
                 result = result?.let { plus(it, text) } ?: text
                 continue
             }
-            if (argument.type.isPrimitiveType()) unsupported("formatting ${argument.type.render()} into a string")
             val start = result ?: newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, "")) }
-            result = plus(start, operand(argument))
+            result = plus(start, reference(argument))
         }
         return result ?: newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, "")) }
     }
@@ -594,8 +637,7 @@ internal class VmFunctionGenerator private constructor(
 
     /** `String.plus(Any?)`: [string] then [argument]'s `toString`. */
     private fun plus(string: VmValue, argument: IrExpression): VmValue {
-        if (argument.type.isPrimitiveType()) unsupported("boxing ${argument.type.render()} into kotlin.Any?")
-        return plus(string, operand(argument))
+        return plus(string, reference(argument))
     }
 
     /** Throws a new instance of the runtime class [className], with [message]. */
@@ -682,22 +724,21 @@ internal class VmFunctionGenerator private constructor(
         val callee = call.symbol.owner
         intrinsic(call, callee)?.let { return it.value }
         val target = gen.callTarget(callee, isSuperCall = call.superQualifierSymbol != null)
-        val args = call.arguments.map { operand(it ?: unsupported("a default argument")) }
-        val returnType = target.symbol.returnType
-        val type = call.type
-        val expected = gen.vmType(type)
-        if (returnType != null && expected != null && (returnType is VmType.Ref) != (expected is VmType.Ref)) {
-            unsupported("a call returning ${type.render()} through a generic declaration, which needs boxing")
-        }
-        val dst = returnType?.let(::newValue)
-        emit(VmInstruction.Call(dst, target.callee, args))
+        val dst = target.symbol.returnType?.let(::newValue)
+        emit(VmInstruction.Call(dst, target.callee, arguments(call, callee, target.symbol.paramTypes)))
         return dst
     }
+
+    /** A call's arguments as its callee's signature takes them, boxed or unboxed where the two differ. */
+    private fun arguments(call: IrFunctionAccessExpression, callee: IrFunction, slots: List<VmType>): List<VmValue> =
+        call.arguments.mapIndexed { index, argument ->
+            operandAs(argument ?: unsupported("a default argument"), callee.parameters[index].type, slots[index])
+        }
 
     /** Allocates the object, then runs the constructor on it with the arguments already evaluated. */
     private fun constructorCall(call: IrConstructorCall): VmValue {
         val constructor = call.symbol.owner
-        val args = call.arguments.map { operand(it ?: unsupported("a default argument")) }
+        val args = constructorArguments(call, constructor)
         gen.runtimeThrowable(constructor.constructedClass)?.let { throwable ->
             val exception = newValue(VmType.Ref(throwable)).also { emit(VmInstruction.NewObject(it, throwable)) }
             constructThrowable(exception, constructor, args)
@@ -715,13 +756,19 @@ internal class VmFunctionGenerator private constructor(
         // `Any`'s constructor does nothing, and `Enum`'s name and ordinal are stored by whatever creates the entry, so
         // the runtime declares neither.
         if (with(gen) { constructor.constructedClass.isAny() || constructor.constructedClass.isEnumBase() }) return
-        val args = call.arguments.map { operand(it ?: unsupported("a default argument")) }
+        val args = constructorArguments(call, constructor)
         if (gen.runtimeThrowable(constructor.constructedClass) != null) {
             constructThrowable(constructed!!, constructor, args)
             return
         }
         emit(VmInstruction.Call(null, gen.staticTarget(constructor).callee, listOf(constructed!!) + args))
     }
+
+    /** A constructor's arguments as its parameters hold them; a throwable's runtime constructor takes references. */
+    private fun constructorArguments(call: IrFunctionAccessExpression, constructor: IrConstructor): List<VmValue> =
+        call.arguments.mapIndexed { index, argument ->
+            operandAs(argument ?: unsupported("a default argument"), constructor.parameters[index].type)
+        }
 
     /** Property initializers and `init` blocks, in the order the class declares them. */
     private fun instanceInitializers(declaration: IrClass) {
@@ -738,7 +785,7 @@ internal class VmFunctionGenerator private constructor(
 
     private fun initializeField(self: VmValue, field: IrField) {
         val initializer = field.initializer ?: return
-        emit(VmInstruction.StoreField(self, gen.fieldIndex(field), operand(initializer.expression)))
+        emit(VmInstruction.StoreField(self, gen.fieldIndex(field), operandAs(initializer.expression, field.type)))
     }
 
     /** What an intrinsic produced: a value, or none for one returning `Unit`. */
@@ -841,18 +888,15 @@ internal class VmFunctionGenerator private constructor(
     private fun equals(lhsExpression: IrExpression, rhsExpression: IrExpression): VmValue {
         val lhsType = lhsExpression.type
         val rhsType = rhsExpression.type
-        if (lhsType.isPrimitiveType() && rhsType.isPrimitiveType()) {
-            if (primitive(lhsType) == PrimitiveType.DOUBLE) unsupported("`==` on Double outside IEEE 754 comparisons")
+        // `==` on doubles outside an IEEE 754 comparison is `Double.equals`, which the box answers.
+        if (lhsType.isPrimitiveType() && rhsType.isPrimitiveType() && primitive(lhsType) != PrimitiveType.DOUBLE) {
             return binary(VmBinaryOp.EQ, operand(lhsExpression), operand(rhsExpression))
         }
-        if (lhsType.isPrimitiveType() || rhsType.isPrimitiveType() || lhsType.isNullablePrimitiveType() || rhsType.isNullablePrimitiveType()) {
-            unsupported("`==` between ${lhsType.render()} and ${rhsType.render()}")
-        }
-        if (rhsExpression.isNullConstant()) return isNull(operand(lhsExpression))
-        if (lhsExpression.isNullConstant()) return isNull(operand(rhsExpression))
+        if (rhsExpression.isNullConstant()) return isNull(reference(lhsExpression))
+        if (lhsExpression.isNullConstant()) return isNull(reference(rhsExpression))
 
-        val lhs = operand(lhsExpression)
-        val rhs = operand(rhsExpression)
+        val lhs = reference(lhsExpression)
+        val rhs = reference(rhsExpression)
         val result = newValue(VmType.I64)
         val lhsNull = newBlock()
         val call = newBlock()
