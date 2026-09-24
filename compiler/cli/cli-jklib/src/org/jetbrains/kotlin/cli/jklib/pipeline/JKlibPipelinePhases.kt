@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.diagnosticFactoriesStorage
 import org.jetbrains.kotlin.cli.jklib.config.jklibCompileIr
 import org.jetbrains.kotlin.cli.jklib.config.jklibOutputDestination
+import org.jetbrains.kotlin.cli.jklib.config.jklibVmOutput
 import org.jetbrains.kotlin.cli.jklib.config.klibPaths
 import org.jetbrains.kotlin.cli.jklib.prepareJKlibSessions
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
@@ -183,7 +184,8 @@ object JKlibConfigurationUpdater : ConfigurationUpdater<K2JKlibCompilerArguments
         configuration.renderDiagnosticInternalName = arguments.renderInternalDiagnosticNames
 
         arguments.destination?.let { configuration.jklibOutputDestination = it }
-        configuration.jklibCompileIr = arguments.compileIr
+        configuration.jklibCompileIr = arguments.compileIr || arguments.vmOutput != null
+        arguments.vmOutput?.let { configuration.jklibVmOutput = it }
         arguments.friendModules?.let { configuration.friendPaths = it.split(File.pathSeparator).filterNot(String::isEmpty) }
 
         // TODO(KT-87172): call configuration.setupCommonKlibArguments() instead of manual setup.

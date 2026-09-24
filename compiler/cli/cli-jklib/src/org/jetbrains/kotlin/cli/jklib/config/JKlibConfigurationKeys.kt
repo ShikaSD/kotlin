@@ -12,6 +12,7 @@ object JKlibConfigurationKeys {
     val JKLIB_OUTPUT_DESTINATION = CompilerConfigurationKey.create<String>("jklib output destination")
     val JKLIB_COMPILE_IR = CompilerConfigurationKey.create<Boolean>("jklib compile ir")
     val KLIB_PATHS = CompilerConfigurationKey.create<List<String>>("KLIB_PATHS")
+    val JKLIB_VM_OUTPUT = CompilerConfigurationKey.create<String>("jklib VM binary IR output")
 }
 
 var CompilerConfiguration.jklibOutputDestination: String?
@@ -30,4 +31,10 @@ var CompilerConfiguration.klibPaths: List<String>
     get() = getList(JKlibConfigurationKeys.KLIB_PATHS)
     set(value) {
         put(JKlibConfigurationKeys.KLIB_PATHS, value)
+    }
+
+var CompilerConfiguration.jklibVmOutput: String?
+    get() = get(JKlibConfigurationKeys.JKLIB_VM_OUTPUT)
+    set(value) {
+        putIfNotNull(JKlibConfigurationKeys.JKLIB_VM_OUTPUT, value)
     }

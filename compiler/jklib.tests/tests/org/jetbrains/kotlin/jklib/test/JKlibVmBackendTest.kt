@@ -1,0 +1,448 @@
+/*
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
+package org.jetbrains.kotlin.jklib.test
+
+import org.jetbrains.kotlin.cli.common.ExitCode
+import org.jetbrains.kotlin.cli.jklib.K2JKlibCompiler
+import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.PrintStream
+import java.util.concurrent.TimeUnit
+
+/**
+ * The VM backend behind `-Xvm-output`. A test that runs its output needs a built checkout of the VM repository, named by
+ * the `KOTLIN_VM_REPO` environment variable, and is skipped without one.
+ */
+class JKlibVmBackendTest {
+    private val stdlibKlib: String
+        get() = ForTestCompileRuntime.jklibStdlibForTests().path
+
+    private data class Compilation(val output: String, val exitCode: ExitCode)
+
+    private fun compile(tempDir: File, source: String): Compilation {
+        val sourceFile = File(tempDir, "box.kt").apply { writeText(source.trimIndent()) }
+        val args = listOf(
+            sourceFile.path,
+            "-d", File(tempDir, "main.klib").path,
+            "-module-name", "main",
+            "-no-stdlib",
+            "-Xklib=$stdlibKlib",
+            "-Xvm-output=${File(tempDir, "main.vir").path}",
+        )
+        // A stream of this compilation's own: capturing System.err would race the other tests running in parallel.
+        val messages = ByteArrayOutputStream()
+        val exitCode = K2JKlibCompiler().exec(PrintStream(messages), *args.toTypedArray())
+        return Compilation(messages.toString(), exitCode)
+    }
+
+    /** Compiles [source], links it against the VM runtime and runs it, returning what `box()` answered. */
+    private fun runBox(tempDir: File, source: String): Boolean {
+        val repo = System.getenv("KOTLIN_VM_REPO")
+        assumeTrue(repo != null, "KOTLIN_VM_REPO names no VM checkout to run on")
+        val (output, exitCode) = compile(tempDir, source)
+        assertEquals(ExitCode.OK, exitCode) { "Compilation failed: $output" }
+
+        val container = File(tempDir, "main.vmc").path
+        val runtime = File(repo, "runtime/src/runtime.ir").path
+        run(File(repo, "target/debug/link_ir"), container, File(tempDir, "main.vir").path, runtime)
+        val result = run(File(repo, "target/debug/execute"), container)
+        return result.lines().any { it == "r0 = 1" }
+    }
+
+    private fun run(binary: File, vararg args: String): String {
+        assertTrue(binary.canExecute()) { "$binary is missing: build the VM repository with `cargo build`" }
+        val process = ProcessBuilder(binary.path, *args).redirectErrorStream(true).start()
+        val output = process.inputStream.bufferedReader().readText()
+        assertTrue(process.waitFor(1, TimeUnit.MINUTES)) { "$binary timed out" }
+        assertEquals(0, process.exitValue()) { "$binary failed: $output" }
+        return output
+    }
+
+    @Test
+    fun testOutputIsBinaryIr(@TempDir tempDir: File) {
+        val (output, exitCode) = compile(tempDir, """fun box(): String = "OK"""")
+        assertEquals(ExitCode.OK, exitCode) { "Compilation failed: $output" }
+
+        val magic = File(tempDir, "main.vir").readBytes().copyOf(4).decodeToString()
+        assertEquals("VMIR", magic)
+    }
+
+    @Test
+    fun testUnsupportedDeclarationIsReported(@TempDir tempDir: File) {
+        val (output, exitCode) = compile(tempDir, "object Registry")
+
+        assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
+        assertTrue(output.contains("the VM backend does not support the object Registry")) { output }
+    }
+
+    @Test
+    fun testBoxReturningOk(@TempDir tempDir: File) {
+        assertTrue(runBox(tempDir, """fun box(): String = "OK""""))
+    }
+
+    @Test
+    fun testBoxReturningAnotherString(@TempDir tempDir: File) {
+        assertFalse(runBox(tempDir, """fun box(): String = "fail""""))
+    }
+
+    @Test
+    fun testRecursiveCall(@TempDir tempDir: File) {
+        val source = """
+            fun fib(n: Int): Int = if (n < 2) n else fib(n - 1) + fib(n - 2)
+
+            fun box(): String = if (fib(20) == 6765) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testWhileLoopWithBreakAndContinue(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                var sum = 0
+                var i = 0
+                while (true) {
+                    i++
+                    if (i % 2 == 0) continue
+                    if (i > 9) break
+                    sum += i
+                }
+                return if (sum == 25) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testIntArithmeticWraps(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val max = 2147483647
+                val min = max + 1
+                return if (min == -2147483648 && max * 2 == -2 && min / -1 == min) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testIntShiftsUseTheLowFiveBits(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val x = -8
+                return if (x shl 33 == -16 && x shr 1 == -4 && x ushr 28 == 15) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testComparisonsOfEveryKind(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val a = 3
+                val b = 5
+                val ok = a < b && a <= b && b > a && b >= a && a <= 3 && b >= 5 && a != b && !(a > b)
+                return if (ok) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testDoubleArithmetic(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val x = 1.5 * 4 - 1.0
+                return if (x == 5.0 && x / 2 > 2.4 && (7).toDouble() > x) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testCharArithmetic(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val c = 'a' + 2
+                return if (c == 'c' && c - 'a' == 2) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testFieldsFromConstructorParameters(@TempDir tempDir: File) {
+        val source = """
+            class Point(val x: Int, val y: Int) {
+                fun sum() = x + y
+            }
+
+            fun box(): String = if (Point(3, 4).sum() == 7) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testVirtualDispatchThroughSuperclass(@TempDir tempDir: File) {
+        val source = """
+            open class Shape {
+                open fun area(): Int = 0
+            }
+
+            class Square(val side: Int) : Shape() {
+                override fun area() = side * side
+            }
+
+            fun measure(shape: Shape) = shape.area()
+
+            fun box(): String = if (measure(Square(3)) == 9 && measure(Shape()) == 0) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testAbstractMethodCalledFromBaseClass(@TempDir tempDir: File) {
+        val source = """
+            abstract class Animal {
+                abstract fun legs(): Int
+                fun describe() = legs() * 10
+            }
+
+            class Dog : Animal() {
+                override fun legs() = 4
+            }
+
+            fun box(): String = if (Dog().describe() == 40) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testInterfaceDefaultMethod(@TempDir tempDir: File) {
+        val source = """
+            interface Greeter {
+                fun base(): Int = 1
+                fun twice() = base() * 2
+            }
+
+            class Plain : Greeter
+
+            class Loud : Greeter {
+                override fun base() = 5
+            }
+
+            fun twice(greeter: Greeter) = greeter.twice()
+
+            fun box(): String = if (twice(Plain()) == 2 && twice(Loud()) == 10) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testInitializationRunsInDeclarationOrder(@TempDir tempDir: File) {
+        val source = """
+            class Counter(start: Int) {
+                var value = start
+                init {
+                    value = value * 10
+                }
+                val doubled = value * 2
+
+                constructor() : this(7)
+            }
+
+            fun box(): String = if (Counter().doubled == 140 && Counter(1).value == 10) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testSuperCall(@TempDir tempDir: File) {
+        val source = """
+            open class Base {
+                open fun id() = 1
+            }
+
+            class Derived : Base() {
+                override fun id() = super.id() + 10
+            }
+
+            fun box(): String = if (Derived().id() == 11) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testTypeTestsAndSafeCast(@TempDir tempDir: File) {
+        val source = """
+            open class A
+            class B : A()
+
+            fun kind(x: Any): Int = if (x is B) 2 else if (x is A) 1 else 0
+
+            fun box(): String {
+                val notB: Any = A()
+                return if (kind(B()) == 2 && kind(A()) == 1 && kind("s") == 0 && notB as? B == null) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testEqualsOverrideAnswersEquality(@TempDir tempDir: File) {
+        val source = """
+            class Id(val v: Int) {
+                override fun equals(other: Any?): Boolean = other is Id && other.v == v
+                override fun hashCode(): Int = v
+            }
+
+            fun box(): String = if (Id(1) == Id(1) && Id(1) != Id(2)) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testDefaultToStringIsNameAndHash(@TempDir tempDir: File) {
+        val source = """
+            class Point {
+                override fun hashCode(): Int = 255
+            }
+
+            fun box(): String = if (Point().toString() == "Point@ff") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testPropertySetter(@TempDir tempDir: File) {
+        val source = """
+            class Box {
+                var v = 0
+                    set(value) {
+                        field = value * 2
+                    }
+            }
+
+            fun box(): String {
+                val b = Box()
+                b.v = 3
+                return if (b.v == 6) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testInlineFunctionWithLambda(@TempDir tempDir: File) {
+        val source = """
+            inline fun sumOf(n: Int, f: (Int) -> Int): Int {
+                var sum = 0
+                var i = 0
+                while (i < n) {
+                    sum += f(i)
+                    i++
+                }
+                return sum
+            }
+
+            fun box(): String = if (sumOf(4) { it * it } == 14) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testNonLocalReturnFromInlinedLambda(@TempDir tempDir: File) {
+        val source = """
+            inline fun upTo(n: Int, f: (Int) -> Unit) {
+                var i = 0
+                while (i < n) {
+                    f(i)
+                    i++
+                }
+            }
+
+            fun firstSquareOver(limit: Int): Int {
+                upTo(10) { if (it * it > limit) return it }
+                return -1
+            }
+
+            fun box(): String = if (firstSquareOver(20) == 5 && firstSquareOver(1000) == -1) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testLabeledReturnFromInlinedLambda(@TempDir tempDir: File) {
+        val source = """
+            inline fun transform(value: Int, f: (Int) -> Int): Int = f(value)
+
+            fun box(): String {
+                val r = transform(5) {
+                    if (it > 3) return@transform 1
+                    2
+                }
+                return if (r == 1) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testStdlibScopeFunctions(@TempDir tempDir: File) {
+        val source = """
+            class Point {
+                var x = 0
+            }
+
+            fun box(): String {
+                val p = Point().apply { x = 3 }
+                val same = p.also { it.x = it.x + 1 }
+                val other = p.let { Point() }
+                return if (same === p && p.x == 4 && other !== p && run { "OK" } == "OK") "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testReifiedTypeParameter(@TempDir tempDir: File) {
+        val source = """
+            open class A
+            class B : A()
+
+            inline fun <reified T> isA(x: Any): Boolean = x is T
+
+            fun box(): String = if (isA<B>(B()) && !isA<B>(A()) && isA<A>(B())) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** Inlining substitutes a non-reified type parameter too, so a primitive type argument needs no boxing. */
+    @Test
+    fun testInlinedGenericOverPrimitive(@TempDir tempDir: File) {
+        val source = """
+            inline fun <T> transform(value: T, f: (T) -> T): T = f(value)
+
+            fun box(): String = if (5.let { it + 1 } == 6 && transform(20) { it * 2 } == 40 && run { 7 } == 7) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** Boxing is not implemented yet, so a primitive reaching erased code is reported rather than miscompiled. */
+    @Test
+    fun testBoxingIsReported(@TempDir tempDir: File) {
+        val (output, exitCode) = compile(tempDir, """fun box(): String { val x: Any = 5; return if (x == 5) "OK" else "fail" }""")
+
+        assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
+        assertTrue(output.contains("the VM backend does not support")) { output }
+    }
+}

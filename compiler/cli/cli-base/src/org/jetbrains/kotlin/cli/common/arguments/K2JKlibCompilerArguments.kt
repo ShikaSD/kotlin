@@ -263,6 +263,17 @@ The default value is 'indy'.""",
             field = value
         }
 
+    @Argument(
+        value = "-Xvm-output",
+        valueDescription = "<path>",
+        description = "Compile the module's IR into a binary IR file for the VM backend at the given path. Implies '-Xcompile-ir'."
+    )
+    var vmOutput: String? = null
+        set(value) {
+            checkFrozen()
+            field = if (value.isNullOrEmpty()) null else value
+        }
+
     // TODO(KT-87172): Remove if we decide to extend CommonKlibBasedCompilerArguments 
     @Argument(
         value = "-Xklib-zip-file-accessor-cache-limit",

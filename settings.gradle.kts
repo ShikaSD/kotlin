@@ -198,6 +198,7 @@ include(
     ":compiler:ir.validation",
     ":compiler:backend.js",
     ":compiler:backend.wasm",
+    ":compiler:backend.vm",
     ":compiler:backend.jvm",
     ":compiler:backend.jvm.lower",
     ":compiler:backend.jvm.codegen",
@@ -827,6 +828,7 @@ project(":compiler:ir.inline").projectDir = File("$rootDir/compiler/ir/ir.inline
 project(":compiler:ir.validation").projectDir = File("$rootDir/compiler/ir/ir.validation")
 project(":compiler:backend.js").projectDir = File("$rootDir/compiler/ir/backend.js")
 project(":compiler:backend.wasm").projectDir = File("$rootDir/compiler/ir/backend.wasm")
+project(":compiler:backend.vm").projectDir = File("$rootDir/compiler/ir/backend.vm")
 project(":compiler:backend.jvm").projectDir = File("$rootDir/compiler/ir/backend.jvm")
 project(":compiler:backend.jvm.lower").projectDir = File("$rootDir/compiler/ir/backend.jvm/lower")
 project(":compiler:backend.jvm.codegen").projectDir = File("$rootDir/compiler/ir/backend.jvm/codegen")
