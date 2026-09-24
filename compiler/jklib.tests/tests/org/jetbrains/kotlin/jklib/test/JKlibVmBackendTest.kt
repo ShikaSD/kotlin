@@ -1020,4 +1020,177 @@ class JKlibVmBackendTest {
         """
         assertTrue(runBox(tempDir, source))
     }
+
+    @Test
+    fun testTailrecFunctionRunsAsALoop(@TempDir tempDir: File) {
+        val source = """
+            tailrec fun sum(x: Long, acc: Long): Long = if (x == 0L) acc else sum(x - 1, acc + x)
+
+            fun box(): String = if (sum(1000000, 0) == 500000500000L) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** What follows a `return` in the same expression is unreachable, and reads a value nothing defines. */
+    @Test
+    fun testCodeAfterAnExpressionThatNeverCompletes(@TempDir tempDir: File) {
+        val source = """
+            fun pick(first: Boolean): Int {
+                val x: Int = if (first) return 1 else return 2
+                return x
+            }
+
+            fun box(): String = if (pick(true) == 1 && pick(false) == 2) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A smart cast leaves the receiver's static type nullable, so the member's parameter type unboxes it. */
+    @Test
+    fun testArithmeticOnASmartCastNullableByte(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                var b: Byte? = 0
+                if (b != null) b--
+                return if (b == (-1).toByte()) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testNegatingADoubleFlipsTheSignOfZero(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val zero = 0.0
+                val negative = -zero
+                return if (1.0 / negative < 0.0) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** Statically `Double?`, `==` is still IEEE 754's: `0.0 == -0.0`, where `Double.equals` would say no. */
+    @Test
+    fun testNullableDoublesCompareAsIeee(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val zero: Double? = 0.0
+                val negative: Double? = -0.0
+                val none: Double? = null
+                return if (zero == negative && zero != none && none == null) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `when` over a `Double` tests each case with `==`, which is IEEE 754's: `-0.0` matches `0.0`. */
+    @Test
+    fun testWhenOverADoubleComparesAsIeee(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val negative = -0.0
+                return when (negative) {
+                    0.0 -> "OK"
+                    else -> "fail"
+                }
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testWhenOverANullableDoubleComparesAsIeee(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val negative: Double? = -0.0
+                return when (negative) {
+                    0.0 -> "OK"
+                    else -> "fail"
+                }
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testExtensionPropertiesOverloadedByReceiver(@TempDir tempDir: File) {
+        val source = """
+            val Int.kind: String get() = "O"
+            val Long.kind: String get() = "K"
+
+            fun box(): String = 1.kind + 1L.kind
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testPrivateOverloads(@TempDir tempDir: File) {
+        val source = """
+            private fun kind(x: Int) = "O"
+            private fun kind(x: Long) = "K"
+
+            fun box(): String = kind(1) + kind(1L)
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `Enum`'s own `name` answers the interface's selector, which the runtime cannot. */
+    @Test
+    fun testEnumImplementsAnInterfaceWithItsName(@TempDir tempDir: File) {
+        val source = """
+            interface Named {
+                val name: String
+            }
+
+            enum class E : Named { OK }
+
+            fun box(): String {
+                val named: Named = E.OK
+                return named.name
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testClassNamedLikeAJvmClass(@TempDir tempDir: File) {
+        val source = """
+            enum class Enum { OK }
+
+            class Integer(val value: String)
+
+            fun box(): String = if (Integer(Enum.OK.name).value == "OK") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A template of constants is one literal, so two of the same text are one string, as on the JVM. */
+    @Test
+    fun testConstantTemplatesAreOneString(@TempDir tempDir: File) {
+        val source = """
+            object A {
+                const val tag = "${'$'}"
+                val text = "1234${'$'}tag"
+            }
+
+            object B {
+                const val tag = "${'$'}"
+                val text = "1234${'$'}tag"
+            }
+
+            fun box(): String = if (A.text === B.text) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testBoxingABooleanTwiceGivesOneBox(@TempDir tempDir: File) {
+        val source = """
+            fun box(value: Boolean): Any = value
+
+            fun box(): String = if (box(true) === box(true) && box(true) !== box(false)) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
 }

@@ -95,8 +95,42 @@ internal class VmFunctionGenerator private constructor(
     }
 
     private fun finish(): VmFunction {
+        clearUnreachableBlocks()
         renumberHandlers()
         return function
+    }
+
+    /**
+     * Code after an expression that never completes lands in a block nothing reaches, and may read the placeholder
+     * [operand] answered for it, which nothing defines. Such a block only returns, so every value read is defined.
+     */
+    private fun clearUnreachableBlocks() {
+        val reached = BooleanArray(function.blocks.size)
+        val pending = ArrayDeque(listOf(function.entry))
+        while (pending.isNotEmpty()) {
+            val index = pending.removeLast()
+            if (reached[index]) continue
+            reached[index] = true
+            val block = function.blocks[index]
+            when (val terminator = block.terminator) {
+                is VmTerminator.Jump -> pending += terminator.target
+                is VmTerminator.Branch -> pending += listOf(terminator.ifTrue, terminator.ifFalse)
+                is VmTerminator.Return, is VmTerminator.Throw, null -> {}
+            }
+            var handler = block.protectedBy
+            while (handler != null) {
+                pending += function.handlers[handler].block
+                handler = function.handlers[handler].next
+            }
+        }
+        for (block in function.blocks) {
+            if (reached[block.index]) continue
+            block.instructions.clear()
+            val returnType = function.symbol.returnType
+            block.terminator = VmTerminator.Return(returnType?.let { type ->
+                function.newValue(type).also { block.instructions += VmInstruction.Constant(it, 0) }
+            })
+        }
     }
 
     /**
@@ -169,8 +203,8 @@ internal class VmFunctionGenerator private constructor(
         private const val BOX_VALUE_FIELD = 0
 
         /** Where the runtime's `Enum` lays out an entry's name and ordinal, ahead of every field an enum declares. */
-        private const val ENUM_NAME_FIELD = 0
-        private const val ENUM_ORDINAL_FIELD = 1
+        internal const val ENUM_NAME_FIELD = 0
+        internal const val ENUM_ORDINAL_FIELD = 1
 
         /** Unowned, as every initializer is. */
         fun classInitializer(gen: VmModuleGenerator, symbol: VmFunctionSymbol, parts: List<IrClass>): VmFunction =
@@ -523,7 +557,8 @@ internal class VmFunctionGenerator private constructor(
         val join = newBlock()
         for (branch in expression.branches) {
             val body = newBlock()
-            if (branch is IrElseBranch) {
+            // A branch on a constant `true` is an `else` too, and no branch after it runs.
+            if (branch is IrElseBranch || (branch.condition as? IrConst)?.value == true) {
                 startBlock(body)
             } else {
                 val next = newBlock()
@@ -618,6 +653,11 @@ internal class VmFunctionGenerator private constructor(
      * computed at run time needs formatting the runtime does not have yet.
      */
     private fun concatenation(expression: IrStringConcatenation): VmValue {
+        // Only constants: one literal, which is interned, as the JVM's compilers fold such a concatenation.
+        if (expression.arguments.all { it is IrConst }) {
+            val text = expression.arguments.joinToString("") { (it as IrConst).value.toString() }
+            return newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, text)) }
+        }
         var result: VmValue? = null
         for (argument in expression.arguments) {
             if (argument is IrConst && argument.kind != IrConstKind.Null) {
@@ -690,7 +730,7 @@ internal class VmFunctionGenerator private constructor(
         current = fail
         val message = newValue(gen.stringType)
         emit(VmInstruction.StringConstant(message, "lateinit property ${property.name.asString()} has not been initialized"))
-        throwNew("UninitializedPropertyAccessException", message)
+        throwNew("kotlin.UninitializedPropertyAccessException", message)
         current = next
     }
 
@@ -804,14 +844,14 @@ internal class VmFunctionGenerator private constructor(
             builtIns.checkNotNullSymbol -> operand(args[0]).also(::throwIfNull)
             // An exhaustive `when` that matched nothing: only a class changed since compilation gets here.
             builtIns.noWhenBranchMatchedExceptionSymbol -> {
-                throwNew("NoWhenBranchMatchedException", message = null)
+                throwNew("kotlin.NoWhenBranchMatchedException", message = null)
                 return Intrinsic(null)
             }
-            in builtIns.ieee754equalsFunByOperandType.values -> compare(Comparison.EQ, args[0], args[1])
-            in builtIns.lessFunByOperandType.values -> compare(Comparison.LT, args[0], args[1])
-            in builtIns.lessOrEqualFunByOperandType.values -> compare(Comparison.LE, args[0], args[1])
-            in builtIns.greaterFunByOperandType.values -> compare(Comparison.GT, args[0], args[1])
-            in builtIns.greaterOrEqualFunByOperandType.values -> compare(Comparison.GE, args[0], args[1])
+            in builtIns.ieee754equalsFunByOperandType.values -> compare(Comparison.EQ, callee, args)
+            in builtIns.lessFunByOperandType.values -> compare(Comparison.LT, callee, args)
+            in builtIns.lessOrEqualFunByOperandType.values -> compare(Comparison.LE, callee, args)
+            in builtIns.greaterFunByOperandType.values -> compare(Comparison.GT, callee, args)
+            in builtIns.greaterOrEqualFunByOperandType.values -> compare(Comparison.GE, callee, args)
             else -> {
                 enumMember(callee, args)?.let { return Intrinsic(it) }
                 when (callee.fqNameWhenAvailable?.asString()) {
@@ -819,7 +859,7 @@ internal class VmFunctionGenerator private constructor(
                     "kotlin.internal.throwNoWhenBranchMatchedException" -> {
                         val prefix = newValue(gen.stringType)
                         emit(VmInstruction.StringConstant(prefix, "No branch matched for subject: "))
-                        throwNew("NoWhenBranchMatchedException", plus(prefix, args[0]))
+                        throwNew("kotlin.NoWhenBranchMatchedException", plus(prefix, args[0]))
                         return Intrinsic(null)
                     }
                     "kotlin.String.plus" -> return Intrinsic(plus(operand(args[0]), args[1]))
@@ -854,10 +894,19 @@ internal class VmFunctionGenerator private constructor(
 
     private enum class Comparison { EQ, LT, LE, GT, GE }
 
-    private fun compare(comparison: Comparison, lhsExpression: IrExpression, rhsExpression: IrExpression): VmValue {
-        val type = primitive(lhsExpression.type)
-        val lhs = operand(lhsExpression)
-        val rhs = operand(rhsExpression)
+    /**
+     * A comparison built-in, its operands taken as its parameters are typed: the primitive, or its box where the
+     * parameter is nullable, which only `ieee754equals` has.
+     */
+    private fun compare(comparison: Comparison, callee: IrSimpleFunction, args: List<IrExpression>): VmValue {
+        val lhsType = callee.parameters[0].type
+        val type = lhsType.getPrimitiveType() ?: unsupported("comparing ${lhsType.render()}")
+        if (lhsType.isMarkedNullable() || callee.parameters[1].type.isMarkedNullable()) {
+            if (comparison != Comparison.EQ) unsupported("ordering nullable ${lhsType.render()}")
+            return nullableIeeeEquals(operandAs(args[0], lhsType), operandAs(args[1], callee.parameters[1].type), lhsType)
+        }
+        val lhs = operandAs(args[0], lhsType)
+        val rhs = operandAs(args[1], callee.parameters[1].type)
         if (type == PrimitiveType.DOUBLE) {
             val op = when (comparison) {
                 Comparison.EQ -> VmBinaryOp.EQ
@@ -879,6 +928,28 @@ internal class VmFunctionGenerator private constructor(
         }
     }
 
+    /**
+     * IEEE 754 equality of two possibly null boxes of [type]: both null are equal, one null is unequal, and two numbers
+     * compare as numbers, so `0.0 == -0.0` and NaN equals nothing.
+     */
+    private fun nullableIeeeEquals(lhs: VmValue, rhs: VmValue, type: IrType): VmValue {
+        val result = newValue(VmType.I64)
+        val lhsNull = isNull(lhs)
+        val rhsNull = isNull(rhs)
+        val someNull = newBlock()
+        val numbers = newBlock()
+        val join = newBlock()
+        terminate(VmTerminator.Branch(binary(VmBinaryOp.OR, lhsNull, rhsNull), someNull.index, numbers.index))
+        current = someNull
+        emit(VmInstruction.Copy(result, binary(VmBinaryOp.AND, lhsNull, rhsNull)))
+        jumpTo(join)
+        current = numbers
+        val primitive = type.makeNotNull()
+        emit(VmInstruction.Copy(result, binary(VmBinaryOp.EQ, normalize(lhs, primitive), normalize(rhs, primitive))))
+        startBlock(join)
+        return result
+    }
+
     private fun primitive(type: IrType): PrimitiveType {
         if (!type.isPrimitiveType()) unsupported("an operand of type ${type.render()}")
         return type.getPrimitiveType()!!
@@ -888,9 +959,12 @@ internal class VmFunctionGenerator private constructor(
     private fun equals(lhsExpression: IrExpression, rhsExpression: IrExpression): VmValue {
         val lhsType = lhsExpression.type
         val rhsType = rhsExpression.type
-        // `==` on doubles outside an IEEE 754 comparison is `Double.equals`, which the box answers.
-        if (lhsType.isPrimitiveType() && rhsType.isPrimitiveType() && primitive(lhsType) != PrimitiveType.DOUBLE) {
+        // Two doubles, statically, are equal as IEEE 754 says, boxed or not; a box of `Any` type answers `equals`.
+        if (lhsType.isPrimitiveType() && rhsType.isPrimitiveType()) {
             return binary(VmBinaryOp.EQ, operand(lhsExpression), operand(rhsExpression))
+        }
+        if (lhsType.getPrimitiveType() == PrimitiveType.DOUBLE && rhsType.getPrimitiveType() == PrimitiveType.DOUBLE) {
+            return nullableIeeeEquals(reference(lhsExpression), reference(rhsExpression), lhsType)
         }
         if (rhsExpression.isNullConstant()) return isNull(reference(lhsExpression))
         if (lhsExpression.isNullConstant()) return isNull(reference(rhsExpression))
@@ -918,27 +992,33 @@ internal class VmFunctionGenerator private constructor(
     /** A member of a primitive class: its operators and conversions. */
     private fun primitiveMember(callee: IrSimpleFunction, receiverType: PrimitiveType, args: List<IrExpression>): VmValue? {
         val name = callee.name.asString()
-        val receiver = operand(args[0])
+        // Operands as the member's parameters type them: a smart-cast receiver can still be statically nullable, and
+        // so held boxed.
+        val receiver = operandAs(args[0], callee.parameters[0].type)
         val resultType = callee.returnType.takeIf { it.isPrimitiveType() }?.getPrimitiveType()
-        fun argument() = operand(args[1])
+        fun argument() = operandAs(args[1], callee.parameters[1].type)
         fun resultType() = resultType ?: unsupported("${receiverType.typeName}.$name")
 
         return when (name) {
-            "plus" -> arithmetic(VmBinaryOp.ADD, receiver, receiverType, args[1], resultType())
-            "minus" -> arithmetic(VmBinaryOp.SUB, receiver, receiverType, args[1], resultType())
-            "times" -> arithmetic(VmBinaryOp.MUL, receiver, receiverType, args[1], resultType())
-            "div" -> arithmetic(VmBinaryOp.DIV_S, receiver, receiverType, args[1], resultType())
-            "rem" -> arithmetic(VmBinaryOp.REM_S, receiver, receiverType, args[1], resultType())
+            "plus" -> arithmetic(VmBinaryOp.ADD, receiver, receiverType, args[1], callee.parameters[1].type, resultType())
+            "minus" -> arithmetic(VmBinaryOp.SUB, receiver, receiverType, args[1], callee.parameters[1].type, resultType())
+            "times" -> arithmetic(VmBinaryOp.MUL, receiver, receiverType, args[1], callee.parameters[1].type, resultType())
+            "div" -> arithmetic(VmBinaryOp.DIV_S, receiver, receiverType, args[1], callee.parameters[1].type, resultType())
+            "rem" -> arithmetic(VmBinaryOp.REM_S, receiver, receiverType, args[1], callee.parameters[1].type, resultType())
             "unaryPlus" -> receiver
             "unaryMinus" -> {
                 val type = resultType()
-                val value = if (type.isFloating()) receiver else widen(receiver, receiverType, type)
-                narrow(newValue(value.vmType()).also { emit(VmInstruction.Unary(VmUnaryOp.NEG, it, value)) }, type)
+                if (type.isFloating()) {
+                    negateDouble(receiver)
+                } else {
+                    val value = widen(receiver, receiverType, type)
+                    narrow(newValue(value.vmType()).also { emit(VmInstruction.Unary(VmUnaryOp.NEG, it, value)) }, type)
+                }
             }
             "inc" -> narrow(binary(VmBinaryOp.ADD, receiver, one(receiverType), receiver.vmType()), receiverType)
             "dec" -> narrow(binary(VmBinaryOp.SUB, receiver, one(receiverType), receiver.vmType()), receiverType)
             "compareTo" -> {
-                if (receiverType.isFloating() || primitive(args[1].type).isFloating()) unsupported("compareTo on floating-point numbers")
+                if (receiverType.isFloating() || primitive(callee.parameters[1].type).isFloating()) unsupported("compareTo on floating-point numbers")
                 val other = argument()
                 binary(VmBinaryOp.SUB, binary(VmBinaryOp.GT_S, receiver, other), binary(VmBinaryOp.LT_S, receiver, other))
             }
@@ -951,6 +1031,13 @@ internal class VmFunctionGenerator private constructor(
             "toByte", "toShort", "toInt", "toLong", "toChar", "toDouble" -> convert(receiver, receiverType, resultType())
             else -> unsupported("${receiverType.typeName}.$name")
         }
+    }
+
+    /** The VM negates integers only, so a double's sign bit is flipped, which is exact for zeros and NaN too. */
+    private fun negateDouble(value: VmValue): VmValue {
+        val bits = newValue(VmType.I64).also { emit(VmInstruction.Copy(it, value)) }
+        val flipped = binary(VmBinaryOp.XOR, bits, constant(VmType.I64, Long.MIN_VALUE))
+        return newValue(VmType.F64).also { emit(VmInstruction.Copy(it, flipped)) }
     }
 
     private fun PrimitiveType.isFloating() = this == PrimitiveType.DOUBLE || this == PrimitiveType.FLOAT
@@ -971,11 +1058,12 @@ internal class VmFunctionGenerator private constructor(
         receiver: VmValue,
         receiverType: PrimitiveType,
         argument: IrExpression,
+        parameterType: IrType,
         resultType: PrimitiveType,
     ): VmValue {
-        val argumentType = primitive(argument.type)
+        val argumentType = primitive(parameterType)
         val lhs = widen(receiver, receiverType, resultType)
-        val rhs = widen(operand(argument), argumentType, resultType)
+        val rhs = widen(operandAs(argument, parameterType), argumentType, resultType)
         if (resultType.isFloating()) {
             if (op == VmBinaryOp.REM_S) unsupported("`rem` on floating-point numbers")
             return binary(op, lhs, rhs, VmType.F64)

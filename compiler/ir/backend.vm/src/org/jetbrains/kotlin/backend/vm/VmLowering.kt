@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.backend.vm
 import org.jetbrains.kotlin.backend.common.LoweringContext
 import org.jetbrains.kotlin.backend.common.ir.PreSerializationSymbols
 import org.jetbrains.kotlin.backend.common.ir.SharedVariablesManager
+import org.jetbrains.kotlin.backend.common.lower.TailrecLowering
 import org.jetbrains.kotlin.backend.common.lower.UpgradeCallableReferences
 import org.jetbrains.kotlin.backend.vm.vmir.VmModule
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -66,6 +67,9 @@ fun lowerForVm(context: VmLoweringContext, module: IrModuleFragment) {
     val inlining = object : FunctionInlining(context, VmInlineFunctionResolver(upgrade), substituteNonReifiedTypeParameters = true) {}
     module.files.forEach(upgrade::lower)
     module.files.forEach(inlining::lower)
+    // After inlining, so a tail call an inlined lambda holds becomes a jump too.
+    val tailrec = TailrecLowering(context)
+    module.files.forEach { tailrec.lower(it) }
 }
 
 /** Lowers [module] and generates it as one VM module named [moduleName]. */

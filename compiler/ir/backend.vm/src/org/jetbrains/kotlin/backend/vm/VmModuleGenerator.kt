@@ -34,38 +34,42 @@ internal fun unsupported(what: String): Nothing = throw VmCodegenException("the 
 const val VM_RUNTIME_MODULE = "vm.runtime"
 
 /**
- * The JVM's throwables the runtime implements, by the runtime class standing for each. The Kotlin names are the
- * standard library's own classes; its other exceptions are aliases of the Java ones. The VM raises the runtime classes
- * under `vm.` names itself, which is what makes a `catch` of the JVM class catch the VM's failure.
+ * The standard library's types the runtime declares, by the runtime class standing for each: the JVM class the Kotlin
+ * type is compiled to, whose name the runtime gives its class.
  */
-/** The standard library's types the runtime declares under the same simple name. */
 private val RUNTIME_TYPES = mapOf(
-    "kotlin.Number" to "Number",
-    "kotlin.Comparable" to "Comparable",
-    "kotlin.CharSequence" to "CharSequence",
+    "kotlin.Number" to "java.lang.Number",
+    "kotlin.Comparable" to "java.lang.Comparable",
+    "kotlin.CharSequence" to "java.lang.CharSequence",
 )
 
+/**
+ * The JVM's throwables the runtime implements, by the runtime class standing for each. The Kotlin names are the
+ * standard library's own classes; its other exceptions are aliases of the Java ones. The VM raises the `vm.` classes
+ * itself, which is what makes a `catch` of the JVM class catch the VM's failure.
+ */
 private val RUNTIME_THROWABLES = mapOf(
-    "kotlin.Throwable" to "Throwable",
-    "java.lang.Throwable" to "Throwable",
-    "java.lang.Exception" to "Exception",
-    "java.lang.Error" to "Error",
-    "java.lang.AssertionError" to "AssertionError",
-    "java.lang.RuntimeException" to "RuntimeException",
-    "java.lang.IllegalStateException" to "IllegalStateException",
-    "java.lang.IllegalArgumentException" to "IllegalArgumentException",
-    "java.lang.NumberFormatException" to "NumberFormatException",
-    "java.lang.UnsupportedOperationException" to "UnsupportedOperationException",
-    "java.lang.IndexOutOfBoundsException" to "IndexOutOfBoundsException",
-    "java.util.NoSuchElementException" to "NoSuchElementException",
-    "kotlin.NoWhenBranchMatchedException" to "NoWhenBranchMatchedException",
-    "kotlin.UninitializedPropertyAccessException" to "UninitializedPropertyAccessException",
+    "kotlin.Throwable" to "java.lang.Throwable",
+    "kotlin.NoWhenBranchMatchedException" to "kotlin.NoWhenBranchMatchedException",
+    "kotlin.UninitializedPropertyAccessException" to "kotlin.UninitializedPropertyAccessException",
     "java.lang.NullPointerException" to "vm.NullReference",
     "java.lang.ArithmeticException" to "vm.DivisionByZero",
     "java.lang.ClassCastException" to "vm.ClassCast",
     "java.lang.ArrayIndexOutOfBoundsException" to "vm.ArrayIndexOutOfBounds",
     "java.lang.StringIndexOutOfBoundsException" to "vm.StringIndexOutOfBounds",
-)
+) + listOf(
+    "java.lang.Throwable",
+    "java.lang.Exception",
+    "java.lang.Error",
+    "java.lang.AssertionError",
+    "java.lang.RuntimeException",
+    "java.lang.IllegalStateException",
+    "java.lang.IllegalArgumentException",
+    "java.lang.NumberFormatException",
+    "java.lang.UnsupportedOperationException",
+    "java.lang.IndexOutOfBoundsException",
+    "java.util.NoSuchElementException",
+).associateWith { it }
 
 /**
  * Generates one VM module from a linked, unlowered IR module fragment.
@@ -326,7 +330,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     /** The class the VM raises for a null dereference, which Kotlin throws for a failed null check too. */
     internal val nullPointerClass: Int get() = runtimeClass("vm.NullReference")
 
-    internal val throwableClass: Int get() = runtimeClass("Throwable")
+    internal val throwableClass: Int get() = runtimeClass("java.lang.Throwable")
 
     /** A runtime class by the name the runtime declares it under. */
     internal fun runtimeClassNamed(name: String): Int = runtimeClass(name)
@@ -340,8 +344,8 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
             "equals" -> VmSelector(name, VM_RUNTIME_MODULE, any, listOf(anyType), VmType.I64)
             "hashCode" -> VmSelector(name, VM_RUNTIME_MODULE, any, emptyList(), VmType.I64)
             "toString" -> VmSelector(name, VM_RUNTIME_MODULE, any, emptyList(), stringType)
-            "message" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("Throwable"), emptyList(), stringType)
-            "cause" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("Throwable"), emptyList(), anyType)
+            "message" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("java.lang.Throwable"), emptyList(), stringType)
+            "cause" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("java.lang.Throwable"), emptyList(), anyType)
             else -> error("The runtime declares no selector $name on Any")
         }
         module.selectors.size - 1
@@ -359,7 +363,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     }
 
     /** The runtime's box for a primitive: its JVM class, holding the value in its only field. */
-    internal fun boxClass(kind: PrimitiveType): Int = runtimeClass(boxName(kind))
+    internal fun boxClass(kind: PrimitiveType): Int = runtimeClass("java.lang.${boxName(kind)}")
 
     /** The runtime's `valueOf` for a primitive's box, which boxing calls. */
     internal fun valueOf(kind: PrimitiveType): VmFunctionSymbol {
@@ -484,7 +488,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         val superClass = declaration.superClass()
         val superIndex = when {
             superClass == null || superClass.isAny() -> runtimeClass("Any")
-            superClass.isEnumBase() -> runtimeClass("Enum")
+            superClass.isEnumBase() -> runtimeClass("java.lang.Enum")
             runtimeThrowable(superClass) != null -> runtimeThrowable(superClass)!!
             else -> classIndex(superClass) ?: unsupported("the superclass ${superClass.name} from another module")
         }
@@ -509,8 +513,14 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
             // Only an instance member answers a selector, which leaves out an enum's `values` and `valueOf`.
             if (implementation.dispatchReceiverParameter == null) continue
             val implementationSymbol = when {
-                // Answered by the runtime's `Enum`, or by `Any` through it.
-                implementation.parentClassOrNull?.isEnumBase() == true -> continue
+                // Answered by the runtime's `Enum`, or by `Any` through it, but for an interface's selector.
+                implementation.parentClassOrNull?.isEnumBase() == true -> {
+                    for (root in function.roots()) {
+                        val selector = selectors[root.symbol] ?: continue
+                        methods += VmMethod(selector, enumAdapter(declaration, implementation, module.selectors[selector]))
+                    }
+                    continue
+                }
                 // Answered by the runtime's throwable, except its name, which only the class's own code has.
                 implementation.parentClassOrNull?.let(::runtimeThrowable) != null -> {
                     if (implementation.name.asString() != "toString" || isAbstract) continue
@@ -534,6 +544,32 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         }
         return methods.toList()
     }
+
+    /**
+     * The function of an enum answering [selector], which an interface it implements declares, with the runtime
+     * `Enum`'s [member]: the runtime cannot answer a selector of the module.
+     */
+    private fun enumAdapter(declaration: IrClass, member: IrSimpleFunction, selector: VmSelector): VmFunctionSymbol =
+        enumAdapters.getOrPut(declaration.symbol to member.name.asString()) {
+            val [field, type] = when (member.name.asString()) {
+                "<get-name>" -> VmFunctionGenerator.ENUM_NAME_FIELD to stringType
+                "<get-ordinal>" -> VmFunctionGenerator.ENUM_ORDINAL_FIELD to VmType.I64
+                else -> unsupported("implementing an interface with ${member.render()}")
+            }
+            if (selector.paramTypes.isNotEmpty() || selector.returnType != type) unsupported("a bridge to ${member.render()}")
+            val symbol = VmFunctionSymbol(sanitized("${declaration.vmName}::${member.name.asString()}"), listOf(anyType), type)
+            val function = VmFunction(symbol, owner = null)
+            val self = function.newValue(anyType)
+            function.params += self
+            val result = function.newValue(type)
+            val block = function.newBlock()
+            block.instructions += VmInstruction.LoadField(result, self, field)
+            block.terminator = VmTerminator.Return(result)
+            module.functions += function
+            symbol
+        }
+
+    private val enumAdapters = hashMapOf<Pair<IrClassSymbol, String>, VmFunctionSymbol>()
 
     /** `Name: message`, for a throwable whose `toString` is still `Throwable`'s; see `@Throwable::describe`. */
     private fun throwableToString(declaration: IrClass): VmFunctionSymbol = defaultToStrings.getOrPut(declaration.symbol) {
@@ -657,14 +693,27 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
 
     /**
      * A function's name in the VM: its qualified name — a member's as `Class::name` — then the hash its public signature
-     * carries, which is what tells overloads apart.
+     * carries, which is what tells overloads apart. A function without one is private to the module, so a counter
+     * tells its overloads apart instead.
      */
     private fun vmName(function: IrFunction): String {
         val owner = function.parentClassOrNull
         val base = if (owner != null) "${owner.vmName}::${function.name.asString()}"
         else function.fqNameWhenAvailable?.asString() ?: function.name.asString()
-        val hash = (function.symbol.signature as? IdSignature.CommonSignature)?.id
-        return sanitized(if (hash == null) base else "${base}_${java.lang.Long.toHexString(hash)}")
+        val hash = signatureHash(function.symbol.signature)
+        val name = sanitized(if (hash == null) base else "${base}_${java.lang.Long.toHexString(hash)}")
+        if (usedFunctionNames.add(name)) return name
+        return generateSequence(1) { it + 1 }.map { "${name}_$it" }.first(usedFunctionNames::add)
+    }
+
+    private val usedFunctionNames = hashSetOf<String>()
+
+    /** An accessor's hash is its own; its property's would be the same for the getter and the setter. */
+    private fun signatureHash(signature: IdSignature?): Long? = when (signature) {
+        is IdSignature.CommonSignature -> signature.id
+        is IdSignature.AccessorSignature -> signature.accessorSignature.id
+        is IdSignature.CompositeSignature -> signatureHash(signature.inner)
+        else -> null
     }
 
     /** Keeps only what an IR text name may hold, so a dump reads back in. */

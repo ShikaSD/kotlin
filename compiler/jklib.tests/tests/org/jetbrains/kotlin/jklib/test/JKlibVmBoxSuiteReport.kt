@@ -37,6 +37,12 @@ class JKlibVmBoxSuiteReport {
         "// JVM_TARGET", "// ENABLE_JVM_PREVIEW", "// IGNORE_BACKEND: ANY",
     )
 
+    /** A test that `DONT_TARGET_EXACT_BACKEND` keeps off a JVM backend checks a behaviour the VM does not model either. */
+    private fun excludesJvm(text: String): Boolean =
+        Regex("""// DONT_TARGET_EXACT_BACKEND:(.*)""").findAll(text).any { match ->
+            match.groupValues[1].split(',', ' ').any { it.trim().startsWith("JVM") }
+        }
+
     private enum class Outcome { PASS, WRONG_RESULT, RUNTIME_ERROR, LINK_ERROR, UNSUPPORTED, FRONTEND_ERROR, TIMEOUT }
 
     private class Result(val test: String, val withStdlib: Boolean, val outcome: Outcome, val detail: String)
@@ -49,7 +55,7 @@ class JKlibVmBoxSuiteReport {
         val root = if (suite == "1") boxRoot else File(boxRoot, suite!!)
         val tests = root.walkTopDown().filter { it.isFile && it.extension == "kt" }.sorted().filter { file ->
             val text = file.readText()
-            inapplicable.none { it in text }
+            inapplicable.none { it in text } && !excludesJvm(text)
         }.toList()
 
         val pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
@@ -63,11 +69,27 @@ class JKlibVmBoxSuiteReport {
     }
 
     private fun run(test: File, repo: File): Result {
+        val dir = Files.createTempDirectory("vm-box").toFile()
+        try {
+            val result = compileAndRun(test, repo, dir)
+            // What a failure compiled to, for reading with the VM's `dump_ir`, beside its source.
+            val keep = System.getenv("KOTLIN_VM_BOX_KEEP")
+            if (keep != null && result.outcome in setOf(Outcome.WRONG_RESULT, Outcome.RUNTIME_ERROR, Outcome.LINK_ERROR)) {
+                val base = File(keep, result.test.replace('/', '_').removeSuffix(".kt")).apply { parentFile.mkdirs() }
+                File(dir, "main.vir").takeIf { it.exists() }?.copyTo(File("${base.path}.vir"), overwrite = true)
+                File("${base.path}.kt").writeText(prepared(test.readText()))
+            }
+            return result
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    private fun compileAndRun(test: File, repo: File, dir: File): Result {
         val name = test.relativeTo(boxRoot).path
         val text = test.readText()
         val withStdlib = "// WITH_STDLIB" in text
-        val dir = Files.createTempDirectory("vm-box").toFile()
-        try {
+        run {
             val vir = File(dir, "main.vir")
             val source = File(dir, test.name).apply { writeText(prepared(text)) }
             val args = arrayOf(
@@ -95,16 +117,16 @@ class JKlibVmBoxSuiteReport {
             val container = File(dir, "main.vmc").path
             val link = exec(File(repo, "target/debug/link_ir"), container, vir.path, File(repo, "runtime/src/runtime.ir").path)
                 ?: return Result(name, withStdlib, Outcome.TIMEOUT, "link")
-            if (link.first != 0) return Result(name, withStdlib, Outcome.LINK_ERROR, link.second.lineSequence().first().take(200))
+            if (link.first != 0) {
+                return Result(name, withStdlib, Outcome.LINK_ERROR, lastMessage(link.second).take(200))
+            }
             val execute = exec(File(repo, "target/debug/execute"), container)
                 ?: return Result(name, withStdlib, Outcome.TIMEOUT, "execute")
             return when {
                 execute.second.lines().any { it == "r0 = 1" } -> Result(name, withStdlib, Outcome.PASS, "")
                 execute.first == 0 -> Result(name, withStdlib, Outcome.WRONG_RESULT, "")
-                else -> Result(name, withStdlib, Outcome.RUNTIME_ERROR, execute.second.lines().lastOrNull { it.isNotBlank() }?.take(160) ?: "")
+                else -> Result(name, withStdlib, Outcome.RUNTIME_ERROR, lastMessage(execute.second).take(160))
             }
-        } finally {
-            dir.deleteRecursively()
         }
     }
 
@@ -123,15 +145,24 @@ class JKlibVmBoxSuiteReport {
             .filter { it.startsWith("+") || it.startsWith("-") }
             .toList()
 
+    /** The last line of a binary's [output] that says what went wrong: a panic's message rather than its `note:`. */
+    private fun lastMessage(output: String): String =
+        output.lines().lastOrNull { it.isNotBlank() && !it.startsWith("note:") } ?: ""
+
     /** Runs [binary], answering its exit code and output, or null when it runs past a time limit. */
     private fun exec(binary: File, vararg args: String): Pair<Int, String>? {
-        val process = ProcessBuilder(binary.path, *args).redirectErrorStream(true).start()
-        val output = process.inputStream.bufferedReader().readText()
-        if (!process.waitFor(20, TimeUnit.SECONDS)) {
-            process.destroyForcibly()
-            return null
+        // Into a file, since reading a pipe would wait for a program that never ends before the limit could apply.
+        val log = File.createTempFile("vm-exec", ".log")
+        try {
+            val process = ProcessBuilder(binary.path, *args).redirectErrorStream(true).redirectOutput(log).start()
+            if (!process.waitFor(20, TimeUnit.SECONDS)) {
+                process.destroyForcibly()
+                return null
+            }
+            return process.exitValue() to log.readText()
+        } finally {
+            log.delete()
         }
-        return process.exitValue() to output
     }
 
     /**
@@ -168,8 +199,10 @@ class JKlibVmBoxSuiteReport {
         appendLine()
         appendLine("Passing:")
         results.filter { it.outcome == Outcome.PASS }.forEach { appendLine("  ${it.test}") }
-        appendLine()
-        appendLine("Wrong result:")
-        results.filter { it.outcome == Outcome.WRONG_RESULT }.forEach { appendLine("  ${it.test}") }
+        for (outcome in listOf(Outcome.WRONG_RESULT, Outcome.RUNTIME_ERROR, Outcome.LINK_ERROR, Outcome.TIMEOUT)) {
+            appendLine()
+            appendLine("All $outcome:")
+            results.filter { it.outcome == outcome }.forEach { appendLine("  ${it.test}  ${it.detail}") }
+        }
     }
 }
