@@ -5,12 +5,15 @@
 
 package org.jetbrains.kotlin.backend.vm
 
-import org.jetbrains.kotlin.backend.common.LoweringContext
+import org.jetbrains.kotlin.backend.common.CommonBackendContext
+import org.jetbrains.kotlin.backend.common.InlineClassesUtils
+import org.jetbrains.kotlin.backend.common.ir.BackendSymbols
 import org.jetbrains.kotlin.backend.common.ir.KlibSharedVariablesManager
 import org.jetbrains.kotlin.backend.common.ir.PreSerializationKlibSymbols
-import org.jetbrains.kotlin.backend.common.ir.PreSerializationSymbols
 import org.jetbrains.kotlin.backend.common.ir.SharedVariablesManager
 import org.jetbrains.kotlin.backend.common.lower.ArrayConstructorLowering
+import org.jetbrains.kotlin.backend.common.lower.InnerClassesSupport
+import org.jetbrains.kotlin.backend.common.lower.loops.ForLoopsLowering
 import org.jetbrains.kotlin.backend.common.lower.LocalDeclarationPopupLowering
 import org.jetbrains.kotlin.backend.common.lower.LocalDeclarationsLowering
 import org.jetbrains.kotlin.backend.common.lower.SharedVariablesLowering
@@ -29,9 +32,16 @@ import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.inline.FunctionInlining
 import org.jetbrains.kotlin.ir.inline.InlineFunctionResolver
+import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.functionSymbolAssociatedBy
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
+import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
+import org.jetbrains.kotlin.ir.types.classifierOrFail
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.ir.util.resolveFakeOverrideOrSelf
@@ -44,18 +54,56 @@ class VmLoweringContext(
     override val configuration: CompilerConfiguration,
     override val irBuiltIns: IrBuiltIns,
     override val diagnosticReporter: IrDiagnosticReporter,
-) : LoweringContext {
+) : CommonBackendContext {
     override val irFactory: IrFactory = IrFactoryImpl
     override var inVerbosePhase: Boolean = false
 
-    override val symbols: PreSerializationSymbols
-        get() = error("The VM backend declares no lowering symbols yet")
+    override val symbols: BackendSymbols by lazy { VmSymbols(irBuiltIns) }
+
+    override val typeSystem: IrTypeSystemContext = IrTypeSystemContextImpl(irBuiltIns)
+
+    /** The VM backend compiles no value classes yet, so none is treated as one. */
+    override val inlineClassesUtils: InlineClassesUtils = object : InlineClassesUtils {
+        override fun isClassInlineLike(klass: IrClass): Boolean = false
+    }
+
+    override val innerClassesSupport: InnerClassesSupport
+        get() = error("The VM backend lowers no inner classes yet")
 
     /** Boxes a captured variable something assigns as the klib backends do, in `kotlin.internal.SharedVariableBox`. */
     override val sharedVariablesManager: SharedVariablesManager by lazy { KlibSharedVariablesManager(SharedVariableSymbols(irBuiltIns)) }
 }
 
-/** The one symbol [KlibSharedVariablesManager] reads; the rest fail loudly, as [VmLoweringContext.symbols] does. */
+/**
+ * The symbols the lowerings [lowerForVm] runs read: the ranges and progressions `ForLoopsLowering` recognizes, which
+ * [BackendSymbols] finds itself, and the function computing a progression's last element. The rest fail loudly.
+ */
+private class VmSymbols(irBuiltIns: IrBuiltIns) : BackendSymbols(irBuiltIns) {
+    override val getProgressionLastElementByReturnType: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> by CallableId(
+        StandardNames.KOTLIN_INTERNAL_FQ_NAME, Name.identifier("getProgressionLastElement")
+    ).functionSymbolAssociatedBy { it.returnType.classifierOrFail }
+
+    override val throwNullPointerException: IrSimpleFunctionSymbol get() = unused()
+    override val throwTypeCastException: IrSimpleFunctionSymbol get() = unused()
+    override val throwKotlinNothingValueException: IrSimpleFunctionSymbol get() = unused()
+    override val stringBuilder: IrClassSymbol get() = unused()
+    override val coroutineSuspendedGetter: IrSimpleFunctionSymbol get() = unused()
+    override val getContinuation: IrSimpleFunctionSymbol get() = unused()
+    override val continuationClass: IrClassSymbol get() = unused()
+    override val returnIfSuspended: IrSimpleFunctionSymbol get() = unused()
+    override val functionAdapter: IrClassSymbol get() = unused()
+    override val defaultConstructorMarker: IrClassSymbol get() = unused()
+    override val throwUninitializedPropertyAccessException: IrSimpleFunctionSymbol get() = unused()
+    override val throwUnsupportedOperationException: IrSimpleFunctionSymbol get() = unused()
+    override val syntheticConstructorMarker: IrClassSymbol get() = unused()
+    override val coroutineContextGetter: IrSimpleFunctionSymbol get() = unused()
+    override val suspendCoroutineUninterceptedOrReturn: IrSimpleFunctionSymbol get() = unused()
+    override val coroutineGetContext: IrSimpleFunctionSymbol get() = unused()
+
+    private fun unused(): Nothing = error("The VM backend declares no such lowering symbol yet")
+}
+
+/** The one symbol [KlibSharedVariablesManager] reads; the rest fail loudly, as [VmSymbols] does. */
 @OptIn(InternalSymbolFinderAPI::class)
 private class SharedVariableSymbols(irBuiltIns: IrBuiltIns) : PreSerializationKlibSymbols {
     override val genericSharedVariableBox = PreSerializationKlibSymbols.SharedVariableBoxClassInfo(
@@ -115,6 +163,10 @@ fun lowerForVm(context: VmLoweringContext, module: IrModuleFragment) {
     // After inlining, so a tail call an inlined lambda holds becomes a jump too.
     val tailrec = TailrecLowering(context)
     module.files.forEach { tailrec.lower(it) }
+    // A `for` over an array, a range or a progression becomes a loop counting its index or its value, rather than
+    // calling an iterator; after inlining, so a loop an inlined body holds is counted too.
+    val forLoops = ForLoopsLowering(context)
+    module.files.forEach { forLoops.lower(it) }
     // A local function becomes a function of its enclosing class or file taking what it captures as parameters, and a
     // local class keeps what it captures in fields; boxing what is also assigned first lets every copy reach it.
     val shared = SharedVariablesLowering(context)

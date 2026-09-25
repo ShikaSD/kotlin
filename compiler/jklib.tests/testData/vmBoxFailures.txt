@@ -1,42 +1,42 @@
 # Box tests under compiler/testData/codegen/box expected to fail on the VM; see JKlibVmExpectedFailures.
-# 4771 failures; the most common reasons:
+# 4623 failures; the most common reasons:
 #     430  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 #     275  IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 #     183  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
-#     181  unsupported: a call to iterator
 #     123  IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'x'. Specify it explicitly.
-#     121  unsupported: the expression RICH_PROPERTY_REFERENCE …
+#     122  unsupported: the expression RICH_PROPERTY_REFERENCE …
 #     121  unsupported: the value class Z
-#     115  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
+#     117  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 #     101  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
+#     100  unsupported: a call to CONSTRUCTOR …
 #      99  unsupported: the inner class Inner
-#      92  IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
-#      91  unsupported: a call to CONSTRUCTOR …
-#      84  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+#      94  unsupported: overriding FUN …
+#      93  IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
+#      85  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 #      83  unsupported: the type operator SAM_CONVERSION
-#      82  unsupported: overriding FUN …
 #      77  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 #      75  unsupported: the value class X
 #      74  unsupported: the value class IC
-#      72  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
+#      71  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 #      64  unsupported: the value class A
-#      50  unsupported: inheriting FUN …
-#      48  unsupported: a call to <get-length>
+#      53  unsupported: inheriting FUN …
+#      49  unsupported: a call to <get-length>
 #      46  unsupported: Int.hashCode
+#      44  unsupported: Int.toString
 #      43  IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 #      43  unsupported: a type test against CT of .Buildee
 #      42  unsupported: the value class R
-#      41  unsupported: Int.toString
 #      39  unsupported: the value class S
 #      38  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'UInt'.
 #      38  unsupported: the value class Foo
 #      29  unsupported: a bridge from FUN …
 #      29  unsupported: the inner class B
-#      27  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
 #      27  unsupported: a value of type kotlin.Unit
 #      26  unsupported: the value class UInt
 #      25  IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'c'. Specify it explicitly.
 #      25  unsupported: a value of type kotlin.Nothing
+#      24  unsupported: a call to append
+#      24  unsupported: a call to contains
 #      24  unsupported: a call to toString
 #      23  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
 #      23  unsupported: a suspend lambda
@@ -46,9 +46,9 @@
 #      20  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
 #      20  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'require'.
 #      19  IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
-#      19  unsupported: a call to append
 #      18  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Result'.
 #      18  unsupported: the annotation class A
+#      17  unsupported: a call to iterator
 #      17  unsupported: the value class Value
 
 annotations/annotationWithDefaultArgInDifferentModule.kt: unsupported: the annotation class MyConfig
@@ -64,7 +64,7 @@ annotations/instances/annotationInstances.kt: IllegalStateException: UNSIGNED_LI
 annotations/instances/annotationInstancesEmptyDefault.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contentEquals' on receiver of type 'Array<String>'.
 annotations/instances/annotationInstancesEmptyDefaultLowered.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contentEquals' on receiver of type 'Array<String>'.
 annotations/instances/annotationToString.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
-annotations/instances/annotationToStringDefaultsAndEmptyArrays.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'String'.
+annotations/instances/annotationToStringDefaultsAndEmptyArrays.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
 annotations/instances/annotationWithTypeParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'endsWith' on receiver of type 'String'.
 annotations/instances/annotationsUnsignedTypes.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'uintArrayOf'.
 annotations/instances/arrayContentEqAny.kt: unsupported: the annotation class A
@@ -106,7 +106,6 @@ arithmetic/basic_uintTests.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYP
 arithmetic/division.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 arithmetic/divisionByZero.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'div' for operator '/'.
 arithmetic/github1856.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-arrays/arrayConstructorWithNonInlineLambda.kt: unsupported: a call to iterator
 arrays/arrayConstructorsSimple.kt: unsupported: Int.toString
 arrays/arrayInstanceOf.kt: unsupported: a call to iterator
 arrays/arraysAreCloneable.kt: CompilationErrorException: There are still 9 unbound symbols Found unbound symbol:
@@ -117,14 +116,6 @@ arrays/cloneArray.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved re
 arrays/clonePrimitiveArrays.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contentEquals' on receiver of type 'IntArray'.
 arrays/collectionAssignGetMultiIndex.kt: unsupported: overriding FUN …
 arrays/collectionGetMultiIndex.kt: unsupported: overriding FUN …
-arrays/forEachBooleanArray.kt: unsupported: a call to iterator
-arrays/forEachByteArray.kt: unsupported: a call to iterator
-arrays/forEachCharArray.kt: unsupported: a call to iterator
-arrays/forEachDoubleArray.kt: unsupported: a call to iterator
-arrays/forEachFloatArray.kt: unsupported: a call to iterator
-arrays/forEachIntArray.kt: unsupported: a call to iterator
-arrays/forEachLongArray.kt: unsupported: a call to iterator
-arrays/forEachShortArray.kt: unsupported: a call to iterator
 arrays/forInReversed/reversedArrayOriginalUpdatedInLoopBody.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 arrays/forInReversed/reversedArrayReversedArrayOriginalUpdatedInLoopBody.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 arrays/forInReversed/reversedOriginalUpdatedInLoopBody.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
@@ -157,30 +148,12 @@ arrays/kt2997.kt: unsupported: a call to iterator
 arrays/kt33.kt: unsupported: a call to CONSTRUCTOR …
 arrays/kt42932.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'indexOfAny' on receiver of type 'String'.
 arrays/kt47483.kt: unsupported: a value of type kotlin.Nothing
-arrays/kt55984.kt: unsupported: a call to iterator
 arrays/kt7009.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Int'.
 arrays/kt7288.kt: unsupported: a call to iterator
-arrays/kt945.kt: unsupported: a call to iterator
 arrays/kt950.kt: unsupported: overriding FUN …
-arrays/multiArrayConstructors.kt: unsupported: a call to iterator
-arrays/multiDecl/MultiDeclFor.kt: unsupported: a call to iterator
-arrays/multiDecl/MultiDeclForComponentExtensions.kt: unsupported: a call to iterator
-arrays/multiDecl/MultiDeclForComponentMemberExtensions.kt: unsupported: a call to iterator
-arrays/multiDecl/MultiDeclForComponentMemberExtensionsInExtensionFunction.kt: unsupported: a call to iterator
-arrays/multiDecl/MultiDeclForValCaptured.kt: unsupported: a call to iterator
-arrays/multiDecl/int/MultiDeclForComponentExtensions.kt: unsupported: a call to iterator
-arrays/multiDecl/int/MultiDeclForComponentExtensionsValCaptured.kt: unsupported: a call to iterator
-arrays/multiDecl/int/MultiDeclForComponentMemberExtensions.kt: unsupported: a call to iterator
-arrays/multiDecl/int/MultiDeclForComponentMemberExtensionsInExtensionFunction.kt: unsupported: a call to iterator
-arrays/multiDecl/kt15560.kt: unsupported: a call to iterator
-arrays/multiDecl/kt15568.kt: unsupported: a call to iterator
-arrays/multiDecl/long/MultiDeclForComponentExtensions.kt: unsupported: a call to iterator
-arrays/multiDecl/long/MultiDeclForComponentExtensionsValCaptured.kt: unsupported: a call to iterator
-arrays/multiDecl/long/MultiDeclForComponentMemberExtensions.kt: unsupported: a call to iterator
-arrays/multiDecl/long/MultiDeclForComponentMemberExtensionsInExtensionFunction.kt: unsupported: a call to iterator
 arrays/nonLocalReturnArrayConstructor.kt: unsupported: Int.toString
 arrays/primitiveArrays.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'copyOf' on receiver of type 'BooleanArray'.
-arrays/stdlib.kt: unsupported: a call to iterator
+arrays/stdlib.kt: unsupported: a type test against T of .MutableArray
 assert/alwaysDisable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'assert'.
 assert/alwaysEnable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'assert'.
 associatedObjects/associatedObjectNested.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
@@ -207,30 +180,22 @@ basics/unchecked_cast2.kt: unsupported: a call to CONSTRUCTOR …
 basics/unchecked_cast3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
 basics/unchecked_cast4.kt: unsupported: a call to CONSTRUCTOR …
 basics/unchecked_cast6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
-basics/unchecked_cast6x.kt: unsupported: a call to iterator
 basics/unchecked_cast7.kt: unsupported: a call to CONSTRUCTOR …
 basics/unchecked_cast8.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
 basics/unchecked_cast9.kt: unsupported: a call to CONSTRUCTOR …
 basics/unit1.kt: unsupported: a value of type kotlin.Unit
 basics/unit2.kt: unsupported: a value of type kotlin.Unit
 basics/unit3.kt: unsupported: a value of type kotlin.Unit
-basics/unit4.kt: unsupported: a call to iterator
+basics/unit4.kt: unsupported: the parameter type kotlin.Unit
 bce/bceCases.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
-bce/customGetter.kt: unsupported: a call to iterator
-bce/differentArrays.kt: unsupported: a call to iterator
-bce/differentObjects.kt: unsupported: a call to iterator
 bce/forDownToSize.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 bce/forDownToWithStep.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 bce/forEachIndexedTest.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'index'. Specify it explicitly.
-bce/forEachIndicies.kt: unsupported: a call to iterator
 bce/forIndiciesWithStep.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-bce/forRangeToSize.kt: unsupported: a call to iterator
 bce/forRangeToWithStep.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 bce/forReversed.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-bce/forUntilSize.kt: unsupported: a call to iterator
 bce/forUntilWithStep.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 bce/forWithIndex.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-bce/withGetter.kt: unsupported: a call to iterator
 binaryOp/bitwiseOp.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'and' on receiver of type 'Short'.
 binaryOp/bitwiseOpAny.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'and' on receiver of type 'Short'.
 binaryOp/bitwiseOpNullable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'and' on receiver of type 'Short'.
@@ -240,7 +205,6 @@ binaryOp/eqNullableToPrimitiveWithSideEffects.kt: wrong result
 binaryOp/intrinsic.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
 binaryOp/intrinsicNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
 binaryOp/primitiveEqualsSafeCall.kt: unsupported: Short.equals
-boxing/box_cache0.kt: unsupported: a call to iterator
 boxing/boxing1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 boxing/boxing11.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 boxing/boxing12.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
@@ -273,8 +237,8 @@ boxingOptimization/kt49092c.kt: unsupported: a value of type kotlin.Nothing
 boxingOptimization/kt49092d.kt: unsupported: a value of type kotlin.Nothing
 boxingOptimization/kt49092e.kt: unsupported: a value of type kotlin.Nothing
 boxingOptimization/kt49092f.kt: unsupported: a value of type kotlin.Nothing
-boxingOptimization/kt49548.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'last' on receiver of type 'IntRange'.
-boxingOptimization/kt49548a.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'last' on receiver of type 'IntRange'.
+boxingOptimization/kt49548.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'plus' for operator '+' on receiver of type 'IntRange'.
+boxingOptimization/kt49548a.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'plus' for operator '+' on receiver of type 'IntRange'.
 boxingOptimization/kt5493.kt: unsupported: a call to toString
 boxingOptimization/kt6842.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 boxingOptimization/maxMinByOrNull.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
@@ -404,7 +368,7 @@ callableReference/adaptedReferences/suspendConversion/withContextParameters.kt: 
 callableReference/adaptedReferences/suspendConversion/withContextParametersAsASupertype.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend context(String) () -> Unit'.
 callableReference/adaptedReferences/suspendConversion/withParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
 callableReference/adaptedReferences/suspendUnitConversion.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
-callableReference/adaptedReferences/varargViewedAsPrimitiveArray.kt: unsupported: a call to iterator
+callableReference/adaptedReferences/varargViewedAsPrimitiveArray.kt: unsupported: overriding FUN …
 callableReference/adaptedReferences/varargWithDefaultValue.kt: unsupported: overriding FUN …
 callableReference/arrayConstructorArgument.kt: unsupported: a call to get
 callableReference/arrayOfNulls.kt: IllegalStateException: RETURN_TYPE_MISMATCH: Return type mismatch: expected 'String', actual 'Char'.
@@ -614,14 +578,13 @@ classes/kt2391.kt: unsupported: a call to append
 classes/kt2417.kt: unsupported: a call to CONSTRUCTOR …
 classes/kt2566_2.kt: unsupported: the inner class E
 classes/kt2607.kt: unsupported: the inner class C
-classes/kt2711.kt: IllegalStateException: INAPPLICABLE_OPERATOR_MODIFIER: 'operator' modifier is not applicable to function: must return 'Boolean'.
+classes/kt2711.kt: unsupported: a call to contains
 classes/kt3114.kt: unsupported: a call to compareTo
 classes/kt343.kt: unsupported: a call to CONSTRUCTOR …
 classes/kt40332.kt: unsupported: inheriting FUN …
 classes/kt508.kt: unsupported: overriding FUN …
 classes/kt5347.kt: unsupported: Int.hashCode
 classes/kt6136.kt: unsupported: Int.hashCode
-classes/kt633.kt: unsupported: a call to iterator
 classes/kt707.kt: unsupported: Int.toString
 classes/kt8011.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 classes/kt940.kt: unsupported: a call to <get-length>
@@ -659,13 +622,12 @@ closures/captureInSuperConstructorCall/outerCapturedInPrimaryConstructorDefaultP
 closures/captureInSuperConstructorCall/outerCapturedInSecondaryConstructorDefaultParameter.kt: unsupported: the inner class Inner
 closures/captureInSuperConstructorCall/outerEnumEntryCapturedInLambdaInInnerClass.kt: unsupported: the inner class Inner
 closures/captureInSuperConstructorCall/properValueCapturedByClosure2.kt: unsupported: the inner class Inner
-closures/capturedVarsOptimization/callableReferenceWithSwap.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'code' on receiver of type 'Char'.
+closures/capturedVarsOptimization/callableReferenceWithSwap.kt: unsupported: a call to <get-length>
 closures/capturedVarsOptimization/closureBoxedVarOptimizations.kt: unsupported: the value class AnyWrapper
 closures/capturedVarsOptimization/kt17588.kt: unsupported: Int.hashCode
 closures/capturedVarsOptimization/kt44347.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 closures/capturedVarsOptimization/withCoroutines.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'c'. Specify it explicitly.
 closures/capturedVarsOptimization/withCoroutinesNoStdLib.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'c'. Specify it explicitly.
-closures/closureCapturingGenericParam.kt: unsupported: a call to iterator
 closures/closureInsideClosure/propertyAndFunctionNameClash.kt: unsupported: overriding FUN …
 closures/closureOnTopLevel1.kt: unsupported: the supertype Function0 outside the VM modules
 closures/closureOnTopLevel2.kt: unsupported: the supertype Function0 outside the VM modules
@@ -676,9 +638,6 @@ closures/kt4106.kt: unsupported: the inner class Inner
 closures/kt47894_inlineFunWithObjectWithNothing.kt: unsupported: a value of type kotlin.Nothing
 collectionLiterals/array.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contentEquals' on receiver of type 'Array<CharSequence>'.
 collectionLiterals/companionBlockOf.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'joinToString' on receiver of type 'Array<out String>'.
-collectionLiterals/genericCollection.kt: unsupported: a call to iterator
-collectionLiterals/multipleOfOverloads.kt: unsupported: a call to iterator
-collectionLiterals/nonGenericCollection.kt: unsupported: a call to iterator
 collectionLiterals/primitiveArrays.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contentEquals' on receiver of type 'IntArray'.
 collectionLiterals/stdlibCollections.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'zip'.
 collectionLiterals/stdlibSequence.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'joinToString'.
@@ -812,42 +771,28 @@ contracts/nestedLambdaInNonInlineCallExactlyOnce.kt: IllegalStateException: UNRE
 contracts/nonNullSmartCast.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'requireNotNull'.
 contracts/require.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'require'.
 controlStructures/breakContinueInExpressions/breakFromOuter.kt: unsupported: a value of type kotlin.Nothing
-controlStructures/breakContinueInExpressions/breakInExpr.kt: unsupported: a call to iterator
 controlStructures/breakContinueInExpressions/breakInLoopConditions.kt: unsupported: a value of type kotlin.Nothing
-controlStructures/breakContinueInExpressions/continueInExpr.kt: unsupported: a call to iterator
-controlStructures/breakContinueInExpressions/inlinedBreakContinue/continueInTryBlock.kt: unsupported: a call to iterator
+controlStructures/breakContinueInExpressions/inlinedBreakContinue/continueInTryBlock.kt: unsupported: Int.toString
 controlStructures/breakContinueInExpressions/inlinedBreakContinue/initializerBlock.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 controlStructures/breakContinueInExpressions/inlinedBreakContinue/inlineFunctionWithMultipleParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 controlStructures/breakContinueInExpressions/inlinedBreakContinue/lambdaPassedToInlineFunction.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 controlStructures/breakContinueInExpressions/inlinedBreakContinue/loopWithinInlineFunction.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
-controlStructures/breakContinueInExpressions/inlinedBreakContinue/withReturnValue.kt: unsupported: a call to iterator
 controlStructures/breakContinueInExpressions/inlinedBreakContinue/withReturnValueNested.kt: IllegalStateException: BREAK_OR_CONTINUE_JUMPS_ACROSS_FUNCTION_BOUNDARY: 'break' or 'continue' crosses a function or class boundary.
 controlStructures/breakContinueInExpressions/innerLoopWithStack.kt: unsupported: a value of type kotlin.Nothing
-controlStructures/breakContinueInExpressions/kt17384.kt: unsupported: a call to iterator
-controlStructures/breakContinueInExpressions/kt45704_elvisInInlineFun.kt: unsupported: a call to iterator
 controlStructures/breakContinueInExpressions/popSizes.kt: unsupported: a value of type kotlin.Nothing
 controlStructures/breakContinueInExpressions/tryFinally1.kt: unsupported: a value of type kotlin.Nothing
-controlStructures/breakContinueInExpressions/tryFinally2.kt: unsupported: a call to iterator
-controlStructures/breakInWhen.kt: unsupported: a call to iterator
 controlStructures/continueInExpr.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-controlStructures/continueInFor.kt: unsupported: a call to iterator
+controlStructures/continueInFor.kt: unsupported: a call to CONSTRUCTOR …
 controlStructures/continueInForCondition.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-controlStructures/continueInWhen.kt: unsupported: a call to iterator
-controlStructures/continueToLabelInFor.kt: unsupported: a call to iterator
+controlStructures/continueToLabelInFor.kt: unsupported: a call to CONSTRUCTOR …
 controlStructures/doWhile.kt: unsupported: a call to <get-length>
-controlStructures/emptyFor.kt: unsupported: a call to iterator
+controlStructures/emptyFor.kt: unsupported: overriding FUN …
 controlStructures/forArrayList.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
 controlStructures/forArrayListMultiDecl.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Int'.
 controlStructures/forInArray/forInArraySpecializedToUntil.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-controlStructures/forInArray/forInArrayWithArrayPropertyUpdatedInLoopBody.kt: unsupported: a call to iterator
-controlStructures/forInArray/forInArrayWithArrayVarUpdatedInLoopBody13.kt: unsupported: a call to iterator
-controlStructures/forInArray/forInDelegatedPropertyUpdatedInLoopBody.kt: unsupported: a call to iterator
-controlStructures/forInArray/forInDoubleArrayWithUpcast.kt: unsupported: a call to iterator
-controlStructures/forInArray/forInFieldUpdatedInLoopBody.kt: unsupported: a call to iterator
+controlStructures/forInArray/forInDelegatedPropertyUpdatedInLoopBody.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
+controlStructures/forInArray/forInFieldUpdatedInLoopBody.kt: unsupported: a call to intArrayOf
 controlStructures/forInArray/forInInlineClassArrayWithUpcast.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-controlStructures/forInArray/forIntArray.kt: unsupported: a call to iterator
-controlStructures/forInArray/forNullableIntArray.kt: unsupported: a call to iterator
-controlStructures/forInArray/forPrimitiveIntArray.kt: unsupported: a call to iterator
 controlStructures/forInArrayWithIndex/forInArrayOfObjectArrayWithIndex.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 controlStructures/forInArrayWithIndex/forInArrayOfPrimArrayWithIndex.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 controlStructures/forInArrayWithIndex/forInArrayWithIndexBreakAndContinue.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
@@ -912,30 +857,23 @@ controlStructures/forInSequenceWithIndex/forInSequenceWithIndexNoElementVarCheck
 controlStructures/forInSequenceWithIndex/forInSequenceWithIndexNoIndexVar.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 controlStructures/forInSequenceWithIndex/forInSequenceWithIndexNoIndexVarCheckSideEffects.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'iterator'.
 controlStructures/forInSequenceWithIndex/forInSequenceWithIndexWithExplicitlyTypedIndexVariable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-controlStructures/forInSmartCastToArray.kt: unsupported: a call to iterator
 controlStructures/forNullableCharInString.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 controlStructures/forUserType.kt: unsupported: overriding FUN …
-controlStructures/kt1742.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
-controlStructures/kt2291.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
+controlStructures/kt1742.kt: unsupported: a call to contains
+controlStructures/kt2291.kt: unsupported: a call to contains
 controlStructures/kt237.kt: unsupported: a value of type kotlin.Unit
-controlStructures/kt2416.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
-controlStructures/kt299.kt: CompilationErrorException: Module "main" has a reference to symbol kotlin.ranges/ClosedRange|null[0]. Neither the module itself nor its dependencies contain suc
+controlStructures/kt2416.kt: unsupported: a call to contains
+controlStructures/kt299.kt: unsupported: the supertype ClosedRange outside the VM modules
 controlStructures/kt3273.kt: unsupported: a call to <get-length>
 controlStructures/kt42455.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-controlStructures/kt47245.kt: unsupported: a call to iterator
 controlStructures/kt513.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
 controlStructures/kt769.kt: unsupported: Int.toString
-controlStructures/kt772.kt: unsupported: a call to iterator
-controlStructures/kt773.kt: unsupported: a call to iterator
 controlStructures/kt88544.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 controlStructures/kt910.kt: unsupported: overriding FUN …
-controlStructures/kt958.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
+controlStructures/kt958.kt: unsupported: a call to contains
 controlStructures/longRange.kt: unsupported: Long.rangeTo
-controlStructures/quicksort.kt: unsupported: a call to iterator
 controlStructures/slowDsl/slowHtmlLikeDsl.kt: unsupported: a call to <get-length>
 controlStructures/tryCatchExpression.kt: unsupported: a value of type kotlin.Unit
-controlStructures/tryCatchInExpressions/nonLocalReturnInTryFinally.kt: unsupported: a call to iterator
-controlStructures/tryCatchInExpressions/tryAndContinue.kt: unsupported: a call to iterator
 controlStructures/tryCatchInExpressions/tryCatchAfterWhileTrue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
 controlStructures/tryCatchInExpressions/tryFinallyOfTypeUnit.kt: unsupported: a value of type kotlin.Unit
 controlStructures/tryFinally.kt: unsupported: a value of type kotlin.Unit
@@ -945,9 +883,9 @@ controlflow/callOnSmarcastedNothing.kt: unsupported: a call to <get-length>
 controlflow/for_loops.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 controlflow/for_loops_array_break_continue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 controlflow/for_loops_array_indices.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-controlflow/for_loops_array_mutation.kt: unsupported: a call to iterator
-controlflow/for_loops_array_nested.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.ranges.IntProgression'. Ensure that you have a dependency on the
-controlflow/for_loops_array_nullable.kt: unsupported: a call to iterator
+controlflow/for_loops_array_mutation.kt: unsupported: a call to append
+controlflow/for_loops_array_nested.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+controlflow/for_loops_array_nullable.kt: unsupported: a call to append
 controlflow/for_loops_array_side_effects.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 controlflow/for_loops_call_order.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 controlflow/for_loops_coroutines.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
@@ -1460,7 +1398,6 @@ coroutines/varValueConflictsWithTable.kt: IllegalStateException: CANNOT_INFER_VA
 coroutines/varValueConflictsWithTableSameSort.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'x'. Specify it explicitly.
 coroutines/varargCallFromSuspend.kt: IllegalStateException: RETURN_TYPE_MISMATCH: Return type mismatch: expected 'List<Int>', actual 'String'.
 coroutines/withReceiver.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
-cycles/cycle_for.kt: unsupported: a call to iterator
 dataClasses/arrayParams.kt: unsupported: a call to dataClassArrayMemberToString
 dataClasses/components/kt49812.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 dataClasses/copy/constructorWithDefaultParam.kt: unsupported: Int.hashCode
@@ -1695,8 +1632,8 @@ diagnostics/functions/tailRecursion/realIteratorFoldl.kt: unsupported: overridin
 diagnostics/functions/tailRecursion/realStringEscape.kt: unsupported: a call to <get-length>
 diagnostics/functions/tailRecursion/realStringRepeat.kt: unsupported: a call to toString
 diagnostics/functions/tailRecursion/recursiveCallInInlineLambda.kt: unsupported: inheriting FUN …
-diagnostics/functions/tailRecursion/recursiveCallInInlineLambdaWithCapture.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
-diagnostics/functions/tailRecursion/whenWithInRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
+diagnostics/functions/tailRecursion/recursiveCallInInlineLambdaWithCapture.kt: IllegalStateException: RETURN_NOT_ALLOWED: 'return' is prohibited here.
+diagnostics/functions/tailRecursion/whenWithInRange.kt: unsupported: a call to contains
 directInvokeOptimization/boundInnerContructorRef.kt: unsupported: the inner class Inner
 directInvokeOptimization/contextParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'require'.
 directInvokeOptimization/samConversion.kt: unsupported: the type operator SAM_CONVERSION
@@ -1753,12 +1690,9 @@ enum/throwingEntryInitializer.kt: unsupported: a type test against java.lang.Exc
 enum/valueOf2.kt: unsupported: a call to valueOf
 enum/valueof.kt: unsupported: a call to valueOf
 enum/values.kt: unsupported: a call to values
-escapeAnalysis/zeroOutObjectOnAlloc.kt: unsupported: a call to iterator
 evaluate/annotationClassWithInner.kt: unsupported: the annotation class Anno
-evaluate/charOperations.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'code' on receiver of type 'Char'.
 evaluate/inJavaLangPackage.kt: IllegalStateException: TYPE_CANT_BE_USED_FOR_CONST_VAL: Const 'val' has type 'Double'. Only primitive types and 'String' are allowed.
 evaluate/intrinsicConst/bitwiseOperations.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_INITIALIZER: Const 'val' initializer must be a constant value.
-evaluate/intrinsicConst/charConstructor.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_INITIALIZER: Const 'val' initializer must be a constant value.
 evaluate/intrinsicConst/companions.kt: unsupported: the static property x
 evaluate/intrinsicConst/constTrim.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_INITIALIZER: Const 'val' initializer must be a constant value.
 evaluate/intrinsicConst/enumNameWithInit.kt: wrong result
@@ -1785,7 +1719,7 @@ evaluate/serialization/annotationWithDefaults.kt: unsupported: the annotation cl
 evaluate/serialization/intrinsicConst.kt: unsupported: the annotation class BinaryAnnotation
 evaluate/serialization/nestedTypeAnnotation.kt: unsupported: the annotation class TypeAnnotation
 evaluate/serialization/typeAnnotation.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
-evaluate/stdlibConst.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'code' on receiver of type 'Char'.
+evaluate/stdlibConst.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_INITIALIZER: Const 'val' initializer must be a constant value.
 evaluate/stringOperations.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 evaluate/thisPlusString.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
 evaluate/ubyteOperations.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_INITIALIZER: Const 'val' initializer must be a constant value.
@@ -1825,7 +1759,6 @@ extensionFunctions/simple.kt: unsupported: a call to get
 extensionFunctions/suspendConversionForExtensionFunAsAFunType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend Int.() -> Unit'.
 extensionFunctions/suspendConversionForExtensionFunAsAPropertyType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend Int.() -> Unit'.
 extensionFunctions/suspendConversionForExtensionFunAsASuperType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend Int.() -> Unit'.
-extensionFunctions/virtual.kt: unsupported: a call to iterator
 extensionProperties/extensionPropertyDelegated.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 extensionProperties/extensionPropertyDifferentReceiver.kt: unsupported: the parameter type kotlin.Unit
 extensionProperties/extensionPropertyInInnerClass.kt: unsupported: the inner class Inner1
@@ -1844,15 +1777,8 @@ fakeOverride/kt40180_2.kt: unsupported: the supertype Test outside the VM module
 fakeOverride/kt40180_3.kt: AssertionFailedError: Java Compilation failed. Notice: This might be caused by a circular dependency between Java and Kotlin sources, which is not supported in 
 fakeOverride/substitutionInLocal.kt: unsupported: a call to plus
 fieldRename/delegates.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-finally/breakAndOuterFinally.kt: unsupported: a call to iterator
-finally/continueAndOuterFinally.kt: unsupported: a call to iterator
-finally/kt31923_break.kt: unsupported: a call to iterator
-finally/kt31923_continue.kt: unsupported: a call to iterator
-finally/kt3874.kt: unsupported: a call to iterator
 finally/kt4134.kt: unsupported: a call to toString
-finally/loopAndFinally.kt: unsupported: a call to iterator
 finally/someStuff.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-finally/tryLoopTry.kt: unsupported: a call to iterator
 fir/anonymousOverrideWithDefaultInLocalOverridden.kt: unsupported: the inner class A
 fir/anonymousOverrideWithDefaultInOverridden.kt: unsupported: the inner class A
 fir/deserializedOptInDeprecated.kt: unsupported: the annotation class My
@@ -1974,13 +1900,13 @@ functions/invoke/implicitInvokeInCompanionObjectWithFunctionalArgument.kt: unsup
 functions/invoke/implicitInvokeWithFunctionLiteralArgument.kt: unsupported: a value of type kotlin.Nothing
 functions/invoke/kt3190.kt: unsupported: a call to CONSTRUCTOR …
 functions/invoke/kt3822invokeOnThis.kt: unsupported: the supertype Function0 outside the VM modules
-functions/kt1038.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'TItem'. Specify it explicitly.
+functions/kt1038.kt: unsupported: overriding FUN …
 functions/kt1739.kt: unsupported: the supertype Runnable outside the VM modules
 functions/kt2929.kt: unsupported: a call to compareTo
 functions/kt3214.kt: unsupported: a value of type kotlin.Unit
 functions/kt47449.kt: unsupported: a value of type kotlin.Unit
 functions/kt48058.kt: unsupported: a type test against kotlin.Function0 outside the VM modules
-functions/localFunction.kt: unsupported: a call to iterator
+functions/localFunction.kt: unsupported: a call to <get-first>
 functions/localFunctions/kt4777.kt: unsupported: overriding FUN …
 functions/localFunctions/nameClashAcrossDifferentContainers.kt: unsupported: a call to <get-length>
 ieee754/anyCastToPrimitiveCompareTo1.kt: unsupported: compareTo on floating-point numbers
@@ -1994,13 +1920,11 @@ ieee754/explicitCompareCall.kt: unsupported: compareTo on floating-point numbers
 ieee754/explicitEqualsCall.kt: unsupported: Double.equals
 ieee754/inline.kt: unsupported: overriding FUN …
 ieee754/safeCall.kt: unsupported: Double.equals
-increment/classVarargGetSet.kt: unsupported: a call to iterator
-increment/classVarargGetSetEvaluationOrder.kt: unsupported: a call to iterator
 increment/mutableListElement.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
 inference/builderInferenceLeakingVariable.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 inference/capturedSelfInsideIntersection2.kt: unsupported: a type test against T of .EntityImpl.isEqualTo
 inference/capturedSelfInsideIntersection3.kt: unsupported: a type test against T of .EntityImpl.isEqualTo
-inference/capturedTypeWhenSubject.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
+inference/capturedTypeWhenSubject.kt: unsupported: a type test against J of .OperandType
 inference/coercionToUnitWithLastLambdaExpression.kt: unsupported: a type test against K of .materialize
 inference/eagerLambdaAnalysisSamAndLambda.kt: unsupported: the type operator SAM_CONVERSION
 inference/eagerLambdaAnalysisSuspendAndNotSuspend.kt: unsupported: a suspend lambda
@@ -2165,14 +2089,10 @@ initializers/initializers2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unre
 initializers/initializers9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 initializers/static_arrays.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'joinToString' on receiver of type 'IntArray'.
 initializers/static_list.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-initializers/static_smallIntIdentity.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'code' on receiver of type 'Char'.
-initializers/static_varargChange.kt: unsupported: a call to iterator
 initializers/throw1.kt: unsupported: a call to error
 initializers/throw2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 inline/LocalEntitiesInAnonymousObjectInInlineCallables.kt: unsupported: Int.hashCode
 inline/anonymousObjectInlineMethod.kt: unsupported: inheriting FUN …
-inline/astCopy.kt: unsupported: a call to iterator
-inline/blocksMaterialization.kt: unsupported: a call to iterator
 inline/callableReferenceOfLocalFun.kt: unsupported: a call to toString
 inline/callableReferenceOfLocalInline.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
 inline/callableReferenceOfLocalKT77102.kt: unsupported: a Unit property
@@ -2195,11 +2115,9 @@ inline/inline24.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved refe
 inline/inline6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 inline/inline7.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 inline/inline9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-inline/inlineCallNoInline.kt: unsupported: a call to iterator
 inline/inlineChainCrossModule.kt: CompilationErrorException: Module "mid" has a reference to symbol /baz|baz(){}[0]. Neither the module itself nor its dependencies contain such declaration.
-inline/inlineCtor.kt: unsupported: a call to iterator
 inline/inlineIntSimple.kt: unsupported: inheriting FUN …
-inline/inlineLambdaNoCapture.kt: unsupported: a call to iterator
+inline/inlineLambdaNoCapture.kt: unsupported: a call to arrayOf
 inline/inlineLambdaWithCapture.kt: unsupported: Int.hashCode
 inline/inlineMethod.kt: unsupported: Int.hashCode
 inline/inlinedLambdaWithErasedParamType.kt: unsupported: Char.toString
@@ -2227,7 +2145,6 @@ inline/loopWithInlinableCondition.kt: unsupported: inheriting FUN …
 inline/metadataForPublicFunction.kt: unsupported: inheriting FUN …
 inline/multipleInheritanceClash.kt: CompilationException: Back-end: Please report this problem https://kotl.in/issue
 inline/nameBasedDestructuring.kt: unsupported: Int.hashCode
-inline/nestedLabelsInlinedClashingAtFunctionsWithClosure.kt: unsupported: a call to iterator
 inline/operators.kt: unsupported: inheriting FUN …
 inline/params.kt: unsupported: inheriting FUN …
 inline/positionBasedDestructuring.kt: unsupported: Int.hashCode
@@ -2245,11 +2162,10 @@ inline/simpleInt.kt: unsupported: inheriting FUN …
 inline/simpleObject.kt: unsupported: inheriting FUN …
 inline/statementAsLastExprInBlock.kt: unsupported: the object Companion outside the VM modules
 inline/statementsAfterReturn.kt: unsupported: Int.hashCode
-inline/thisImplicitlyCaptured.kt: unsupported: a call to iterator
+inline/thisImplicitlyCaptured.kt: unsupported: inheriting FUN …
 inline/thisLiteralAliasing.kt: unsupported: inheriting FUN …
 inline/twiceInlinedObject.kt: unsupported: a call to append
 inline/typeSubstitutionInFakeOverride.kt: unsupported: overriding FUN …
-inline/vararg.kt: unsupported: a call to iterator
 inlineArgsInPlace/arrayDequeRemoveAll.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toTypedArray' on receiver of type 'Collection<E (of class ArrayDeque<E>)>'.
 inlineArgsInPlace/breakInArgumentExpression.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'linkedMapOf'.
 inlineArgsInPlace/continueInArgumentExpression.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'linkedMapOf'.
@@ -2711,10 +2627,10 @@ inlineClasses/initBlockGeneric.kt: unsupported: the value class SingleInitBlock
 inlineClasses/initInCompanion.kt: unsupported: the value class IC
 inlineClasses/inlineClassAsLastExpressionInInLambda.kt: unsupported: the value class Name
 inlineClasses/inlineClassAsLastExpressionInInLambdaGeneric.kt: unsupported: the value class Name
-inlineClasses/inlineClassCollection/inlineCollectionOfInlineClass.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntArray'.
-inlineClasses/inlineClassCollection/inlineCollectionOfInlineClassGeneric.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntArray'.
-inlineClasses/inlineClassCollection/inlineListOfInlineClass.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntArray'.
-inlineClasses/inlineClassCollection/inlineListOfInlineClassGeneric.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntArray'.
+inlineClasses/inlineClassCollection/inlineCollectionOfInlineClass.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
+inlineClasses/inlineClassCollection/inlineCollectionOfInlineClassGeneric.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
+inlineClasses/inlineClassCollection/inlineListOfInlineClass.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
+inlineClasses/inlineClassCollection/inlineListOfInlineClassGeneric.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
 inlineClasses/inlineClassCollection/inlineMapOfInlineClass.kt: IllegalStateException: RETURN_TYPE_MISMATCH: Return type mismatch: expected 'Set<Map.Entry<Z, Z>>', actual 'ZArrayMap.MapEntrySet'.
 inlineClasses/inlineClassCollection/inlineMapOfInlineClassGeneric.kt: IllegalStateException: RETURN_TYPE_MISMATCH: Return type mismatch: expected 'Set<Map.Entry<Z<Int>, Z<Int>>>', actual 'ZArrayMap.MapEntrySet'.
 inlineClasses/inlineClassCollection/inlineMutableCollectionBulkAdd.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
@@ -3051,11 +2967,7 @@ inlineClasses/whenWithSubjectGeneric.kt: unsupported: the value class InlineLong
 inlineClasses/withReturnTypeMangling.kt: unsupported: the value class S
 inlineClasses/withReturnTypeManglingGeneric.kt: unsupported: the value class S
 inlineEvaluationOrder/arrayAccessLhsDecomposed.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-inlineEvaluationOrder/arrayLiteral.kt: unsupported: a call to iterator
-inlineEvaluationOrder/arrayLiteralMultipleInlineCalls.kt: unsupported: a call to iterator
-inlineEvaluationOrder/arrayLiteralNested.kt: unsupported: a call to iterator
 inlineEvaluationOrder/continueInExtractedDoWhile.kt: unsupported: Int.toString
-inlineEvaluationOrder/for.kt: unsupported: a call to iterator
 inlineEvaluationOrder/inlineFunctionAsParameterOfQualifiedCall.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'replace' on receiver of type 'String'.
 inlineEvaluationOrder/methodDecomposedWithBind.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Int'.
 inlineEvaluationOrder/methodInlineCallQualifierWithSideEffect.kt: unsupported: inheriting FUN …
@@ -3152,19 +3064,13 @@ jdk/hashMap.kt: unsupported: a call to CONSTRUCTOR …
 jdk/iteratingOverHashMap.kt: unsupported: a call to CONSTRUCTOR …
 jdk/kt1397.kt: unsupported: a call to CONSTRUCTOR …
 jdk/noStringToCharArray.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toCharArray' on receiver of type 'String'.
-jsAstOptimizations/whileConditionFolding/doWhileWithNestedContinue.kt: unsupported: a call to iterator
-jsAstOptimizations/whileConditionFolding/labeledContinueInNestedLoop.kt: unsupported: a call to iterator
 jvm8/defaults/enable/kt55083_indyLambdaForFunInterface.kt: unsupported: the type operator SAM_CONVERSION
 kclass/kclass1.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 klib/kt33411.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'getK'.
-labels/controlLabelClashesWithFuncitonName.kt: unsupported: a call to iterator
-labels/labelOnExpression.kt: unsupported: a call to iterator
+labels/labelOnExpression.kt: unsupported: inheriting FUN …
 labels/labeledDeclarations.kt: unsupported: Int.hashCode
-labels/nestedLabelsInlinedClashing.kt: unsupported: a call to iterator
 labels/nestedLabelsInlinedClashingAtFunctionsWithClosure.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
-labels/siblingLabelsInlined.kt: unsupported: a call to iterator
-labels/siblingLabelsInlinedClashing.kt: unsupported: a call to iterator
-labels/simpleLabelInlined.kt: unsupported: a call to iterator
+labels/siblingLabelsInlinedClashing.kt: unsupported: Int.toString
 lambda/lambda1.kt: unsupported: a call to append
 lambda/lambda10.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 lambda/lambda11.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
@@ -3196,7 +3102,6 @@ localClass/objectExpressionInProperty.kt: unsupported: the inner class InClass
 localClass/tryCatch.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 localClass/virtualCallFromConstructor.kt: unsupported: a call to <get-length>
 localClasses/closureOfInnerLocalClass.kt: unsupported: the inner class D
-localClasses/closureOfLambdaInLocalClass.kt: unsupported: a call to iterator
 localClasses/closureWithSelfInstantiation.kt: unsupported: the inner class D
 localClasses/innerClassInLocalClass.kt: unsupported: the inner class C
 localClasses/innerOfLocalCaptureExtensionReceiver.kt: unsupported: the inner class Inner
@@ -3214,11 +3119,11 @@ lower/forLoopsLowering/arrays.kt: IllegalStateException: UNRESOLVED_REFERENCE: U
 lower/forLoopsLowering/lists.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 lower/forLoopsLowering/listsCME.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 lower/forLoopsLowering/nested.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-lower/forLoopsLowering/progressions.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Iterable<Int>', actual 'IntRange'.
+lower/forLoopsLowering/progressions.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 lower/forLoopsLowering/reversed.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'reversedArray' on receiver of type 'IntArray'.
-lower/forLoopsLowering/reversedCharProgression.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'step' on receiver of type 'CharRange'.
+lower/forLoopsLowering/reversedCharProgression.kt: IllegalStateException: FUNCTION_EXPECTED: Expression 'step' of type 'Int' cannot be invoked as a function. Function 'invoke()' is not found.
 lower/forLoopsLowering/sequences.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Sequence'.
-lower/forLoopsLowering/vars.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Iterable<Int>', actual 'IntRange'.
+lower/forLoopsLowering/vars.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 lower/forLoopsLowering/withIndex.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 lower/forLoopsLowering/withIndexUInt.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 lower/localDelegatedProperty.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
@@ -3234,35 +3139,8 @@ multiDecl/forIterator/longIterator/MultiDeclForComponentExtensions.kt: unsupport
 multiDecl/forIterator/longIterator/MultiDeclForComponentExtensionsValCaptured.kt: unsupported: overriding FUN …
 multiDecl/forIterator/longIterator/MultiDeclForComponentMemberExtensions.kt: unsupported: overriding FUN …
 multiDecl/forIterator/longIterator/MultiDeclForComponentMemberExtensionsInExtensionFunction.kt: unsupported: overriding FUN …
-multiDecl/forRange/UnderscoreNamesDontCallComponent.kt: unsupported: a call to iterator
-multiDecl/forRange/explicitRangeTo/int/MultiDeclForComponentExtensions.kt: unsupported: a call to iterator
-multiDecl/forRange/explicitRangeTo/int/MultiDeclForComponentExtensionsValCaptured.kt: unsupported: a call to iterator
-multiDecl/forRange/explicitRangeTo/int/MultiDeclForComponentMemberExtensions.kt: unsupported: a call to iterator
-multiDecl/forRange/explicitRangeTo/int/MultiDeclForComponentMemberExtensionsInExtensionFunction.kt: unsupported: a call to iterator
-multiDecl/forRange/explicitRangeTo/long/MultiDeclForComponentExtensions.kt: unsupported: a call to iterator
-multiDecl/forRange/explicitRangeTo/long/MultiDeclForComponentExtensionsValCaptured.kt: unsupported: a call to iterator
-multiDecl/forRange/explicitRangeTo/long/MultiDeclForComponentMemberExtensions.kt: unsupported: a call to iterator
-multiDecl/forRange/explicitRangeTo/long/MultiDeclForComponentMemberExtensionsInExtensionFunction.kt: unsupported: a call to iterator
-multiDecl/forRange/explicitRangeToWithDot/int/MultiDeclForComponentExtensions.kt: unsupported: a call to iterator
-multiDecl/forRange/explicitRangeToWithDot/int/MultiDeclForComponentExtensionsValCaptured.kt: unsupported: a call to iterator
-multiDecl/forRange/explicitRangeToWithDot/int/MultiDeclForComponentMemberExtensions.kt: unsupported: a call to iterator
-multiDecl/forRange/explicitRangeToWithDot/int/MultiDeclForComponentMemberExtensionsInExtensionFunction.kt: unsupported: a call to iterator
 multiDecl/forRange/explicitRangeToWithDot/long/MultiDeclForComponentExtensions.kt: unsupported: Long.rangeTo
-multiDecl/forRange/explicitRangeToWithDot/long/MultiDeclForComponentExtensionsValCaptured.kt: unsupported: a call to iterator
-multiDecl/forRange/explicitRangeToWithDot/long/MultiDeclForComponentMemberExtensions.kt: unsupported: a call to iterator
-multiDecl/forRange/explicitRangeToWithDot/long/MultiDeclForComponentMemberExtensionsInExtensionFunction.kt: unsupported: a call to iterator
-multiDecl/forRange/int/MultiDeclForComponentExtensions.kt: unsupported: a call to iterator
-multiDecl/forRange/int/MultiDeclForComponentExtensionsValCaptured.kt: unsupported: a call to iterator
-multiDecl/forRange/int/MultiDeclForComponentMemberExtensions.kt: unsupported: a call to iterator
-multiDecl/forRange/int/MultiDeclForComponentMemberExtensionsInExtensionFunction.kt: unsupported: a call to iterator
-multiDecl/forRange/long/MultiDeclForComponentExtensions.kt: unsupported: a call to iterator
-multiDecl/forRange/long/MultiDeclForComponentExtensionsValCaptured.kt: unsupported: a call to iterator
-multiDecl/forRange/long/MultiDeclForComponentMemberExtensions.kt: unsupported: a call to iterator
-multiDecl/forRange/long/MultiDeclForComponentMemberExtensionsInExtensionFunction.kt: unsupported: a call to iterator
 multiDecl/kt9828_hashMap.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-multiDecl/nameBasedDestructuringFullForm.kt: unsupported: a call to iterator
-multiDecl/nameBasedDestructuringShortForm.kt: unsupported: a call to iterator
-multiDecl/nameBasedDestructuringUnderscoreWithRenaming.kt: unsupported: a call to iterator
 multiDecl/positionalDestructuringFullForm.kt: unsupported: Int.hashCode
 multiDecl/positionalDestructuringShortForm.kt: unsupported: Int.hashCode
 multiplatform/k2/annotations/expectAnnotationCallInLibrary.kt: unsupported: the annotation class Ann
@@ -3310,8 +3188,8 @@ multiplatform/k2/hmpp/genericTypealiasSameNameTwoLibs.kt: IllegalStateException:
 multiplatform/k2/hmpp/kt83572.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsModule'.
 multiplatform/k2/hmpp/moveToDiagnostic/optInActual2-2.kt: unsupported: the annotation class Ann
 multiplatform/k2/hmpp/overridingInternalFromFriend.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Foo'.
-multiplatform/k2/hmpp/stdlibRegressions.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'code' on receiver of type 'Char'.
-multiplatform/k2/hmpp/typealiasNameClash.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'String'.
+multiplatform/k2/hmpp/stdlibRegressions.kt: unsupported: a call to doubleArrayOf
+multiplatform/k2/hmpp/typealiasNameClash.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
 multiplatform/k2/kt57391.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
 multiplatform/k2/kt66970.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'js'.
 multiplatform/k2/migratedOldTests/mpp1.kt: unsupported: the inner class B
@@ -3328,7 +3206,7 @@ nameBasedDestructuring/shortForm.kt: unsupported: Int.hashCode
 nameBasedDestructuring/shortFormExtraPropType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
 nameBasedDestructuring/shortFormFromSmartCast.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 nameBasedDestructuring/shortFormLoopsAndLambdas.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-nonLocalReturns/kt9644let.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
+nonLocalReturns/kt9644let.kt: unsupported: a call to forEach
 nonLocalReturns/suspendConversion.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'Continuation'.
 nothingValue/nothingValueException.kt: unsupported: a call to CONSTRUCTOR …
 nothingValue/toStringOnNothing.kt: unsupported: Int.toString
@@ -3362,7 +3240,7 @@ objects/throwingInitializersCompanionObjects.kt: unsupported: a Unit field
 objects/throwingInitializersObjects.kt: unsupported: a Unit field
 objects/useAnonymousObjectAsIterator.kt: unsupported: overriding FUN …
 objects/useAnonymousObjectFunction.kt: unsupported: the inner class Inner
-operatorConventions/BoundedGenericValueInRangeCheck.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'CharRange'.
+operatorConventions/BoundedGenericValueInRangeCheck.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 operatorConventions/annotatedAssignment.kt: unsupported: the annotation class Annotation
 operatorConventions/augmentedAssignmentWithArrayLHS.kt: unsupported: Int.hashCode
 operatorConventions/compareTo/comparable.kt: unsupported: overriding FUN …
@@ -3376,7 +3254,7 @@ operatorConventions/kt44647.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unr
 operatorConventions/plusAssignWithComplexRHS.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'emptyMap'.
 operatorConventions/plusExplicit.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 operatorConventions/suspendOperators.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
-operatorConventions/untilOperator.kt: CompilationErrorException: Module "main" has a reference to symbol kotlin.ranges/ClosedRange|null[0]. Neither the module itself nor its dependencies contain suc
+operatorConventions/untilOperator.kt: unsupported: overriding FUN …
 optimizations/kt20844.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'a'. Specify it explicitly.
 package/initializationOrder.kt: unsupported: a Unit property
 package/jsExportNameClash.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsExport'.
@@ -3403,7 +3281,6 @@ platformTypes/primitives/unaryMinus.kt: unsupported: a call to CONSTRUCTOR …
 platformTypes/primitives/unaryPlus.kt: unsupported: a call to CONSTRUCTOR …
 primitiveTypes/booleanHashCode.kt: IllegalStateException: UNSAFE_CALL: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Boolean?'.
 primitiveTypes/charToByte.kt: unsupported: the annotation class Foo
-primitiveTypes/conversions.kt: unsupported: a call to iterator
 primitiveTypes/equalityWithObject/boxedNanEquals.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'fromBits'.
 primitiveTypes/equalityWithObject/intEqualsNull.kt: unsupported: Int.equals
 primitiveTypes/equalityWithObject/kt42281.kt: unsupported: a call to intArrayOf
@@ -3420,7 +3297,7 @@ primitiveTypes/kt3078.kt: unsupported: compareTo on floating-point numbers
 primitiveTypes/kt3517.kt: unsupported: Boolean.equals
 primitiveTypes/kt3576.kt: unsupported: Float.equals
 primitiveTypes/kt37505.kt: unsupported: Byte.hashCode
-primitiveTypes/kt4097.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'LongRange'.
+primitiveTypes/kt4097.kt: unsupported: a call to contains
 primitiveTypes/kt4098.kt: unsupported: a call to get
 primitiveTypes/kt4210.kt: unsupported: a call to get
 primitiveTypes/kt518.kt: unsupported: a call to get
@@ -3433,12 +3310,12 @@ primitiveTypes/kt79977_withIncrementalCompilation.kt: IllegalStateException: ANN
 primitiveTypes/kt887.kt: unsupported: a call to compareTo
 primitiveTypes/kt935.kt: unsupported: a call to CONSTRUCTOR …
 primitiveTypes/numberEqualsHashCodeToString.kt: unsupported: overriding FUN …
-primitiveTypes/numberToChar/abstractMethodInSuperinterface.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'code' on receiver of type 'Char'.
-primitiveTypes/numberToChar/fakeOverride.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'code' on receiver of type 'Char'.
-primitiveTypes/numberToChar/simple.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'code' on receiver of type 'Char'.
-primitiveTypes/numberToChar/superCallToClass.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'code' on receiver of type 'Char'.
-primitiveTypes/numberToChar/superCallToInterface.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'code' on receiver of type 'Char'.
-primitiveTypes/numberToChar/superCallToNumber.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'code' on receiver of type 'Char'.
+primitiveTypes/numberToChar/abstractMethodInSuperinterface.kt: unsupported: a call to CONSTRUCTOR …
+primitiveTypes/numberToChar/fakeOverride.kt: unsupported: a call to CONSTRUCTOR …
+primitiveTypes/numberToChar/simple.kt: unsupported: a call to CONSTRUCTOR …
+primitiveTypes/numberToChar/superCallToClass.kt: unsupported: a call to CONSTRUCTOR …
+primitiveTypes/numberToChar/superCallToInterface.kt: unsupported: a call to CONSTRUCTOR …
+primitiveTypes/numberToChar/superCallToNumber.kt: unsupported: a call to CONSTRUCTOR …
 primitiveTypes/rangeTo.kt: unsupported: Byte.rangeTo
 primitiveTypes/reassignDestructured.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Int?'.
 primitiveTypes/stringEqualsHashCodeToString.kt: unsupported: a call to equals
@@ -3500,35 +3377,35 @@ propertyCallableReference/varModule.kt: unsupported: the expression RICH_PROPERT
 publishedApi/inlineFromFriendModule.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'published'.
 publishedApi/simple.kt: unsupported: inheriting FUN …
 ranges/capturedLoopVar.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
-ranges/contains/charInCharRangeWithPossibleOverflow.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'CharRange'.
-ranges/contains/comparisonWithRangeBoundEliminated.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
+ranges/contains/charInCharRangeWithPossibleOverflow.kt: unsupported: a call to contains
+ranges/contains/comparisonWithRangeBoundEliminated.kt: unsupported: a call to contains
 ranges/contains/evaluationOrderForCollection.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'emptyList'.
-ranges/contains/evaluationOrderForComparableRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'rangeTo' for operator '..' on receiver of type 'Z'.
+ranges/contains/evaluationOrderForComparableRange.kt: unsupported: a call to append
 ranges/contains/evaluationOrderForDownTo.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
 ranges/contains/evaluationOrderForDownToReversed.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
-ranges/contains/evaluationOrderForNullableArgument.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
-ranges/contains/evaluationOrderForRangeLiteral.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
+ranges/contains/evaluationOrderForNullableArgument.kt: IllegalStateException: OVERLOAD_RESOLUTION_AMBIGUITY: Overload resolution ambiguity between candidates:
+ranges/contains/evaluationOrderForRangeLiteral.kt: unsupported: a call to append
 ranges/contains/evaluationOrderForRangeLiteralReversed.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'reversed' on receiver of type 'IntRange'.
-ranges/contains/evaluationOrderForUntil.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
+ranges/contains/evaluationOrderForUntil.kt: unsupported: a call to append
 ranges/contains/evaluationOrderForUntilReversed.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'reversed' on receiver of type 'IntRange'.
 ranges/contains/generated/arrayIndices.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'indices' on receiver of type 'IntArray'.
 ranges/contains/generated/charDownTo.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Char'.
-ranges/contains/generated/charRangeTo.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'CharRange'.
-ranges/contains/generated/charRangeUntil.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'CharRange'.
+ranges/contains/generated/charRangeTo.kt: unsupported: a call to contains
+ranges/contains/generated/charRangeUntil.kt: unsupported: a call to contains
 ranges/contains/generated/charSequenceIndices.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'indices' on receiver of type 'CharSequence'.
 ranges/contains/generated/charUntil.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'until' on receiver of type 'Char'.
 ranges/contains/generated/collectionIndices.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-ranges/contains/generated/doubleRangeTo.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'rangeTo' for operator '..' on receiver of type 'Double'.
-ranges/contains/generated/doubleRangeUntil.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'rangeUntil' for operator '..<' on receiver of type 'Double'.
-ranges/contains/generated/floatRangeTo.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'rangeTo' for operator '..' on receiver of type 'Float'.
-ranges/contains/generated/floatRangeUntil.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'rangeUntil' for operator '..<' on receiver of type 'Float'.
+ranges/contains/generated/doubleRangeTo.kt: IllegalStateException: ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Float', but 'Double' was expected.
+ranges/contains/generated/doubleRangeUntil.kt: IllegalStateException: ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Float', but 'Double' was expected.
+ranges/contains/generated/floatRangeTo.kt: IllegalStateException: ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Double', but 'Float' was expected.
+ranges/contains/generated/floatRangeUntil.kt: unsupported: overriding FUN …
 ranges/contains/generated/intDownTo.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
-ranges/contains/generated/intRangeTo.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
-ranges/contains/generated/intRangeUntil.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
-ranges/contains/generated/intUntil.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
+ranges/contains/generated/intRangeTo.kt: IllegalStateException: ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Byte', but 'Int' was expected.
+ranges/contains/generated/intRangeUntil.kt: IllegalStateException: ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Byte', but 'Int' was expected.
+ranges/contains/generated/intUntil.kt: IllegalStateException: ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Byte', but 'Int' was expected.
 ranges/contains/generated/longDownTo.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Long'.
-ranges/contains/generated/longRangeTo.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'LongRange'.
-ranges/contains/generated/longRangeUntil.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'LongRange'.
+ranges/contains/generated/longRangeTo.kt: IllegalStateException: ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Byte', but 'Long' was expected.
+ranges/contains/generated/longRangeUntil.kt: IllegalStateException: ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Byte', but 'Long' was expected.
 ranges/contains/generated/longUntil.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'until' on receiver of type 'Long'.
 ranges/contains/generated/uintDownTo.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 ranges/contains/generated/uintRangeTo.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
@@ -3538,46 +3415,46 @@ ranges/contains/generated/ulongDownTo.kt: IllegalStateException: MISSING_STDLIB_
 ranges/contains/generated/ulongRangeTo.kt: IllegalStateException: MISSING_STDLIB_CLASS: Missing stdlib class.
 ranges/contains/generated/ulongRangeUntil.kt: IllegalStateException: MISSING_STDLIB_CLASS: Missing stdlib class.
 ranges/contains/generated/ulongUntil.kt: IllegalStateException: MISSING_STDLIB_CLASS: Missing stdlib class.
-ranges/contains/genericCharInRangeLiteral.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'CharRange'.
-ranges/contains/inArray.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntArray'.
-ranges/contains/inCharSequence.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'String'.
-ranges/contains/inComparableRange.kt: IllegalStateException: TYPECHECKER_HAS_RUN_INTO_RECURSIVE_PROBLEM: Type checking has run into a recursive problem. Easiest workaround: specify the types of your
+ranges/contains/genericCharInRangeLiteral.kt: unsupported: a call to contains
+ranges/contains/inArray.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
+ranges/contains/inCharSequence.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
+ranges/contains/inComparableRange.kt: unsupported: overriding FUN …
 ranges/contains/inCustomObjectRange.kt: IllegalStateException: TYPECHECKER_HAS_RUN_INTO_RECURSIVE_PROBLEM: Type checking has run into a recursive problem. Easiest workaround: specify the types of your
-ranges/contains/inDoubleRangeLiteralVsComparableRangeLiteral.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'rangeTo' for operator '..' on receiver of type 'Double'.
-ranges/contains/inExtensionRange.kt: IllegalStateException: RETURN_TYPE_MISMATCH: Return type mismatch: expected 'ClosedRange<Int>', actual 'IntRange'.
-ranges/contains/inFloatingPointRangeWithNaNBound.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'rangeTo' for operator '..' on receiver of type 'Double'.
-ranges/contains/inIntRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
+ranges/contains/inDoubleRangeLiteralVsComparableRangeLiteral.kt: unsupported: overriding FUN …
+ranges/contains/inExtensionRange.kt: unsupported: Int.rangeTo
+ranges/contains/inFloatingPointRangeWithNaNBound.kt: unsupported: a call to rangeTo
+ranges/contains/inIntRange.kt: unsupported: a call to contains
 ranges/contains/inIterable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-ranges/contains/inNonMatchingRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
-ranges/contains/inOptimizableDoubleRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'rangeTo' for operator '..' on receiver of type 'Double'.
-ranges/contains/inOptimizableFloatRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'rangeTo' for operator '..' on receiver of type 'Float'.
-ranges/contains/inOptimizableIntRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
-ranges/contains/inOptimizableLongRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'LongRange'.
-ranges/contains/inPrimitiveProgression.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'step' on receiver of type 'IntRange'.
-ranges/contains/inPrimitiveRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
-ranges/contains/inRangeLiteralComposition.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
-ranges/contains/inRangeWithCustomContains.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.ranges.ClosedRange'. Ensure that you have a dependency on the Ko
-ranges/contains/inRangeWithImplicitReceiver.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'LongRange'.
-ranges/contains/inRangeWithNonmatchingArguments.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
-ranges/contains/inRangeWithSmartCast.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
-ranges/contains/inUntil.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
+ranges/contains/inNonMatchingRange.kt: IllegalStateException: ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Long', but 'Int' was expected.
+ranges/contains/inOptimizableDoubleRange.kt: unsupported: overriding FUN …
+ranges/contains/inOptimizableFloatRange.kt: unsupported: overriding FUN …
+ranges/contains/inOptimizableIntRange.kt: unsupported: a call to contains
+ranges/contains/inOptimizableLongRange.kt: unsupported: a call to contains
+ranges/contains/inPrimitiveProgression.kt: IllegalStateException: FUNCTION_EXPECTED: Expression 'step' of type 'Int' cannot be invoked as a function. Function 'invoke()' is not found.
+ranges/contains/inPrimitiveRange.kt: unsupported: a call to contains
+ranges/contains/inRangeLiteralComposition.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
+ranges/contains/inRangeWithCustomContains.kt: unsupported: overriding FUN …
+ranges/contains/inRangeWithImplicitReceiver.kt: unsupported: a call to contains
+ranges/contains/inRangeWithNonmatchingArguments.kt: IllegalStateException: ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Long', but 'Int' was expected.
+ranges/contains/inRangeWithSmartCast.kt: unsupported: a call to contains
+ranges/contains/inUntil.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'until' on receiver of type 'Byte'.
 ranges/contains/inUntilMaxValue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'until' on receiver of type 'Char'.
 ranges/contains/inUntilMinValue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'until' on receiver of type 'Char'.
 ranges/contains/inUntilMinValueNonConst.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'until' on receiver of type 'Char'.
-ranges/contains/intInByteRangeWithPossibleOverflow.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
-ranges/contains/intInIntRangeWithPossibleOverflow.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
-ranges/contains/intInShortRangeWithPossibleOverflow.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
+ranges/contains/intInByteRangeWithPossibleOverflow.kt: unsupported: a call to contains
+ranges/contains/intInIntRangeWithPossibleOverflow.kt: unsupported: a call to contains
+ranges/contains/intInShortRangeWithPossibleOverflow.kt: unsupported: a call to contains
 ranges/contains/kt20106.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'setOf'.
-ranges/contains/longInLongRangeWithPossibleOverflow.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'LongRange'.
-ranges/contains/nullableInPrimitiveRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
+ranges/contains/longInLongRangeWithPossibleOverflow.kt: unsupported: a call to contains
+ranges/contains/nullableInPrimitiveRange.kt: IllegalStateException: OVERLOAD_RESOLUTION_AMBIGUITY: Overload resolution ambiguity between candidates:
 ranges/contains/rangeContainsString.kt: unsupported: Int.rangeTo
-ranges/contains/smartCastOnBothEnds.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'rangeTo' for operator '..' on receiver of type 'Double'.
-ranges/contains/smartCastOnBothEndsGeneric.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'rangeTo' for operator '..' on receiver of type 'Double'.
+ranges/contains/smartCastOnBothEnds.kt: IllegalStateException: UNRESOLVED_REFERENCE_WRONG_RECEIVER: Candidate 'fun <T : Comparable<T>> T.rangeTo(that: T): ClosedRange<T>' is inapplicable for operator 
+ranges/contains/smartCastOnBothEndsGeneric.kt: IllegalStateException: UNRESOLVED_REFERENCE_WRONG_RECEIVER: Candidate 'fun Double.rangeTo(that: Double): ClosedFloatingPointRange<Double>' is inapplicable for o
 ranges/contains/uintInUByteRangeWithPossibleOverflow.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 ranges/contains/uintInUIntRangeWithPossibleOverflow.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 ranges/contains/uintInUShortRangeWithPossibleOverflow.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 ranges/contains/ulongInULongRangeWithPossibleOverflow.kt: IllegalStateException: MISSING_STDLIB_CLASS: Missing stdlib class.
-ranges/contains/userDefinedContainsExtension.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
+ranges/contains/userDefinedContainsExtension.kt: IllegalStateException: OVERLOAD_RESOLUTION_AMBIGUITY: Overload resolution ambiguity between candidates:
 ranges/evaluationOrder/forInDownTo.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/evaluationOrder/forInDownToReversed.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/evaluationOrder/forInDownToReversedReversed.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
@@ -3615,8 +3492,8 @@ ranges/expression/emptyDownto.kt: IllegalStateException: UNRESOLVED_REFERENCE: U
 ranges/expression/emptyRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 ranges/expression/inexactDownToMinValue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
 ranges/expression/inexactSteppedDownTo.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
-ranges/expression/inexactSteppedRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'step' on receiver of type 'IntRange'.
-ranges/expression/inexactToMaxValue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'step' on receiver of type 'IntRange'.
+ranges/expression/inexactSteppedRange.kt: IllegalStateException: FUNCTION_EXPECTED: Expression 'step' of type 'Int' cannot be invoked as a function. Function 'invoke()' is not found.
+ranges/expression/inexactToMaxValue.kt: IllegalStateException: FUNCTION_EXPECTED: Expression 'step' of type 'Int' cannot be invoked as a function. Function 'invoke()' is not found.
 ranges/expression/maxValueMinusTwoToMaxValue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 ranges/expression/maxValueToMaxValue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 ranges/expression/maxValueToMinValue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
@@ -3625,23 +3502,23 @@ ranges/expression/oneElementRange.kt: IllegalStateException: UNRESOLVED_REFERENC
 ranges/expression/openRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 ranges/expression/openRangeUntil.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 ranges/expression/overflowZeroDownToMaxValue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
-ranges/expression/overflowZeroToMinValue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'step' on receiver of type 'IntRange'.
+ranges/expression/overflowZeroToMinValue.kt: IllegalStateException: FUNCTION_EXPECTED: Expression 'step' of type 'Int' cannot be invoked as a function. Function 'invoke()' is not found.
 ranges/expression/progressionDownToMinValue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
-ranges/expression/progressionMaxValueMinusTwoToMaxValue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'step' on receiver of type 'IntRange'.
-ranges/expression/progressionMaxValueToMaxValue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'step' on receiver of type 'IntRange'.
-ranges/expression/progressionMaxValueToMinValue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'step' on receiver of type 'IntRange'.
-ranges/expression/progressionMinValueToMinValue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'step' on receiver of type 'IntRange'.
+ranges/expression/progressionMaxValueMinusTwoToMaxValue.kt: IllegalStateException: FUNCTION_EXPECTED: Expression 'step' of type 'Int' cannot be invoked as a function. Function 'invoke()' is not found.
+ranges/expression/progressionMaxValueToMaxValue.kt: IllegalStateException: FUNCTION_EXPECTED: Expression 'step' of type 'Int' cannot be invoked as a function. Function 'invoke()' is not found.
+ranges/expression/progressionMaxValueToMinValue.kt: IllegalStateException: FUNCTION_EXPECTED: Expression 'step' of type 'Int' cannot be invoked as a function. Function 'invoke()' is not found.
+ranges/expression/progressionMinValueToMinValue.kt: IllegalStateException: FUNCTION_EXPECTED: Expression 'step' of type 'Int' cannot be invoked as a function. Function 'invoke()' is not found.
 ranges/expression/reversedBackSequence.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
 ranges/expression/reversedEmptyBackSequence.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
 ranges/expression/reversedEmptyRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'reversed' on receiver of type 'IntRange'.
 ranges/expression/reversedInexactSteppedDownTo.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
 ranges/expression/reversedRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'reversed' on receiver of type 'IntRange'.
-ranges/expression/reversedSimpleSteppedRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'step' on receiver of type 'IntRange'.
+ranges/expression/reversedSimpleSteppedRange.kt: IllegalStateException: FUNCTION_EXPECTED: Expression 'step' of type 'Int' cannot be invoked as a function. Function 'invoke()' is not found.
 ranges/expression/simpleDownTo.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
 ranges/expression/simpleRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 ranges/expression/simpleRangeWithNonConstantEnds.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 ranges/expression/simpleSteppedDownTo.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
-ranges/expression/simpleSteppedRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'step' on receiver of type 'IntRange'.
+ranges/expression/simpleSteppedRange.kt: IllegalStateException: FUNCTION_EXPECTED: Expression 'step' of type 'Int' cannot be invoked as a function. Function 'invoke()' is not found.
 ranges/forByteProgressionWithIntIncrement.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInCharSequenceLengthDecreasedInLoopBody.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInCharSequenceLengthIncreasedInLoopBody.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
@@ -3649,7 +3526,7 @@ ranges/forInCharSequenceWithCustomIterator.kt: IllegalStateException: ITERATOR_M
 ranges/forInCharSequenceWithMultipleGetFunctions.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInCustomCharSequence.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInCustomIterable.kt: IllegalStateException: RETURN_TYPE_MISMATCH: Return type mismatch: expected 'Iterator<String>', actual 'Double'.
-ranges/forInDoubleRangeWithCustomIterator.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.ranges.ClosedRange'. Ensure that you have a dependency on the Ko
+ranges/forInDoubleRangeWithCustomIterator.kt: unsupported: overriding FUN …
 ranges/forInDownTo/forInDownToWithPossibleUnderflow.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInDownTo/forInSumDownToSum.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInDownTo/forIntInDownTo.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
@@ -3657,7 +3534,7 @@ ranges/forInDownTo/forIntInDownToWithNonConstBounds.kt: IllegalStateException: I
 ranges/forInDownTo/forIntInNonOptimizedDownTo.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
 ranges/forInDownTo/forLongInDownTo.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInDownTo/forNullableIntInDownTo.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-ranges/forInFloatRangeWithCustomIterator.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.ranges.ClosedRange'. Ensure that you have a dependency on the Ko
+ranges/forInFloatRangeWithCustomIterator.kt: unsupported: overriding FUN …
 ranges/forInIndices/forInArrayListIndices.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInIndices/forInCharSequenceIndices.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInIndices/forInCharSequenceTypeParameterIndices.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
@@ -3668,12 +3545,9 @@ ranges/forInIndices/forInListIndices.kt: IllegalStateException: ITERATOR_MISSING
 ranges/forInIndices/forInListIndicesBreak.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInIndices/forInListIndicesContinue.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInIndices/forInNonOptimizedIndices.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-ranges/forInIndices/forInObjectArrayIndices.kt: unsupported: a call to iterator
 ranges/forInIndices/forInPrimitiveArrayIndices.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-ranges/forInIndices/forNullableIntInArrayIndices.kt: unsupported: a call to iterator
 ranges/forInIndices/forNullableIntInCollectionIndices.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 ranges/forInIndices/indexOfLast.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-ranges/forInIndices/kt12983_forInGenericArrayIndices.kt: unsupported: a call to iterator
 ranges/forInIndices/kt12983_forInGenericCollectionIndices.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInIndices/kt12983_forInSpecificArrayIndices.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInIndices/kt12983_forInSpecificCollectionIndices.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
@@ -3681,9 +3555,7 @@ ranges/forInIndices/kt13241_Array.kt: IllegalStateException: ITERATOR_MISSING: F
 ranges/forInIndices/kt13241_CharSequence.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInIndices/kt13241_Collection.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInIndices/kt43159_ArrayUpperBound.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
-ranges/forInIndices/kt43159_GenericArray.kt: unsupported: a call to iterator
-ranges/forInIntRangeToConstWithBreak.kt: unsupported: a call to iterator
-ranges/forInIntRangeToConstWithContinue.kt: unsupported: a call to iterator
+ranges/forInIndices/kt43159_GenericArray.kt: unsupported: inheriting FUN …
 ranges/forInProgressionWithIndex/forInDownToWithIndex.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 ranges/forInProgressionWithIndex/forInIndicesWithIndex.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 ranges/forInProgressionWithIndex/forInRangeToWithIndex.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
@@ -3699,8 +3571,6 @@ ranges/forInProgressionWithIndex/forInWithIndexReversed.kt: IllegalStateExceptio
 ranges/forInProgressionWithIndex/forInWithIndexWithDestructuringInLoop.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 ranges/forInProgressionWithIndex/forInWithIndexWithIndex.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 ranges/forInProgressionWithIndex/kt42909.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-ranges/forInRangeLiteralWithMixedTypeBounds.kt: unsupported: a call to iterator
-ranges/forInRangeWithImplicitReceiver.kt: unsupported: a call to iterator
 ranges/forInReversed/ForInReversedReversedRange.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInReversed/forInReversedArrayIndices.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInReversed/forInReversedCharSequenceIndices.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
@@ -3724,30 +3594,19 @@ ranges/forInUntil/forInUntilChar.kt: IllegalStateException: ITERATOR_MISSING: Fo
 ranges/forInUntil/forInUntilCharMaxValue.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInUntil/forInUntilCharMinValue.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInUntil/forInUntilCharMinValueNonConst.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-ranges/forInUntil/forInUntilInt.kt: unsupported: a call to iterator
-ranges/forInUntil/forInUntilIntMaxValue.kt: unsupported: a call to iterator
-ranges/forInUntil/forInUntilIntMinValue.kt: unsupported: a call to iterator
-ranges/forInUntil/forInUntilIntMinValueNonConst.kt: unsupported: a call to iterator
-ranges/forInUntil/forInUntilLesserInt.kt: unsupported: a call to iterator
 ranges/forInUntil/forInUntilLong.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInUntil/forInUntilLongMaxValue.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forInUntil/forInUntilLongMinValue.kt: IllegalStateException: ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Long', but 'Int' was expected.
 ranges/forInUntil/forInUntilLongMinValueNonConst.kt: IllegalStateException: ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Long', but 'Int' was expected.
-ranges/forInUntil/forIntInIntUntilSmartcastInt.kt: unsupported: a call to iterator
 ranges/forInUntil/kt42533.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-ranges/forIntRange.kt: unsupported: a call to iterator
-ranges/forNullableIntInRangeWithImplicitReceiver.kt: unsupported: a call to iterator
 ranges/forWithPossibleOverflow/forInDownToCharMinValue.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forWithPossibleOverflow/forInDownToCharMinValueReversed.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forWithPossibleOverflow/forInDownToIntMinValue.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forWithPossibleOverflow/forInDownToIntMinValueReversed.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forWithPossibleOverflow/forInDownToLongMinValue.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forWithPossibleOverflow/forInDownToLongMinValueReversed.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-ranges/forWithPossibleOverflow/forInRangeToCharMaxValue.kt: unsupported: a call to iterator
 ranges/forWithPossibleOverflow/forInRangeToCharMaxValueReversed.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-ranges/forWithPossibleOverflow/forInRangeToIntMaxValue.kt: unsupported: a call to iterator
 ranges/forWithPossibleOverflow/forInRangeToIntMaxValueReversed.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-ranges/forWithPossibleOverflow/forInRangeToLongMaxValue.kt: unsupported: a call to iterator
 ranges/forWithPossibleOverflow/forInRangeToLongMaxValueReversed.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/forWithPossibleOverflow/forInUntilIntMinValueReversed.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/kt37370.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
@@ -3787,9 +3646,8 @@ ranges/literal/simpleRangeWithNonConstantEnds.kt: IllegalStateException: UNRESOL
 ranges/literal/simpleSteppedDownTo.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/literal/simpleSteppedRange.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/multiAssignmentIterationOverIntRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
-ranges/nullableLoopParameter/progressionExpression.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'IntProgression', actual 'IntRange'.
+ranges/nullableLoopParameter/progressionExpression.kt: unsupported: Int.rangeTo
 ranges/nullableLoopParameter/rangeExpression.kt: unsupported: Int.rangeTo
-ranges/nullableLoopParameter/rangeLiteral.kt: unsupported: a call to iterator
 ranges/safeCallRangeTo.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'require'.
 ranges/stepped/expression/downTo/emptyProgression.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 ranges/stepped/expression/downTo/illegalStepNegative.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
@@ -4283,7 +4141,7 @@ ranges/unsigned/expression/simpleRange.kt: IllegalStateException: UNSIGNED_LITER
 ranges/unsigned/expression/simpleRangeWithNonConstantEnds.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 ranges/unsigned/expression/simpleSteppedDownTo.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 ranges/unsigned/expression/simpleSteppedRange.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
-ranges/unsigned/inMixedUnsignedRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'rangeTo' for operator '..'.
+ranges/unsigned/inMixedUnsignedRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toUByte' on receiver of type 'Int'.
 ranges/unsigned/kt35004.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'ULong'.
 ranges/unsigned/kt36953.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/unsigned/kt36953_continue.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
@@ -4457,7 +4315,6 @@ secondaryConstructors/innerClassesInheritance.kt: unsupported: the inner class A
 secondaryConstructors/localClasses.kt: unsupported: Int.toString
 secondaryConstructors/superCallPrimary.kt: unsupported: Int.toString
 secondaryConstructors/superCallSecondary.kt: unsupported: Int.toString
-secondaryConstructors/varargs.kt: unsupported: a call to iterator
 serialization/deserializedMembers.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 serialization/serializedDefaultArgs.kt: unsupported: Int.hashCode
 serialization/serializedDoWhile.kt: unsupported: a call to CONSTRUCTOR …
@@ -4467,10 +4324,9 @@ size/helloWorld.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved refe
 size/helloWorldPromise.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Promise'.
 smartCasts/invokeRecieverSmartcastK2.kt: unsupported: a call to <get-length>
 smartCasts/kt44814.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'emptyList'.
-smartCasts/kt44932.kt: unsupported: a call to iterator
 smartCasts/kt72391.kt: unsupported: Double.toString
 smartCasts/negativesmartCastAugmentedAssignment.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-smartCasts/smartCastedGenericWhenSubjectInRangeCheck.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'CharRange'.
+smartCasts/smartCastedGenericWhenSubjectInRangeCheck.kt: unsupported: a call to contains
 smartCasts/smartcastFromGenericToString.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'getValue' on receiver of type 'Map<String, V (of class Some<V : Any>)>'.
 smartCasts/smartcastToStarType.kt: unsupported: a type test against T of .Derived
 smartCasts/whenSmartCast.kt: unsupported: a call to <get-length>
@@ -4528,10 +4384,9 @@ strings/kt47917.kt: unsupported: a call to <get-length>
 strings/kt5389_stringBuilderGet.kt: unsupported: a call to CONSTRUCTOR …
 strings/kt5956.kt: unsupported: overriding FUN …
 strings/kt86478_stringBuilderSetLength.kt: unsupported: a call to CONSTRUCTOR …
-strings/kt894.kt: unsupported: a call to iterator
+strings/kt894.kt: unsupported: a call to plus
 strings/multilineStringsWithTemplates.kt: unsupported: a call to <get-length>
 strings/nestedConcat.kt: unsupported: a call to <get-length>
-strings/rawStringsWithManyQuotes.kt: unsupported: a call to iterator
 strings/simpleStringPlus.kt: unsupported: a call to plus
 strings/stringPlusOnlyWorksOnString.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'E'. Specify it explicitly.
 strings/trimOptimization.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
@@ -4723,13 +4578,12 @@ unsignedTypes/varargsOfUnsignedTypes.kt: IllegalStateException: UNRESOLVED_REFER
 unsignedTypes/whenByUnsigned.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 vararg/boxingArgumentsForVararg.kt: unsupported: the value class InlineClass
 vararg/emptyVarArg.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'UInt'.
-vararg/evaluationOrder.kt: unsupported: a call to iterator
 vararg/inlineClassArraysAsNamedArgumentInVararg.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'sum' on receiver of type 'IntArray'.
 vararg/kt10926.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 vararg/kt37715.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'toList'.
 vararg/kt581.kt: unsupported: a call to CONSTRUCTOR …
-vararg/kt6192.kt: unsupported: a call to iterator
-vararg/referenceToContainsFromVarargParameter.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains'.
+vararg/kt6192.kt: unsupported: Int.toString
+vararg/referenceToContainsFromVarargParameter.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
 vararg/useSuspendFunResultAsVararg.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
 vararg/varargInFunParam.kt: unsupported: a call to intArrayOf
 vararg/varargInTailrec.kt: IllegalStateException: SPREAD_OF_NULLABLE: The spread operator (*foo) cannot be applied to an argument of nullable type.
@@ -4795,7 +4649,6 @@ when/NoWhenBranchMatchedExceptionAfterAnonymous.kt: IllegalStateException: UNRES
 when/NoWhenBranchMatchedExceptionAfterNullable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
 when/NoWhenBranchMatchedExceptionAfterQualified.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
 when/edgeCases.kt: unsupported: a call to toString
-when/exhaustiveBreakContinue.kt: unsupported: a call to iterator
 when/guard/whenWithGuard.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'joinToString' on receiver of type 'List<String>'.
 when/integralWhenWithNoInlinedConstants.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'assert'.
 when/is.kt: unsupported: a type test against java.util.ArrayList outside the VM modules
@@ -4806,9 +4659,8 @@ when/kt83740.kt: unsupported: a call to toString
 when/noElseExhaustiveUnitExpected.kt: unsupported: a value of type kotlin.Unit
 when/nothingTyped.kt: unsupported: a value of type kotlin.Nothing
 when/oneUnitBranch.kt: unsupported: a call to toString
-when/range.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
+when/range.kt: unsupported: a call to CONSTRUCTOR …
 when/stringOptimization/temporaryVarInWhenByStringIsDisposedProperly.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'last' on receiver of type 'ArrayList<String>'.
-when/switchBreakNoLabel.kt: unsupported: a call to iterator
 when/switchOptimizationDense.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'map' on receiver of type 'IntRange'.
 when/switchOptimizationMultipleConditions.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'map' on receiver of type 'IntRange'.
 when/switchOptimizationSparse.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'map' on receiver of type 'IntRange'.
@@ -4820,5 +4672,5 @@ when/whenArgumentIsEvaluatedOnlyOnce.kt: unsupported: a call to CONSTRUCTOR …
 when/whenSafeCallSubjectEvaluatedOnce.kt: unsupported: a call to <get-length>
 when/whenSubjectVariable/denseIntSwitchWithSubjectVariable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'map' on receiver of type 'IntRange'.
 when/whenSubjectVariable/kt33641_inlineClass.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Result'.
-when/whenSubjectVariable/rangeCheckOnSubjectVariable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
+when/whenSubjectVariable/rangeCheckOnSubjectVariable.kt: unsupported: a call to contains
 when/whenSubjectVariable/sparseIntSwitchWithSubjectVariable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'map' on receiver of type 'IntRange'.

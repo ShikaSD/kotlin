@@ -52,6 +52,8 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
 
     from(stdlibProjectDir.resolve("jklib-for-test/src/stubs")) {
         include("kotlin/**")
+        // The real ranges instead, below: the loops lowering reads their classes.
+        exclude("kotlin/ranges/**")
         into("src/common")
     }
 
@@ -96,6 +98,11 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
             "kotlin/internal/Annotations.kt",
             "kotlin/internal/AnnotationsBuiltin.kt",
             "kotlin/internal/progressionUtil.kt",
+            "kotlin/ranges/PrimitiveRanges.kt",
+            "kotlin/ranges/ProgressionIterators.kt",
+            "kotlin/ranges/Progressions.kt",
+            "kotlin/ranges/Range.kt",
+            "kotlin/ranges/Ranges.kt",
             "kotlin/internal/throwNoWhenBranchMatchedException.kt",
             "kotlin/concurrent/atomics/AtomicArrays.common.kt",
             "kotlin/concurrent/atomics/Atomics.common.kt",
@@ -153,6 +160,12 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
             "minimalThrowables.kt",
         )
         into("src/jvm")
+    }
+
+    // What the VM's standard library declares itself, until the common sources it stands in for build.
+    from(file("src")) {
+        include("**/*.kt")
+        into("src/common/vm")
     }
 
     // The common flavor's parts the compiler uses, from the sources Wasm, Native and JS build with.

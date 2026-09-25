@@ -2182,4 +2182,53 @@ class JKlibVmBackendTest {
         """
         assertTrue(runBox(tempDir, source))
     }
+
+    /** A `for` over an array counts its index rather than calling an iterator; see `ForLoopsLowering`. */
+    @Test
+    fun testForOverPrimitiveArrayVisitsEachElement(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                var sum = 0
+                for (n in intArrayOf(1, 2, 3)) sum += n
+                return if (sum == 6) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testForOverArrayVisitsElementsInOrder(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                var text = ""
+                for (word in arrayOf("O", "K")) text += word
+                return text
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testForOverClosedRangeIncludesItsEnd(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                var sum = 0
+                for (i in 1..4) sum += i
+                return if (sum == 10) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testForUntilExcludesItsEnd(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                var sum = 0
+                for (i in 0 until 4) sum += i
+                return if (sum == 6) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
 }
