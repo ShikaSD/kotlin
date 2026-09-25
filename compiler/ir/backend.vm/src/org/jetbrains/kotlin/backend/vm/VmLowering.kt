@@ -177,8 +177,11 @@ fun lowerForVm(context: VmLoweringContext, module: IrModuleFragment) {
     module.files.forEach { popup.lower(it) }
 }
 
-/** Lowers [module] and generates it as one VM module named [moduleName]. */
-fun compileToVm(module: IrModuleFragment, moduleName: String, context: VmLoweringContext): VmModule {
+/**
+ * Lowers [module] and generates it as one VM module named [moduleName]. Compiling the standard library, [reportStub] is
+ * told of each function generated as a stub; see [VmModuleGenerator].
+ */
+fun compileToVm(module: IrModuleFragment, moduleName: String, context: VmLoweringContext, reportStub: (String) -> Unit = {}): VmModule {
     lowerForVm(context, module)
-    return VmModuleGenerator(context.irBuiltIns, moduleName).generate(module)
+    return VmModuleGenerator(context.irBuiltIns, moduleName, reportStub).generate(module)
 }

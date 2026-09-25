@@ -284,6 +284,17 @@ internal class VmFunctionGenerator private constructor(
         /** Unowned, as every initializer is: an owned function is one whose calls run the initializer. */
         fun fileInitializer(gen: VmModuleGenerator, symbol: VmFunctionSymbol, fields: List<IrField>): VmFunction =
             VmFunctionGenerator(gen, null, symbol, owner = null).generateFileInitializer(fields)
+
+        /** A function throwing `UnsupportedOperationException`, standing in for [name], which the backend cannot generate. */
+        fun unsupportedStub(gen: VmModuleGenerator, symbol: VmFunctionSymbol, name: String): VmFunction =
+            VmFunctionGenerator(gen, null, symbol, owner = null).generateUnsupportedStub(name)
+    }
+
+    private fun generateUnsupportedStub(name: String): VmFunction {
+        function.symbol.paramTypes.mapTo(function.params, ::newValue)
+        val message = newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, "the VM backend does not support $name yet")) }
+        throwNew("java.lang.UnsupportedOperationException", message)
+        return finish()
     }
 
     private fun block(): VmBlock = current ?: newBlock().also { current = it }
@@ -330,9 +341,15 @@ internal class VmFunctionGenerator private constructor(
     /** The value of [expression], which must have one: a placeholder when the expression never completes. */
     private fun operand(expression: IrExpression): VmValue = expression(expression) ?: newValue(vmType(expression.type))
 
-    /** The value of [expression] as a slot of [type] holds it, boxed or unboxed as the two differ. */
-    private fun operandAs(expression: IrExpression, type: IrType, slot: VmType? = gen.vmType(type)): VmValue =
-        coerce(operand(expression), expression.type, slot ?: vmType(type), type)
+    /**
+     * The value of [expression] as a slot of [type] holds it, boxed or unboxed as the two differ; a placeholder of the
+     * slot's type when the expression has no value, being `Unit` or never completing.
+     */
+    private fun operandAs(expression: IrExpression, type: IrType, slot: VmType? = gen.vmType(type)): VmValue {
+        val held = slot ?: vmType(type)
+        val value = expression(expression) ?: return newValue(held)
+        return coerce(value, expression.type, held, type)
+    }
 
     /**
      * [value], of Kotlin type [from], as a slot of VM type [slot] and Kotlin type [to] holds it. A primitive in a
@@ -1037,6 +1054,15 @@ internal class VmFunctionGenerator private constructor(
             if (argument == null) emptyVararg(parameter) else operandAs(argument, parameter.type, slots[index])
         }
 
+    /** A new instance of [constructor]'s class, which it initializes with [args], already evaluated. */
+    private fun construct(constructor: IrConstructor, args: List<VmValue>): VmValue {
+        val classIndex = gen.classIndex(constructor.constructedClass) ?: unsupported("constructing ${constructor.constructedClass.name}")
+        val target = gen.staticTarget(constructor).symbol
+        val obj = newValue(VmType.Ref(classIndex)).also { emit(VmInstruction.NewObject(it, classIndex)) }
+        emit(VmInstruction.Call(null, VmCallee.Static(target), listOf(obj) + args))
+        return obj
+    }
+
     /** Allocates the object, then runs the constructor on it with the arguments already evaluated. */
     private fun constructorCall(call: IrConstructorCall): VmValue {
         val constructor = call.symbol.owner
@@ -1145,6 +1171,12 @@ internal class VmFunctionGenerator private constructor(
                         return Intrinsic(null)
                     }
                     "kotlin.String.plus" -> return Intrinsic(plus(operand(args[0]), args[1]))
+                    // Externals of the VM's standard library, which the VM implements; see its `platform-src`.
+                    "kotlin.toRawBits" -> return Intrinsic(newValue(VmType.I64).also { emit(VmInstruction.Copy(it, operand(args[0]))) })
+                    "kotlin.fromBits" -> return Intrinsic(newValue(VmType.F64).also { emit(VmInstruction.Copy(it, operand(args[1]))) })
+                    "kotlin.random.randomSeed" -> return Intrinsic(newValue(VmType.I64).also {
+                        emit(VmInstruction.Call(it, VmCallee.Static(gen.randomSeed), emptyList()))
+                    })
                 }
                 val owner = callee.parentClassOrNull?.defaultType
                 if (callee.body != null || owner == null || !owner.isPrimitiveType()) return null
@@ -1402,6 +1434,17 @@ internal class VmFunctionGenerator private constructor(
             "not" -> not(receiver)
             "shl", "shr", "ushr" -> shift(name, receiver, receiverType, argument())
             "toByte", "toShort", "toInt", "toLong", "toChar", "toFloat", "toDouble" -> convert(receiver, receiverType, resultType())
+            // As the JVM's box answers it, which the runtime's implements; the receiver is boxed already where `Any`'s
+            // member is what the call names.
+            "hashCode" -> newValue(VmType.I64).also {
+                val boxed = if (receiver.vmType() is VmType.Ref) receiver else box(receiver, args[0].type)
+                emit(VmInstruction.Call(it, VmCallee.Virtual(gen.hashCodeSelector), listOf(boxed)))
+            }
+            // A new `IntRange`, `LongRange` or `CharRange` from its constructor.
+            "rangeTo" -> {
+                val range = callee.returnType.classOrNull?.owner?.primaryConstructor ?: unsupported("${receiverType.typeName}.$name")
+                construct(range, listOf(receiver, operandAs(args[1], range.parameters[1].type)))
+            }
             else -> unsupported("${receiverType.typeName}.$name")
         }
     }

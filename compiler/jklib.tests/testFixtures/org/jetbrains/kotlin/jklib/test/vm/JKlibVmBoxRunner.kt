@@ -36,7 +36,8 @@ class JKlibVmBoxRunner(testServices: TestServices) : BinaryArtifactHandler<JKlib
 
         val runtime = File(repository, "runtime/src/runtime.ir").path
         val kotlinTest = JKlibVmSourceRootConfigurator.kotlinTestVir.path
-        val link = exec(File(repository, "target/debug/link_ir"), container, *virs.toTypedArray(), kotlinTest, runtime)
+        val stdlib = JKlibVmSourceRootConfigurator.vmStdlibVir.path
+        val link = exec(File(repository, "target/debug/link_ir"), container, *virs.toTypedArray(), kotlinTest, stdlib, runtime)
             ?: throw AssertionError("timeout: link")
         if (link.first != 0) throw AssertionError("link: ${lastMessage(link.second)}")
         val execute = exec(File(repository, "target/debug/execute"), container)

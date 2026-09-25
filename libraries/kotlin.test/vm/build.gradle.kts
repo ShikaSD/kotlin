@@ -60,7 +60,7 @@ val compileKotlinTest = tasks.register("compileKotlinTest", JavaExec::class) {
     doFirst {
         args(
             "-no-stdlib",
-            "-Xklib=${stdlib.singleFile.absolutePath}",
+            "-Xklib=${stdlib.single { it.name.endsWith(".klib") }.absolutePath}",
             "-module-name", "kotlin-test",
             "-d", klib.get().asFile.absolutePath,
             "-Xvm-output=${vir.get().asFile.absolutePath}",

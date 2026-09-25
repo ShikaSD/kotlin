@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.backend.vm.compileToVm
 import org.jetbrains.kotlin.backend.vm.vmir.VmIrWriter
 import org.jetbrains.kotlin.cli.CliDiagnostics.IO_ERROR
 import org.jetbrains.kotlin.cli.CliDiagnostics.VM_COMPILATION_ERROR
+import org.jetbrains.kotlin.cli.CliDiagnostics.VM_COMPILATION_WARNING
 import org.jetbrains.kotlin.cli.common.diagnosticsCollector
 import org.jetbrains.kotlin.cli.jklib.config.jklibVmOutput
 import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors
@@ -38,7 +39,9 @@ object JKlibVmCodegenPhase : PipelinePhase<JKlibIrCompilationArtifact, JKlibIrCo
                 configuration.diagnosticsCollector, configuration.languageVersionSettings,
             )
             val context = VmLoweringContext(configuration, input.pluginContext.irBuiltIns, diagnosticReporter)
-            compileToVm(input.moduleFragment, moduleName, context)
+            compileToVm(input.moduleFragment, moduleName, context) { stub ->
+                configuration.report(VM_COMPILATION_WARNING, "the VM backend generated a stub for $stub")
+            }
         } catch (e: VmCodegenException) {
             configuration.report(VM_COMPILATION_ERROR, e.message ?: "VM code generation failed")
             return null

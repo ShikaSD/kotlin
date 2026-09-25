@@ -86,7 +86,12 @@ private val RUNTIME_THROWABLES = mapOf(
  * signature from the declaration it overrides for the same reason; where the override declares a primitive and that
  * declaration a reference, the method's own body unboxes and boxes, which is all a bridge would do.
  */
-class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String) {
+class VmModuleGenerator(
+    internal val irBuiltIns: IrBuiltIns,
+    moduleName: String,
+    /** Told of each declaration of the standard library generated as a stub; see [isStdlib]. */
+    private val reportStub: (String) -> Unit = {},
+) {
     private val module = VmModule(moduleName)
     private lateinit var fragment: IrModuleFragment
     private val runtimeClasses = hashMapOf<String, Int>()
@@ -103,8 +108,17 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     private val enumEntries = hashMapOf<IrEnumEntrySymbol, Int>()
     private val functionOwners = hashMapOf<IrFunctionSymbol, VmOwner>()
 
+    /**
+     * Whether the module is the standard library itself. Its declarations the runtime implements are left out, as are
+     * its intrinsics, which have no bodies; and a function it cannot generate yet becomes a stub throwing
+     * `UnsupportedOperationException`, reported through [reportStub], rather than failing the module, so a program can
+     * link against the rest.
+     */
+    private var isStdlib = false
+
     fun generate(fragment: IrModuleFragment): VmModule {
         this.fragment = fragment
+        isStdlib = fragment == irBuiltIns.anyClass.owner.fileOrNull?.module
         val functions = mutableListOf<IrFunction>()
         val classes = mutableListOf<IrClass>()
         val fileMembers = mutableMapOf<IrFile, FileMembers>()
@@ -117,16 +131,20 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
                         members.properties += declaration
                         listOfNotNull(declaration.getter, declaration.setter).filterTo(members.functions) { !it.isOnlyInlined() }
                     }
-                    is IrClass -> collectClass(declaration, classes, functions)
+                    is IrClass -> stubbing(declaration) { collectClass(declaration, classes, functions) }
                     is IrTypeAlias -> {}
                     else -> unsupported("the declaration ${declaration.render()}")
                 }
             }
             functions += members.functions
         }
-        for (function in functions) {
+        functions.retainAll { function ->
             val isAbstract = function is IrSimpleFunction && function.modality == Modality.ABSTRACT
-            if (function.body == null && !isAbstract) unsupported("the declaration ${function.render()}")
+            when {
+                function.body != null || isAbstract -> true
+                isStdlib -> false
+                else -> unsupported("the declaration ${function.render()}")
+            }
         }
         val bodies = functions.filter { it.body != null }
         bodies.mapTo(definedFunctions) { it.symbol }
@@ -141,7 +159,10 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         val initializers = fileMembers.mapNotNull { declareFileGlobals(it.key, it.value) } + declareClassGlobals(classes)
         for (declaration in classes) {
             for (function in declaration.memberFunctions()) {
-                if (!function.isFakeOverride && function.overriddenSymbols.isEmpty() && function.isOverridable()) {
+                // A member with no body that is not abstract is a Java one the JVM maps onto a Kotlin class, which
+                // nothing on the VM answers or calls; see [methods].
+                val answerable = function.body != null || function.modality == Modality.ABSTRACT
+                if (!function.isFakeOverride && function.overriddenSymbols.isEmpty() && function.isOverridable() && answerable) {
                     val symbol = functionSymbol(function)
                     module.selectors += VmSelector(
                         symbol.name, null, classIndices.getValue(declaration.symbol), symbol.paramTypes.drop(1), symbol.returnType,
@@ -153,15 +174,46 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
 
         // The VM starts a program from its entry module's first function.
         functions.singleOrNull(::isBox)?.let { module.functions += boxEntry(it as IrSimpleFunction) }
-        bodies.mapTo(module.functions) { VmFunctionGenerator(this, it).generate() }
+        for (function in bodies) {
+            stubbing(function) { module.functions += VmFunctionGenerator(this, function).generate() }
+                ?: stub(function)?.let(module.functions::add)
+        }
         functions.filter { function -> function.parameters.any { it.defaultValue != null } }.mapTo(module.functions) {
             VmFunctionGenerator.defaultStub(this, it, defaultStub(it))
         }
         initializers.forEach { it() }
         for (declaration in classes) {
-            module.classes[classIndices.getValue(declaration.symbol)] = classDefinition(declaration)
+            module.classes[classIndices.getValue(declaration.symbol)] = stubbing(declaration) { classDefinition(declaration) }
+                ?: if (declaration.isInterface) {
+                    VmClass(declaration.vmName, null, emptyList(), isOpen = true, isAbstract = true, VmClassKind.Interface)
+                } else {
+                    VmClass(declaration.vmName, runtimeClass("Any"), emptyList(), isOpen = true, isAbstract = true, VmClassKind.Class(emptyList(), emptyList()))
+                }
         }
         return module
+    }
+
+    /**
+     * Runs [generate] for [declaration], and answers what it did; in the standard library, answers null instead when it
+     * is something the backend does not support, reporting it.
+     */
+    private fun <T> stubbing(declaration: IrDeclaration, generate: () -> T): T? {
+        if (!isStdlib) return generate()
+        return try {
+            generate()
+        } catch (e: VmCodegenException) {
+            reportStub("${declaration.render()}: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * A function of the standard library standing in for one the backend cannot generate: it throws, saying so. Null when
+     * not even the function's signature can be generated, which leaves out every caller too.
+     */
+    private fun stub(function: IrFunction): VmFunction? {
+        val symbol = stubbing(function) { functionSymbol(function) } ?: return null
+        return VmFunctionGenerator.unsupportedStub(this, symbol, "${function.fqNameWhenAvailable ?: function.name}")
     }
 
     private class FileMembers {
@@ -329,6 +381,8 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     internal val sharedVariableBoxClass: Int get() = runtimeClass("kotlin.internal.SharedVariableBox")
 
     private fun collectClass(declaration: IrClass, classes: MutableList<IrClass>, functions: MutableList<IrFunction>) {
+        // What only the compiler reads, and what the runtime implements in the standard library's stead.
+        if (isStdlib && (declaration.kind == ClassKind.ANNOTATION_CLASS || isRuntimeImplemented(declaration))) return
         when {
             declaration.kind == ClassKind.ANNOTATION_CLASS ->
                 unsupported("the ${declaration.kind.codeRepresentation ?: declaration.kind.name} ${declaration.name}")
@@ -346,8 +400,8 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
                 }
                 is IrAnonymousInitializer -> if (member.isStatic) unsupported("a static initializer in ${declaration.name}")
                 is IrField -> if (member.isStatic) unsupported("the static field ${member.name}")
-                is IrClass -> collectClass(member, classes, functions)
-                is IrEnumEntry -> member.correspondingClass?.let { collectClass(it, classes, functions) }
+                is IrClass -> stubbing(member) { collectClass(member, classes, functions) }
+                is IrEnumEntry -> member.correspondingClass?.let { stubbing(it) { collectClass(it, classes, functions) } }
                 else -> unsupported("the member ${member.render()}")
             }
         }
@@ -390,7 +444,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
      */
     private fun vmModuleOf(declaration: IrDeclaration): String? {
         val kotlinModule = declaration.fileOrNull?.module ?: return null
-        if (kotlinModule == fragment || kotlinModule == irBuiltIns.anyClass.owner.fileOrNull?.module) return null
+        if (kotlinModule == fragment) return null
         return kotlinModule.name.asStringStripSpecialMarkers()
     }
 
@@ -412,7 +466,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
 
     internal val toStringSelector: Int get() = runtimeSelector("toString")
 
-    /** A selector the runtime declares on `Any`, as it declares it. */
+    /** A selector the runtime declares, on `Any` or on one of the classes [RUNTIME_TYPES] lists, as it declares it. */
     private fun runtimeSelector(name: String): Int = runtimeSelectors.getOrPut(name) {
         val any = runtimeClass("Any")
         module.selectors += when (name) {
@@ -421,12 +475,20 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
             "toString" -> VmSelector(name, VM_RUNTIME_MODULE, any, emptyList(), stringType)
             "message" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("java.lang.Throwable"), emptyList(), stringType)
             "cause" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("java.lang.Throwable"), emptyList(), anyType)
+            "compareTo" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("java.lang.Comparable"), listOf(anyType), VmType.I64)
+            "length" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("java.lang.CharSequence"), emptyList(), VmType.I64)
+            "get" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("java.lang.CharSequence"), listOf(VmType.I64), VmType.I64)
             else -> error("The runtime declares no selector $name on Any")
         }
         module.selectors.size - 1
     }
 
     internal val equalsSelector: Int get() = runtimeSelector("equals")
+
+    internal val hashCodeSelector: Int get() = runtimeSelector("hashCode")
+
+    /** The runtime's `vm.random.seed`, which the VM stdlib's `kotlin.random.randomSeed` is. */
+    internal val randomSeed: VmFunctionSymbol by lazy { runtimeFunction("vm.random.seed", emptyList(), VmType.I64) }
 
     /** The runtime class implementing [declaration], one of [RUNTIME_THROWABLES], or null for any other class. */
     internal fun runtimeThrowable(declaration: IrClass): Int? =
@@ -491,8 +553,35 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
 
     // Classes.
 
-    /** The class standing for [declaration]: this module's, or one imported from the VM module declaring it. */
-    internal fun classIndex(declaration: IrClass): Int? = classIndices[declaration.symbol] ?: vmModuleOf(declaration)?.let { owner ->
+    /**
+     * The runtime class implementing [declaration], a class of the standard library the runtime declares in its stead:
+     * `Any`, `String`, a primitive's box, and the classes [RUNTIME_TYPES] and [RUNTIME_THROWABLES] list. Null for any
+     * other class.
+     */
+    private fun runtimeClassOf(declaration: IrClass): Int? {
+        val fqName = declaration.fqNameWhenAvailable?.asString()
+        return when {
+            declaration.isAny() -> runtimeClass("Any")
+            declaration.symbol == irBuiltIns.stringClass -> runtimeClass("vm.String")
+            declaration.isEnumBase() -> runtimeClass("java.lang.Enum")
+            isSharedVariableBox(declaration) -> sharedVariableBoxClass
+            declaration.defaultType.isPrimitiveType() -> boxClass(declaration.defaultType.getPrimitiveType()!!)
+            // Every function value is an instance of `vm.Function`, whatever its arity; see wip/FUNCTION_VALUES_DESIGN.md.
+            fqName == "kotlin.Function" || declaration.defaultType.isFunctionOrKFunction() -> runtimeClass("vm.Function")
+            else -> RUNTIME_TYPES[fqName]?.let(::runtimeClass) ?: runtimeThrowable(declaration)
+        }
+    }
+
+    /**
+     * Whether the standard library's [declaration] needs no class of its own in the VM: the runtime implements it, or it
+     * is one the backend compiles to something else — an array, `Unit` and `Nothing`.
+     */
+    private fun isRuntimeImplemented(declaration: IrClass): Boolean =
+        runtimeClassOf(declaration) != null || arrayClassOf(declaration.defaultType) != null ||
+                declaration.symbol == irBuiltIns.unitClass || declaration.symbol == irBuiltIns.nothingClass
+
+    /** The class standing for [declaration]: the runtime's, this module's, or one imported from the VM module declaring it. */
+    internal fun classIndex(declaration: IrClass): Int? = runtimeClassOf(declaration) ?: classIndices[declaration.symbol] ?: vmModuleOf(declaration)?.let { owner ->
         module.classes += VmClass(declaration.vmName, null, emptyList(), isOpen = false, isAbstract = false, VmClassKind.Imported(owner))
         (module.classes.size - 1).also { classIndices[declaration.symbol] = it }
     }
@@ -556,6 +645,15 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         return classIndex(declaration) ?: runtimeThrowable(declaration)
     }
 
+    /** Whether one of [this]'s superclasses is a throwable the runtime implements. */
+    private fun IrClass.extendsRuntimeThrowable(): Boolean =
+        generateSequence(superClass()) { it.superClass() }.any { runtimeThrowable(it) != null }
+
+    /** Whether [this] is an interface declaring nothing that no VM module holds. */
+    private fun IrClass.isMarkerOutsideVm(): Boolean =
+        isInterface && classIndex(this) == null &&
+                declarations.none { (it is IrSimpleFunction && !it.isFakeOverride) || (it is IrProperty && !it.isFakeOverride) }
+
     private fun IrClass.superClass(): IrClass? =
         superTypes.mapNotNull { it.classOrNull?.owner }.firstOrNull { !it.isInterface }
 
@@ -589,7 +687,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
 
     internal fun fieldIndex(field: IrField): Int {
         val owner = field.parentAsClass
-        if (classIndex(owner) == null) unsupported("the field ${field.name} of ${owner.name}")
+        if (runtimeClassOf(owner) != null || classIndex(owner) == null) unsupported("the field ${field.name} of ${owner.name}")
         return fieldLayout(owner).indexOfFirst { it.declared == field }
     }
 
@@ -621,7 +719,15 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     private val usedClassNames = hashSetOf<String>()
 
     private fun classDefinition(declaration: IrClass): VmClass {
-        val interfaces = declaration.superTypes.mapNotNull { it.classOrNull?.owner }.filter { it.isInterface }.map {
+        val interfaces = declaration.superTypes.mapNotNull { it.classOrNull?.owner }.filter { it.isInterface }.mapNotNull {
+            // A marker interface the VM cannot name, such as `java.io.Serializable`, only a type test could ask about.
+            if (it.isMarkerOutsideVm()) return@mapNotNull null
+            // A function type stands for `vm.Function`, the class every function value has, which an interface cannot
+            // extend and a class gains nothing by naming: a value is a function value only when the VM made it one.
+            // A class calling itself one is what the VM cannot express.
+            val isFunctionType = it.fqNameWhenAvailable?.asString() == "kotlin.Function" || it.defaultType.isFunctionOrKFunction()
+            if (isFunctionType && (declaration.isInterface || !it.defaultType.isFunctionOrKFunction())) return@mapNotNull null
+            if (isFunctionType) unsupported("implementing the function type ${it.name}")
             classIndex(it) ?: unsupported("the supertype ${it.name} outside the VM modules")
         }
         if (declaration.isInterface) {
@@ -663,12 +769,19 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
                     }
                     continue
                 }
-                // Answered by the runtime's throwable, except its name, which only the class's own code has.
-                implementation.parentClassOrNull?.let(::runtimeThrowable) != null -> {
+                // Answered by the runtime's throwable, except its name, which only the class's own code has. A Java
+                // throwable's `toString` can resolve to `Any`'s, so the class is what tells.
+                implementation.parentClassOrNull?.let(::runtimeThrowable) != null ||
+                        (implementation.parentClassOrNull?.isAny() == true && declaration.extendsRuntimeThrowable()) -> {
                     if (implementation.name.asString() != "toString" || isAbstract) continue
                     throwableToString(declaration)
                 }
                 implementation.parentClassOrNull?.isAny() != true -> {
+                    // A Java interface's default method, or a member of this module with no body — an intrinsic, or a
+                    // Java member the JVM maps onto a Kotlin class — which nothing here answers and nothing on the VM
+                    // calls.
+                    val isJava = implementation.origin == IrDeclarationOrigin.IR_EXTERNAL_JAVA_DECLARATION_STUB
+                    if (isJava || (implementation.symbol !in definedFunctions && implementation.fileOrNull?.module == fragment)) continue
                     if (implementation.symbol !in definedFunctions) {
                         importFunction(implementation) ?: unsupported("inheriting ${implementation.render()} outside the VM modules")
                     } else {
@@ -755,9 +868,17 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     /** The selector dispatching a call to [root], or null when nothing can override it. */
     private fun selectorOf(root: IrSimpleFunction): Int? {
         if (root.parentClassOrNull?.isAny() == true) return runtimeSelector(root.name.asString())
+        if (root.parentClassOrNull?.fqNameWhenAvailable?.asString() in RUNTIME_TYPES) return runtimeTypeSelector(root)
         if (root.parentClassOrNull?.let(::runtimeThrowable) != null) return throwableSelector(root.name.asString())
         if (!root.isOverridable()) return null
         return selectors[root.symbol] ?: importSelector(root) ?: unsupported("overriding ${root.render()} outside the VM modules")
+    }
+
+    /** The runtime's selector for [root], a member of one of the classes [RUNTIME_TYPES] lists. */
+    private fun runtimeTypeSelector(root: IrSimpleFunction): Int = when (val name = root.name.asString()) {
+        "compareTo", "get" -> runtimeSelector(name)
+        "<get-length>" -> runtimeSelector("length")
+        else -> unsupported("overriding ${root.render()}")
     }
 
     /** The selector [root] declares in the VM module declaring it, or null when no VM module does. */
@@ -816,9 +937,9 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
      * a constructor takes the object it initializes.
      */
     internal fun functionSymbol(function: IrFunction): VmFunctionSymbol = functionSymbols.getOrPut(function.symbol) {
+        // A parameter of a type with no values, `Unit`, still takes an argument: whatever the caller has, as `Any`.
         fun types(parameters: List<IrValueParameter>) =
-            parameters.filter { it.kind != IrParameterKind.DispatchReceiver }
-                .map { vmType(it.type) ?: unsupported("the parameter type ${it.type.render()}") }
+            parameters.filter { it.kind != IrParameterKind.DispatchReceiver }.map { vmType(it.type) ?: anyType }
 
         when {
             function is IrConstructor -> VmFunctionSymbol(vmName(function), listOf(anyType) + types(function.parameters), null)

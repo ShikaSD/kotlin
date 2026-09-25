@@ -32,6 +32,12 @@ class JKlibVmSourceRootConfigurator(testServices: TestServices) : JKlibSourceRoo
         val vmStdlib: File
             get() = File(System.getProperty(VM_STDLIB_PROPERTY) ?: error("$VM_STDLIB_PROPERTY names no VM stdlib klib"))
 
+        /** The system property naming the VM stdlib's binary IR, which every program links. */
+        const val VM_STDLIB_VIR_PROPERTY = "kotlin.stdlib.vm.vir"
+
+        val vmStdlibVir: File
+            get() = File(System.getProperty(VM_STDLIB_VIR_PROPERTY) ?: error("$VM_STDLIB_VIR_PROPERTY names no binary IR"))
+
         /** The system properties naming the VM kotlin.test's klib and binary IR, which the build sets. */
         const val KOTLIN_TEST_KLIB_PROPERTY = "kotlin.test.vm.klib"
         const val KOTLIN_TEST_VIR_PROPERTY = "kotlin.test.vm.vir"

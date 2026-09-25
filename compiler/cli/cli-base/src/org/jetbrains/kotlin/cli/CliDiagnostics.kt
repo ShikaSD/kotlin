@@ -59,6 +59,7 @@ object CliDiagnostics : KtDiagnosticsContainer() {
     val METADATA_CLI_ERROR: KtSourcelessDiagnosticFactory by errorWithoutSource()
 
     val VM_COMPILATION_ERROR: KtSourcelessDiagnosticFactory by errorWithoutSource()
+    val VM_COMPILATION_WARNING: KtSourcelessDiagnosticFactory by strongWarningWithoutSource()
 
     override fun getRendererFactory(): BaseDiagnosticRendererFactory = Messages
 
@@ -112,6 +113,7 @@ object CliDiagnostics : KtDiagnosticsContainer() {
             map.put(METADATA_CLI_ERROR, MESSAGE_PLACEHOLDER)
 
             map.put(VM_COMPILATION_ERROR, MESSAGE_PLACEHOLDER)
+            map.put(VM_COMPILATION_WARNING, MESSAGE_PLACEHOLDER)
         }
     }
 }

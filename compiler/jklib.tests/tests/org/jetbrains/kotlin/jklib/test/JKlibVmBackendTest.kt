@@ -72,7 +72,8 @@ class JKlibVmBackendTest {
         val runtime = File(repo, "runtime/src/runtime.ir").path
         // The VM starts from the first module's first function: `main`'s entry.
         val virs = names.asReversed().map { File(tempDir, "$it.vir").path }
-        run(File(repo, "target/debug/link_ir"), container, *virs.toTypedArray(), runtime)
+        val stdlib = JKlibVmSourceRootConfigurator.vmStdlibVir.path
+        run(File(repo, "target/debug/link_ir"), container, *virs.toTypedArray(), stdlib, runtime)
         val result = run(File(repo, "target/debug/execute"), container)
         return result.lines().any { it == "r0 = 1" }
     }
@@ -2227,6 +2228,86 @@ class JKlibVmBackendTest {
                 var sum = 0
                 for (i in 0 until 4) sum += i
                 return if (sum == 6) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testSeededRandomRepeatsItsSequence(@TempDir tempDir: File) {
+        val source = """
+            import kotlin.random.Random
+
+            fun box(): String = if (Random(7).nextInt() == Random(7).nextInt()) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** The default random is seeded by the VM's `vm.random.seed`. */
+    @Test
+    fun testDefaultRandomStaysInItsBound(@TempDir tempDir: File) {
+        val source = """
+            import kotlin.random.Random
+
+            fun box(): String {
+                val n = Random.nextInt(10)
+                return if (n >= 0 && n < 10) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testDownToCountsDown(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                var text = ""
+                for (i in 3 downTo 1) text += i
+                return if (text == "321") "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testStepSkipsBetweenValues(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                var sum = 0
+                for (i in 0..10 step 5) sum += i
+                return if (sum == 15) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `in` on a range object calls its `contains`, in the standard library's VM module. */
+    @Test
+    fun testRangeContainsItsValues(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val range = 1..10
+                return if (5 in range && 11 !in range) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testCoerceInClampsToTheBounds(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if (15.coerceIn(0, 10) == 10 && (-3).coerceIn(0, 10) == 0) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A lambda is a `vm.Function`, so an array of function types holds them. */
+    @Test
+    fun testArrayOfLambdasHoldsThem(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val answers = Array(2) { i -> { i + 40 } }
+                return if (answers[1]() == 41) "OK" else "fail"
             }
         """
         assertTrue(runBox(tempDir, source))

@@ -50,11 +50,12 @@ projectTests {
             classpath.from(stdlibJvmIr.elements.map { it.filter { it.asFile.name.endsWith(".klib") } })
         }
         jvmArgumentProviders.add(klibProvider)
-        val vmKlibProvider = objects.newInstance<SystemPropertyClasspathProvider>().apply {
-            property.set("kotlin.stdlib.vm.for.test")
-            classpath.from(stdlibVm.elements.map { it.filter { it.asFile.name.endsWith(".klib") } })
+        for ((property, extension) in listOf("kotlin.stdlib.vm.for.test" to ".klib", "kotlin.stdlib.vm.vir" to ".vir")) {
+            jvmArgumentProviders.add(objects.newInstance<SystemPropertyClasspathProvider>().apply {
+                this.property.set(property)
+                classpath.from(stdlibVm.elements.map { it.filter { it.asFile.name.endsWith(extension) } })
+            })
         }
-        jvmArgumentProviders.add(vmKlibProvider)
         for ((property, extension) in listOf("kotlin.test.vm.klib" to ".klib", "kotlin.test.vm.vir" to ".vir")) {
             jvmArgumentProviders.add(objects.newInstance<SystemPropertyClasspathProvider>().apply {
                 this.property.set(property)

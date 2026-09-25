@@ -44,7 +44,9 @@ dependencies {
     substrateStdlibCompilerDependencies(commonDependency("com.fasterxml:aalto-xml"))
 }
 
-val outputKlib = layout.buildDirectory.file("libs/kotlin-stdlib-vm.klib")
+// A directory: with a VM output, the compiler writes the klib unpacked.
+val outputKlib = layout.buildDirectory.dir("libs/kotlin-stdlib-vm.klib")
+val outputVir = layout.buildDirectory.file("libs/kotlin-stdlib-vm.vir")
 
 val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
     dependsOn(":prepare:build.version:writeStdlibVersion")
@@ -52,8 +54,9 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
 
     from(stdlibProjectDir.resolve("jklib-for-test/src/stubs")) {
         include("kotlin/**")
-        // The real ranges instead, below: the loops lowering reads their classes.
-        exclude("kotlin/ranges/**")
+        // The real ranges and `error` instead, below: the loops lowering reads the range classes, and `Preconditions.kt`
+        // declares `error` beside `require`.
+        exclude("kotlin/ranges/**", "kotlin/stubs.kt")
         into("src/common")
     }
 
@@ -103,6 +106,10 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
             "kotlin/ranges/Progressions.kt",
             "kotlin/ranges/Range.kt",
             "kotlin/ranges/Ranges.kt",
+            "kotlin/random/Random.kt",
+            "kotlin/random/XorWowRandom.kt",
+            "kotlin/internal/serializationUtil.kt",
+            "kotlin/util/Preconditions.kt",
             "kotlin/internal/throwNoWhenBranchMatchedException.kt",
             "kotlin/concurrent/atomics/AtomicArrays.common.kt",
             "kotlin/concurrent/atomics/Atomics.common.kt",
@@ -120,6 +127,7 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
 
     from(stdlibProjectDir.resolve("common/src")) {
         include(
+            "generated/_Ranges.kt",
             "kotlin/ExceptionsH.kt",
             "kotlin/JvmAnnotationsH.kt"
         )
@@ -162,15 +170,24 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
         into("src/jvm")
     }
 
-    // What the VM's standard library declares itself, until the common sources it stands in for build.
+    // What the VM's standard library declares itself, until the common sources it stands in for build: common code, and
+    // the VM's half of the platform's, whose externals the VM backend compiles to VM operations.
     from(file("src")) {
         include("**/*.kt")
         into("src/common/vm")
+    }
+    from(file("platform-src")) {
+        include("**/*.kt")
+        into("src/jvm/vm")
     }
 
     // The common flavor's parts the compiler uses, from the sources Wasm, Native and JS build with.
     from(stdlibProjectDir.resolve("common-non-jvm/src")) {
         include("kotlin/internal/SharedVariableBox.kt")
+        into("src/jvm/common-non-jvm")
+    }
+    from(stdlibProjectDir.resolve("native-wasm/src")) {
+        include("kotlin/internal/serializationUtil.kt")
         into("src/jvm/common-non-jvm")
     }
 
@@ -179,7 +196,7 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
 
 fun JavaExec.configureJklibCompilation(
     sourceTask: TaskProvider<Sync>,
-    klibOutput: Provider<RegularFile>,
+    klibOutput: Provider<Directory>,
 ) {
     dependsOn(sourceTask)
 
@@ -195,7 +212,7 @@ fun JavaExec.configureJklibCompilation(
     inputs.files(jklibCompilerClasspath)
         .withNormalizer(ClasspathNormalizer::class)
         .withPropertyName("jklibCompilerClasspath")
-    outputs.file(klibOutput)
+    outputs.dir(klibOutput)
 
     doFirst {
         val allFiles = sourceTree.files
@@ -208,7 +225,7 @@ fun JavaExec.configureJklibCompilation(
         logger.lifecycle("Compiling ${jvmSourceFiles.size} JVM files and ${commonSourceFiles.size} Common files, total ${allFiles.size}")
         logger.lifecycle("Running K2JKlibCompiler with Java version: ${System.getProperty("java.version")}")
 
-        val outputPath = outputs.files.singleFile.absolutePath
+        val outputPath = klibOutput.get().asFile.absolutePath
 
         args(
             "-no-stdlib",
@@ -238,6 +255,10 @@ val compileStdlib = tasks.register("compileStdlib", JavaExec::class) {
         languageVersion.set(JavaLanguageVersion.of(8))
     })
     configureJklibCompilation(copyMinimalSources, outputKlib)
+    // The standard library as a module the VM runs, which a program links beside its own.
+    outputs.file(outputVir)
+    val vir = outputVir
+    doFirst { args("-Xvm-output=${vir.get().asFile.absolutePath}") }
 
     args("-nowarn")
 }
@@ -258,6 +279,9 @@ val distMinimalJKlib = configurations.create("distMinimalJKlib") {
 
 artifacts {
     add(distJKlib.name, outputKlib) {
+        builtBy(compileStdlib)
+    }
+    add(distJKlib.name, outputVir) {
         builtBy(compileStdlib)
     }
 }
