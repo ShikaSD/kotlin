@@ -155,6 +155,12 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
         into("src/jvm")
     }
 
+    // The common flavor's parts the compiler uses, from the sources Wasm, Native and JS build with.
+    from(stdlibProjectDir.resolve("common-non-jvm/src")) {
+        include("kotlin/internal/SharedVariableBox.kt")
+        into("src/jvm/common-non-jvm")
+    }
+
     duplicatesStrategy = DuplicatesStrategy.FAIL
 }
 

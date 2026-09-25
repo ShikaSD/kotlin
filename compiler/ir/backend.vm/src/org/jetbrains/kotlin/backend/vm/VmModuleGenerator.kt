@@ -126,6 +126,8 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         val bodies = functions.filter { it.body != null }
         bodies.mapTo(definedFunctions) { it.symbol }
 
+        // The classes other modules can name first, so no local class takes a name one of them has.
+        classes.sortedBy { it.symbol.signature !is IdSignature.CommonSignature }.forEach { it.vmName }
         for (declaration in classes) {
             classIndices[declaration.symbol] = module.classes.size
             // Replaced once every class has an index, which supertypes and methods refer to.
@@ -292,14 +294,11 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         return generateSequence(1) { it + 1 }.map { "${name}_$it" }.first(usedFunctionNames::add)
     }
 
-    /** The runtime class a captured `var` held in a slot of [type] lives in; see `kotlin.jvm.internal.Ref` there. */
-    internal fun refBoxClass(type: VmType): Int = runtimeClass(
-        when (type) {
-            VmType.F64 -> "kotlin.jvm.internal.Ref.DoubleRef"
-            is VmType.Ref -> "kotlin.jvm.internal.Ref.ObjectRef"
-            else -> "kotlin.jvm.internal.Ref.LongRef"
-        }
-    )
+    /** The standard library's box for a captured variable, which the runtime implements; see `SharedVariablesLowering`. */
+    internal fun isSharedVariableBox(declaration: IrClass): Boolean =
+        declaration.fqNameWhenAvailable?.asString() == "kotlin.internal.SharedVariableBox"
+
+    internal val sharedVariableBoxClass: Int get() = runtimeClass("kotlin.internal.SharedVariableBox")
 
     private fun collectClass(declaration: IrClass, classes: MutableList<IrClass>, functions: MutableList<IrFunction>) {
         when {
@@ -527,8 +526,20 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
             return if (packageName.isRoot) simpleNames else "${packageName.asString()}.$simpleNames"
         }
 
+    /**
+     * A class's name in the VM: its qualified name. A class other modules can name, by its public signature, keeps it
+     * exactly; a local or anonymous one, which lowering has moved out of its function, gets a counter when another
+     * class of the module has the name already.
+     */
     private val IrClass.vmName: String
-        get() = sanitized(fqNameWhenAvailable?.asString() ?: unsupported("the local class $name"))
+        get() = classNames.getOrPut(symbol) {
+            val name = sanitized(fqNameWhenAvailable?.asString() ?: unsupported("the local class $name"))
+            if (usedClassNames.add(name) || symbol.signature is IdSignature.CommonSignature) return@getOrPut name
+            generateSequence(1) { it + 1 }.map { "${name}_$it" }.first(usedClassNames::add)
+        }
+
+    private val classNames = hashMapOf<IrClassSymbol, String>()
+    private val usedClassNames = hashSetOf<String>()
 
     private fun classDefinition(declaration: IrClass): VmClass {
         val interfaces = declaration.superTypes.mapNotNull { it.classOrNull?.owner }.filter { it.isInterface }.map {

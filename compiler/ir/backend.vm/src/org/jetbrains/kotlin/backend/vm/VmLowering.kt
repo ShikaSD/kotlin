@@ -6,21 +6,32 @@
 package org.jetbrains.kotlin.backend.vm
 
 import org.jetbrains.kotlin.backend.common.LoweringContext
+import org.jetbrains.kotlin.backend.common.ir.KlibSharedVariablesManager
+import org.jetbrains.kotlin.backend.common.ir.PreSerializationKlibSymbols
 import org.jetbrains.kotlin.backend.common.ir.PreSerializationSymbols
 import org.jetbrains.kotlin.backend.common.ir.SharedVariablesManager
+import org.jetbrains.kotlin.backend.common.lower.LocalDeclarationPopupLowering
+import org.jetbrains.kotlin.backend.common.lower.LocalDeclarationsLowering
+import org.jetbrains.kotlin.backend.common.lower.SharedVariablesLowering
 import org.jetbrains.kotlin.backend.common.lower.TailrecLowering
 import org.jetbrains.kotlin.backend.common.lower.UpgradeCallableReferences
 import org.jetbrains.kotlin.backend.vm.vmir.VmModule
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrDiagnosticReporter
+import org.jetbrains.kotlin.ir.InternalSymbolFinderAPI
 import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.inline.FunctionInlining
 import org.jetbrains.kotlin.ir.inline.InlineFunctionResolver
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
+import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.ir.util.resolveFakeOverrideOrSelf
 
 /**
@@ -38,8 +49,26 @@ class VmLoweringContext(
     override val symbols: PreSerializationSymbols
         get() = error("The VM backend declares no lowering symbols yet")
 
-    override val sharedVariablesManager: SharedVariablesManager
-        get() = error("The VM backend does not lower shared variables yet")
+    /** Boxes a captured variable something assigns as the klib backends do, in `kotlin.internal.SharedVariableBox`. */
+    override val sharedVariablesManager: SharedVariablesManager by lazy { KlibSharedVariablesManager(SharedVariableSymbols(irBuiltIns)) }
+}
+
+/** The one symbol [KlibSharedVariablesManager] reads; the rest fail loudly, as [VmLoweringContext.symbols] does. */
+@OptIn(InternalSymbolFinderAPI::class)
+private class SharedVariableSymbols(irBuiltIns: IrBuiltIns) : PreSerializationKlibSymbols {
+    override val genericSharedVariableBox = PreSerializationKlibSymbols.SharedVariableBoxClassInfo(
+        irBuiltIns.symbolFinder.findClass(ClassId(StandardNames.KOTLIN_INTERNAL_FQ_NAME, Name.identifier("SharedVariableBox")))
+            ?: error("The standard library declares no kotlin.internal.SharedVariableBox")
+    )
+
+    override val throwUninitializedPropertyAccessException: IrSimpleFunctionSymbol get() = unused()
+    override val throwUnsupportedOperationException: IrSimpleFunctionSymbol get() = unused()
+    override val syntheticConstructorMarker: IrClassSymbol get() = unused()
+    override val coroutineContextGetter: IrSimpleFunctionSymbol get() = unused()
+    override val suspendCoroutineUninterceptedOrReturn: IrSimpleFunctionSymbol get() = unused()
+    override val coroutineGetContext: IrSimpleFunctionSymbol get() = unused()
+
+    private fun unused(): Nothing = error("The VM backend declares no such lowering symbol yet")
 }
 
 /**
@@ -70,6 +99,14 @@ fun lowerForVm(context: VmLoweringContext, module: IrModuleFragment) {
     // After inlining, so a tail call an inlined lambda holds becomes a jump too.
     val tailrec = TailrecLowering(context)
     module.files.forEach { tailrec.lower(it) }
+    // A local function becomes a function of its enclosing class or file taking what it captures as parameters, and a
+    // local class keeps what it captures in fields; boxing what is also assigned first lets every copy reach it.
+    val shared = SharedVariablesLowering(context)
+    module.files.forEach { shared.lower(it) }
+    val local = LocalDeclarationsLowering(context)
+    module.files.forEach { local.lower(it) }
+    val popup = LocalDeclarationPopupLowering(context)
+    module.files.forEach { popup.lower(it) }
 }
 
 /** Lowers [module] and generates it as one VM module named [moduleName]. */

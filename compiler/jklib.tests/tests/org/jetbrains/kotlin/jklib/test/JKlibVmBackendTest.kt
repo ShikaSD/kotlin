@@ -1594,4 +1594,135 @@ class JKlibVmBackendTest {
         """
         assertTrue(runBox(tempDir, source))
     }
+
+    @Test
+    fun testLocalFunction(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                fun ok() = "OK"
+                return ok()
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testLocalFunctionCapturesAValue(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val prefix = "O"
+                fun complete(suffix: String) = prefix + suffix
+                return complete("K")
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testLocalFunctionWritesACapturedVar(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                var count = 0
+                fun increment() { count++ }
+                increment()
+                increment()
+                return if (count == 2) "OK" else "fail: ${'$'}count"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testRecursiveLocalFunction(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                fun fib(n: Int): Int = if (n < 2) n else fib(n - 1) + fib(n - 2)
+                return if (fib(20) == 6765) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testLocalClass(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                class Pair(val first: String, val second: String) {
+                    fun joined() = first + second
+                }
+                return Pair("O", "K").joined()
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testLocalClassCapturesAValue(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val suffix = "K"
+                class Greeting(val prefix: String) {
+                    fun text() = prefix + suffix
+                }
+                return Greeting("O").text()
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** Two anonymous objects in one file are two classes, however they are named. */
+    @Test
+    fun testAnonymousObjectsImplementAnInterface(@TempDir tempDir: File) {
+        val source = """
+            interface Text { fun text(): String }
+
+            fun o(): Text = object : Text { override fun text() = "O" }
+            fun k(): Text = object : Text { override fun text() = "K" }
+
+            fun box(): String = o().text() + k().text()
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testAnonymousObjectCapturesThis(@TempDir tempDir: File) {
+        val source = """
+            interface Text { fun text(): String }
+
+            class Holder(val value: String) {
+                fun asText(): Text = object : Text { override fun text() = value }
+            }
+
+            fun box(): String = Holder("OK").asText().text()
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A local class named as a class of the module is a class of its own, whichever file comes first. */
+    @Test
+    fun testLocalClassNamedAsAModuleClass(@TempDir tempDir: File) {
+        val local = """
+            fun local(): String {
+                class Name { fun text() = "O" }
+                return Name().text()
+            }
+        """
+        val public = """
+            class Name { fun text() = "K" }
+
+            fun box(): String = local() + Name().text()
+        """
+        assertTrue(runBox(tempDir, listOf(mapOf("a.kt" to local, "b.kt" to public))))
+    }
+
+    /** A primitive `===` a reference is boxed first, so a cached box is identical to the value boxed again. */
+    @Test
+    fun testIdentityOfAPrimitiveAndABox(@TempDir tempDir: File) {
+        val source = """
+            fun same(a: Any) = a === (1 == 1)
+
+            fun box(): String = if (same(true)) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
 }
