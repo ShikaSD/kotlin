@@ -1,55 +1,55 @@
 # Box tests under compiler/testData/codegen/box expected to fail on the VM; see JKlibVmExpectedFailures.
-# 5125 failures; the most common reasons:
+# 4950 failures; the most common reasons:
 #     430  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 #     275  IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 #     183  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
-#     146  unsupported: a default argument to FUN …
+#     138  unsupported: a call to CONSTRUCTOR …
 #     132  unsupported: a call to iterator
 #     123  IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'x'. Specify it explicitly.
 #     121  unsupported: the value class Z
-#     118  unsupported: the expression RICH_PROPERTY_REFERENCE …
+#     119  unsupported: the expression RICH_PROPERTY_REFERENCE …
 #     115  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 #     101  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 #      99  unsupported: the inner class Inner
 #      92  IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 #      84  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-#      84  unsupported: a default argument
 #      82  unsupported: the type operator SAM_CONVERSION
+#      78  unsupported: overriding FUN …
 #      77  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
-#      77  unsupported: overriding FUN …
 #      75  unsupported: the value class X
 #      74  unsupported: the value class IC
 #      72  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 #      69  unsupported: Float, which needs 32-bit floats in the VM
 #      64  unsupported: the value class A
+#      50  unsupported: inheriting FUN …
 #      49  unsupported: a call to get
-#      46  unsupported: inheriting FUN …
-#      45  unsupported: a call to <get-length>
-#      44  unsupported: Int.hashCode
+#      48  unsupported: a call to <get-length>
+#      45  unsupported: Int.hashCode
 #      43  IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 #      43  unsupported: a type test against CT of .Buildee
 #      42  unsupported: the value class R
 #      39  unsupported: the value class S
 #      38  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'UInt'.
 #      38  unsupported: the value class Foo
-#      36  unsupported: Int.toString
-#      36  unsupported: constructing ArrayList
+#      37  unsupported: Int.toString
+#      29  unsupported: a bridge from FUN …
 #      29  unsupported: the inner class B
 #      27  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
 #      26  unsupported: a call to arrayOf
 #      26  unsupported: the value class UInt
 #      25  IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'c'. Specify it explicitly.
-#      25  unsupported: a bridge from FUN …
 #      25  unsupported: a call to <get-size>
-#      25  unsupported: a value of type kotlin.Nothing
 #      25  unsupported: a value of type kotlin.Unit
+#      24  unsupported: a value of type kotlin.Nothing
 #      23  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
 #      22  unsupported: a call to toString
 #      22  unsupported: a type test against TV of .Buildee
 #      22  unsupported: the value class Result
 #      21  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
 #      21  unsupported: a suspend lambda
-#      21  unsupported: constructing Any
+#      21  unsupported: the expression VARARG …
+#      20  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
+#      20  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'require'.
 
 annotations/annotationWithDefaultArgInDifferentModule.kt: unsupported: the annotation class MyConfig
 annotations/annotations0.kt: unsupported: the annotation class Foo
@@ -58,7 +58,7 @@ annotations/instances/AnnotationInstantiationWithArray.kt: unsupported: the anno
 annotations/instances/annotationAnnotationParam.kt: unsupported: the annotation class A
 annotations/instances/annotationAnyDispatch.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isEmpty' on receiver of type 'String'.
 annotations/instances/annotationEqHc.kt: unsupported: the annotation class Bar
-annotations/instances/annotationFromStdlib.kt: unsupported: constructing SinceKotlin
+annotations/instances/annotationFromStdlib.kt: unsupported: a call to CONSTRUCTOR …
 annotations/instances/annotationInlineMultiModule.kt: unsupported: the annotation class LibAnn
 annotations/instances/annotationInstances.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 annotations/instances/annotationInstancesEmptyDefault.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contentEquals' on receiver of type 'Array<String>'.
@@ -113,12 +113,12 @@ arithmetic/basic_uintTests.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYP
 arithmetic/division.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 arithmetic/divisionByZero.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'div' for operator '/'.
 arithmetic/github1856.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-arrays/arrayConstructorWithNonInlineLambda.kt: unsupported: constructing IntArray
-arrays/arrayConstructorsSimple.kt: unsupported: constructing Array
+arrays/arrayConstructorWithNonInlineLambda.kt: unsupported: a call to CONSTRUCTOR …
+arrays/arrayConstructorsSimple.kt: unsupported: a call to CONSTRUCTOR …
 arrays/arrayGetAssignMultiIndex.kt: unsupported: a call to get
 arrays/arrayGetMultiIndex.kt: unsupported: a call to get
-arrays/arrayInstanceOf.kt: unsupported: constructing IntArray
-arrays/arrayPlusAssign.kt: unsupported: constructing IntArray
+arrays/arrayInstanceOf.kt: unsupported: a call to CONSTRUCTOR …
+arrays/arrayPlusAssign.kt: unsupported: a call to CONSTRUCTOR …
 arrays/arraysAreCloneable.kt: CompilationErrorException: There are still 9 unbound symbols Found unbound symbol:
 arrays/arraysOfInlineClass/accessArrayOfInlineClass.kt: unsupported: the value class Z
 arrays/arraysOfInlineClass/accessArrayOfUnsigned.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
@@ -148,46 +148,46 @@ arrays/forInUnsignedArray/forInUnsignedArrayWithIndex.kt: IllegalStateException:
 arrays/forInUnsignedArray/forInUnsignedArrayWithIndexNoElementVar.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 arrays/forInUnsignedArray/forInUnsignedArrayWithIndexNoIndexVar.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 arrays/forInUnsignedArray/forInUnsignedArrayWithIndexReversed.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-arrays/genericArrayInObjectLiteralConstructor.kt: unsupported: constructing Array
+arrays/genericArrayInObjectLiteralConstructor.kt: unsupported: a call to CONSTRUCTOR …
 arrays/hashMap.kt: unsupported: overriding FUN …
 arrays/inProjectionAsParameter.kt: unsupported: a call to set
 arrays/inProjectionOfArray.kt: unsupported: a call to arrayOf
 arrays/inProjectionOfList.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-arrays/indices.kt: unsupported: constructing Array
+arrays/indices.kt: unsupported: a call to CONSTRUCTOR …
 arrays/indicesChar.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'indices' on receiver of type 'CharArray'.
-arrays/inlineInitializer.kt: unsupported: constructing Array
+arrays/inlineInitializer.kt: unsupported: a call to CONSTRUCTOR …
 arrays/iterator.kt: unsupported: a call to iterator
-arrays/iteratorBooleanArray.kt: unsupported: constructing BooleanArray
-arrays/iteratorByteArray.kt: unsupported: constructing ByteArray
-arrays/iteratorByteArrayNextByte.kt: unsupported: constructing ByteArray
-arrays/iteratorCharArray.kt: unsupported: constructing CharArray
-arrays/iteratorDoubleArray.kt: unsupported: constructing DoubleArray
-arrays/iteratorFloatArray.kt: unsupported: constructing FloatArray
-arrays/iteratorIntArray.kt: unsupported: constructing IntArray
-arrays/iteratorLongArray.kt: unsupported: constructing LongArray
-arrays/iteratorLongArrayNextLong.kt: unsupported: constructing LongArray
-arrays/iteratorShortArray.kt: unsupported: constructing ShortArray
+arrays/iteratorBooleanArray.kt: unsupported: a call to CONSTRUCTOR …
+arrays/iteratorByteArray.kt: unsupported: a call to CONSTRUCTOR …
+arrays/iteratorByteArrayNextByte.kt: unsupported: a call to CONSTRUCTOR …
+arrays/iteratorCharArray.kt: unsupported: a call to CONSTRUCTOR …
+arrays/iteratorDoubleArray.kt: unsupported: a call to CONSTRUCTOR …
+arrays/iteratorFloatArray.kt: unsupported: a call to CONSTRUCTOR …
+arrays/iteratorIntArray.kt: unsupported: a call to CONSTRUCTOR …
+arrays/iteratorLongArray.kt: unsupported: a call to CONSTRUCTOR …
+arrays/iteratorLongArrayNextLong.kt: unsupported: a call to CONSTRUCTOR …
+arrays/iteratorShortArray.kt: unsupported: a call to CONSTRUCTOR …
 arrays/kt1291.kt: unsupported: overriding FUN …
 arrays/kt238.kt: unsupported: a call to arrayOfNulls
 arrays/kt2997.kt: unsupported: a type test against kotlin.IntArray outside the VM modules
-arrays/kt33.kt: unsupported: constructing ArrayList
+arrays/kt33.kt: unsupported: a call to CONSTRUCTOR …
 arrays/kt34291_16dimensions.kt: unsupported: a call to arrayOf
 arrays/kt3771.kt: unsupported: a call to set
-arrays/kt4118.kt: unsupported: constructing Array
+arrays/kt4118.kt: unsupported: a call to CONSTRUCTOR …
 arrays/kt42932.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'indexOfAny' on receiver of type 'String'.
 arrays/kt4348.kt: unsupported: a call to get
 arrays/kt4357.kt: unsupported: a call to intArrayOf
-arrays/kt47483.kt: unsupported: a value of type kotlin.Nothing
+arrays/kt47483.kt: unsupported: a call to CONSTRUCTOR …
 arrays/kt503.kt: unsupported: the expression VARARG …
 arrays/kt55984.kt: unsupported: a call to iterator
-arrays/kt594.kt: unsupported: constructing IntArray
+arrays/kt594.kt: unsupported: a call to CONSTRUCTOR …
 arrays/kt7009.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Int'.
-arrays/kt7288.kt: unsupported: constructing IntArray
+arrays/kt7288.kt: unsupported: a call to CONSTRUCTOR …
 arrays/kt779.kt: unsupported: a call to <get-size>
-arrays/kt945.kt: unsupported: constructing Array
+arrays/kt945.kt: unsupported: a call to CONSTRUCTOR …
 arrays/kt950.kt: unsupported: overriding FUN …
 arrays/longAsIndex.kt: unsupported: a call to set
-arrays/multiArrayConstructors.kt: unsupported: constructing Array
+arrays/multiArrayConstructors.kt: unsupported: a call to CONSTRUCTOR …
 arrays/multiDecl/MultiDeclFor.kt: unsupported: a call to iterator
 arrays/multiDecl/MultiDeclForComponentExtensions.kt: unsupported: a call to iterator
 arrays/multiDecl/MultiDeclForComponentMemberExtensions.kt: unsupported: a call to iterator
@@ -198,14 +198,14 @@ arrays/multiDecl/int/MultiDeclForComponentExtensionsValCaptured.kt: unsupported:
 arrays/multiDecl/int/MultiDeclForComponentMemberExtensions.kt: unsupported: a call to iterator
 arrays/multiDecl/int/MultiDeclForComponentMemberExtensionsInExtensionFunction.kt: unsupported: a call to iterator
 arrays/multiDecl/kt15560.kt: unsupported: a call to arrayOf
-arrays/multiDecl/kt15568.kt: unsupported: constructing DoubleArray
-arrays/multiDecl/kt15575.kt: unsupported: constructing BooleanArray
+arrays/multiDecl/kt15568.kt: unsupported: a call to CONSTRUCTOR …
+arrays/multiDecl/kt15575.kt: unsupported: a call to CONSTRUCTOR …
 arrays/multiDecl/long/MultiDeclForComponentExtensions.kt: unsupported: a call to iterator
 arrays/multiDecl/long/MultiDeclForComponentExtensionsValCaptured.kt: unsupported: a call to iterator
 arrays/multiDecl/long/MultiDeclForComponentMemberExtensions.kt: unsupported: a call to iterator
 arrays/multiDecl/long/MultiDeclForComponentMemberExtensionsInExtensionFunction.kt: unsupported: a call to iterator
-arrays/nonLocalReturnArrayConstructor.kt: unsupported: a return from a lambda that is not inlined
-arrays/nonNullArray.kt: unsupported: constructing Array
+arrays/nonLocalReturnArrayConstructor.kt: unsupported: a call to CONSTRUCTOR …
+arrays/nonNullArray.kt: unsupported: a call to CONSTRUCTOR …
 arrays/primitiveArrays.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'copyOf' on receiver of type 'BooleanArray'.
 arrays/stdlib.kt: unsupported: a call to iterator
 assert/alwaysDisable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'assert'.
@@ -216,15 +216,15 @@ associatedObjects/findAssociatedObjectAndDCE.kt: IllegalStateException: UNRESOLV
 associatedObjects/findAssociatedObjectInSeparatedFile.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
 associatedObjects/findAssociatedObjectLazyness.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'AssociatedObjectKey'.
 associatedObjects/kt88571.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
-basics/array_to_any.kt: unsupported: constructing Array
+basics/array_to_any.kt: unsupported: a call to CONSTRUCTOR …
 basics/canonical_name.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 basics/const_infinity.kt: unsupported: Float, which needs 32-bit floats in the VM
-basics/expression_as_statement.kt: unsupported: constructing Any
+basics/expression_as_statement.kt: unsupported: a call to CONSTRUCTOR …
 basics/k42000_1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 basics/k42000_2.kt: unsupported: a value of type kotlin.Nothing
 basics/k42000_crossmodule.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 basics/kt7972.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
-basics/null_check.kt: unsupported: constructing Any
+basics/null_check.kt: unsupported: a call to CONSTRUCTOR …
 basics/safe_cast.kt: unsupported: Boolean.toString
 basics/spread_operator_0.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 basics/statements0.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
@@ -233,35 +233,35 @@ basics/unchecked_cast10.kt: unsupported: a type test against T of .foo
 basics/unchecked_cast11.kt: unsupported: a call to arrayOf
 basics/unchecked_cast12.kt: unsupported: a call to compareTo
 basics/unchecked_cast13.kt: wrong result
-basics/unchecked_cast2.kt: unsupported: constructing Any
+basics/unchecked_cast2.kt: unsupported: a call to CONSTRUCTOR …
 basics/unchecked_cast3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
-basics/unchecked_cast4.kt: unsupported: constructing Any
+basics/unchecked_cast4.kt: unsupported: a call to CONSTRUCTOR …
 basics/unchecked_cast5.kt: unsupported: a call to arrayOf
 basics/unchecked_cast6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 basics/unchecked_cast6x.kt: unsupported: a call to arrayOf
-basics/unchecked_cast7.kt: unsupported: constructing Any
+basics/unchecked_cast7.kt: unsupported: a call to CONSTRUCTOR …
 basics/unchecked_cast8.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
-basics/unchecked_cast9.kt: unsupported: constructing Any
+basics/unchecked_cast9.kt: unsupported: a call to CONSTRUCTOR …
 basics/unit1.kt: unsupported: a value of type kotlin.Unit
 basics/unit2.kt: unsupported: a value of type kotlin.Unit
 basics/unit3.kt: unsupported: a value of type kotlin.Unit
 basics/unit4.kt: unsupported: a call to iterator
 bce/bceCases.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 bce/customGetter.kt: unsupported: a call to arrayOf
-bce/differentArrays.kt: unsupported: constructing IntArray
+bce/differentArrays.kt: unsupported: a call to CONSTRUCTOR …
 bce/differentObjects.kt: unsupported: a call to arrayOf
 bce/forDownToSize.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 bce/forDownToWithStep.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 bce/forEachIndexedTest.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'index'. Specify it explicitly.
-bce/forEachIndicies.kt: unsupported: constructing Array
+bce/forEachIndicies.kt: unsupported: a call to CONSTRUCTOR …
 bce/forIndiciesWithStep.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-bce/forRangeToSize.kt: unsupported: constructing Array
+bce/forRangeToSize.kt: unsupported: a call to CONSTRUCTOR …
 bce/forRangeToWithStep.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 bce/forReversed.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-bce/forUntilSize.kt: unsupported: constructing Array
+bce/forUntilSize.kt: unsupported: a call to CONSTRUCTOR …
 bce/forUntilWithStep.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 bce/forWithIndex.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-bce/withGetter.kt: unsupported: constructing Array
+bce/withGetter.kt: unsupported: a call to CONSTRUCTOR …
 binaryOp/bitwiseOp.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'and' on receiver of type 'Short'.
 binaryOp/bitwiseOpAny.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'and' on receiver of type 'Short'.
 binaryOp/bitwiseOpNullable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'and' on receiver of type 'Short'.
@@ -315,7 +315,7 @@ boxingOptimization/maxMinByOrNull.kt: IllegalStateException: UNRESOLVED_REFERENC
 boxingOptimization/progressions.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'x'. Specify it explicitly.
 boxingOptimization/taintedValues.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mapOf'.
 boxingOptimization/taintedValuesBox.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toList' on receiver of type 'IntArray'.
-boxingOptimization/unsafeRemoving.kt: unsupported: a default argument
+boxingOptimization/unsafeRemoving.kt: unsupported: a call to CONSTRUCTOR …
 boxingOptimization/unsignedArrayForEach.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 boxingOptimization/variables.kt: unsupported: Float, which needs 32-bit floats in the VM
 branching/when7.kt: unsupported: a call to arrayOfNulls
@@ -345,18 +345,17 @@ bridges/internalMethodOverrideMultipleInheritance.kt: IllegalStateException: NOT
 bridges/kt12416.kt: unsupported: a bridge from FUN …
 bridges/kt1939.kt: unsupported: a bridge from FUN …
 bridges/kt2498.kt: unsupported: a call to CONSTRUCTOR …
-bridges/kt46389.kt: unsupported: a default argument to FUN …
-bridges/kt46389_jvmDefault.kt: unsupported: a default argument to FUN …
+bridges/kt46389.kt: unsupported: inheriting FUN …
+bridges/kt46389_jvmDefault.kt: unsupported: a bridge from FUN …
 bridges/kt74377.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-bridges/methodWithDefaultParameter.kt: unsupported: a default argument to FUN …
 bridges/noBridgeOnMutableCollectionInheritance.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 bridges/overrideWithValueClassReturn.kt: unsupported: the value class VC
 bridges/propertyAccessorsWithoutBody.kt: unsupported: a type test against T of .A
-bridges/returnTypeSignature.kt: unsupported: constructing ArrayList
+bridges/returnTypeSignature.kt: unsupported: a call to CONSTRUCTOR …
 bridges/special.kt: unsupported: a type test against kotlin.collections.MutableMap outside the VM modules
-bridges/specialGeneric.kt: unsupported: a default argument
+bridges/specialGeneric.kt: unsupported: a default argument to CONSTRUCTOR …
 bridges/strListContains.kt: unsupported: overriding FUN …
-bridges/substitutionInSuperClass/simple.kt: unsupported: a default argument to FUN …
+bridges/substitutionInSuperClass/simple.kt: IllegalStateException: No declaration of FUN name:foo visibility:public modality:OPEN <> (<this>:<root>.Z, t:kotlin.String, xs:kotlin.IntArray) returnType:kotli
 bridges/test0.kt: unsupported: Int.toString
 bridges/test1.kt: unsupported: Int.toString
 bridges/test10.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
@@ -403,7 +402,6 @@ callableReference/adaptedReferences/contextFunctionWithVararg.kt: unsupported: a
 callableReference/adaptedReferences/contextPropertyWithSam.kt: unsupported: the type operator SAM_CONVERSION
 callableReference/adaptedReferences/contextTypeWithSam.kt: unsupported: the type operator SAM_CONVERSION
 callableReference/adaptedReferences/defaultAfterVararg.kt: unsupported: a call to <get-size>
-callableReference/adaptedReferences/defaultWithGenericExpectedType.kt: unsupported: a default argument to FUN …
 callableReference/adaptedReferences/emptyVarargAndDefault.kt: unsupported: a call to <get-size>
 callableReference/adaptedReferences/extensionFunctionAdaptedReferences.kt: unsupported: the expression VARARG …
 callableReference/adaptedReferences/extensionFunctionAnonymous.kt: unsupported: overriding FUN …
@@ -411,7 +409,7 @@ callableReference/adaptedReferences/extensionInSamWithPassedSupertype.kt: unsupp
 callableReference/adaptedReferences/extensionPropertyToFun.kt: unsupported: a type test against T of .
 callableReference/adaptedReferences/extensionPropertyWithAnonymousContextFun.kt: unsupported: overriding FUN …
 callableReference/adaptedReferences/extensionPropertyWithAnonymousExtensionFun.kt: unsupported: overriding FUN …
-callableReference/adaptedReferences/inlineBound.kt: unsupported: a default argument to FUN …
+callableReference/adaptedReferences/inlineBound.kt: unsupported: an empty vararg
 callableReference/adaptedReferences/inlineDefault.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'concatToString' on receiver of type 'CharArray'.
 callableReference/adaptedReferences/inlineVararg.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'concatToString' on receiver of type 'CharArray'.
 callableReference/adaptedReferences/inlineVarargAndDefault.kt: unsupported: a call to <get-size>
@@ -420,12 +418,11 @@ callableReference/adaptedReferences/innerConstructorToExtensionFun.kt: unsupport
 callableReference/adaptedReferences/innerConstructorToExtensionWithTypeParam.kt: unsupported: the inner class Bar
 callableReference/adaptedReferences/innerConstructorWithVararg.kt: unsupported: the inner class Inner1
 callableReference/adaptedReferences/largeVararg.kt: unsupported: a call to <get-size>
-callableReference/adaptedReferences/localFunctionWithDefault.kt: unsupported: a default argument to FUN …
+callableReference/adaptedReferences/localFunctionWithDefault.kt: unsupported: the expression VARARG …
 callableReference/adaptedReferences/manyDefaultsAndVararg.kt: unsupported: a call to <get-size>
 callableReference/adaptedReferences/nestedClassConstructorWithDefault.kt: unsupported: the inner class InnerAdd
 callableReference/adaptedReferences/referenceToFakeOverrideWithTypeParameter.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'first' on receiver of type 'List<S (of fun <S : CharSequence> foo)>'.
 callableReference/adaptedReferences/referenceToVarargWithDefaults.kt: unsupported: a call to get
-callableReference/adaptedReferences/simpleDefaultArgument.kt: unsupported: a default argument to FUN …
 callableReference/adaptedReferences/simpleEmptyVararg.kt: unsupported: a call to <get-size>
 callableReference/adaptedReferences/suspendConversion/adaptedWithCoercionToUnit.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
 callableReference/adaptedReferences/suspendConversion/adaptedWithDefaultArguments.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
@@ -467,12 +464,11 @@ callableReference/arrayConstructor.kt: unsupported: a call to get
 callableReference/arrayConstructorArgument.kt: unsupported: a call to get
 callableReference/arrayOf.kt: unsupported: a call to arrayOf
 callableReference/arrayOfNulls.kt: IllegalStateException: RETURN_TYPE_MISMATCH: Return type mismatch: expected 'String', actual 'Char'.
-callableReference/bound/adapted.kt: unsupported: a default argument to FUN …
 callableReference/bound/array.kt: unsupported: overriding FUN …
 callableReference/bound/arrayConstructorArgument.kt: unsupported: a call to get
 callableReference/bound/arrayGetIntrinsic.kt: unsupported: a call to arrayOf
 callableReference/bound/boundPrimitiveAndReferenceReceiverSharedClassSplit.kt: unsupported: Int.toString
-callableReference/bound/boundReferenceToOverloadedFunction.kt: unsupported: a default argument
+callableReference/bound/boundReferenceToOverloadedFunction.kt: unsupported: a default argument to CONSTRUCTOR …
 callableReference/bound/coercionToUnit.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 callableReference/bound/companionObjectReceiverInheritsFromOuter.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/bound/dontShareReceiver.kt: unsupported: Int.toString
@@ -496,14 +492,13 @@ callableReference/callableReferenceOfCompanionProperty.kt: unsupported: the expr
 callableReference/callableReferenceOfKotlinNestedClass.kt: unsupported: the inner class SS
 callableReference/callableReferencetoInnerAndLocal.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/charArrayOf.kt: unsupported: a call to charArrayOf
-callableReference/equality/capturedDefaults.kt: unsupported: a default argument to FUN …
-callableReference/equality/capturedVararg.kt: unsupported: a default argument to FUN …
+callableReference/equality/capturedDefaults.kt: run: Execution result: RuntimeError(UncaughtException)
+callableReference/equality/capturedVararg.kt: IllegalStateException: No declaration of FUN name:target visibility:public modality:FINAL <> (<this>:<root>.V, x:kotlin.Array<out kotlin.String>) returnType:kot
 callableReference/equality/coercionToUnit.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/equality/coercionToUnitWithDefaults.kt: unsupported: a default argument to FUN …
+callableReference/equality/coercionToUnitWithDefaults.kt: run: Execution result: RuntimeError(UncaughtException)
 callableReference/equality/coercionToUnitWithVararg.kt: unsupported: the expression VARARG …
 callableReference/equality/conversionCombinations.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'String'.
 callableReference/equality/extensionFunctionEquality.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/equality/extensionReceiverVsDefault.kt: unsupported: a default argument to FUN …
 callableReference/equality/kproperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/equality/kpropertyWithCapturingEquality.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/equality/kpropertyWithCapturingInequality.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -512,10 +507,9 @@ callableReference/equality/overloadedFunctionEquality.kt: run: Execution result:
 callableReference/equality/simpleEquality.kt: run: Execution result: RuntimeError(UncaughtException)
 callableReference/equality/suspendConversion.kt: unsupported: a suspend lambda
 callableReference/equality/suspendFunctionEquality.kt: unsupported: a suspend lambda
-callableReference/equality/unboundVsNullBoundReceiver.kt: unsupported: a default argument to FUN …
 callableReference/equality/varargAsArrayMemberOrExtension.kt: unsupported: the expression VARARG …
-callableReference/equality/varargAsArrayWithDefaults.kt: unsupported: a default argument to FUN …
-callableReference/equality/varargWithDefaults.kt: unsupported: a default argument to FUN …
+callableReference/equality/varargAsArrayWithDefaults.kt: unsupported: the expression VARARG …
+callableReference/equality/varargWithDefaults.kt: unsupported: an empty vararg
 callableReference/funInterfaceConstructor/funInterfaceConstructedObjectsEquality.kt: unsupported: the type operator SAM_CONVERSION
 callableReference/funInterfaceConstructor/funInterfaceConstructor.kt: unsupported: the type operator SAM_CONVERSION
 callableReference/funInterfaceConstructor/funInterfaceConstructorEquality.kt: unsupported: the type operator SAM_CONVERSION
@@ -546,7 +540,7 @@ callableReference/function/local/equalsHashCode.kt: wrong result
 callableReference/function/local/localFunctionName.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction0<Unit>'.
 callableReference/function/local/withValueArguments.kt: unsupported: a call to arrayOf
 callableReference/function/nestedExtensionInSAMInterface.kt: unsupported: the type operator SAM_CONVERSION
-callableReference/function/newArray.kt: unsupported: constructing ByteArray
+callableReference/function/newArray.kt: unsupported: a call to CONSTRUCTOR …
 callableReference/function/overloadedFunVsVal.kt: unsupported: overriding FUN …
 callableReference/function/referenceToCompanionMember.kt: unsupported: a type test against kotlin.Function0 outside the VM modules
 callableReference/function/sortListOfStrings.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'sortWith' on receiver of type 'MutableList<String>'.
@@ -557,7 +551,7 @@ callableReference/inlineArrayConstructors.kt: unsupported: a call to get
 callableReference/interfaceMethodReference.kt: unsupported: a type test against kotlin.Function outside the VM modules
 callableReference/kt21014.kt: unsupported: a call to intArrayOf
 callableReference/kt21092a.kt: unsupported: the value class Z
-callableReference/kt37604.kt: unsupported: a default argument
+callableReference/kt37604.kt: unsupported: an empty vararg
 callableReference/kt44483.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Pair'.
 callableReference/kt46902.kt: unsupported: the inner class C
 callableReference/kt49526.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
@@ -624,7 +618,6 @@ casts/functions/reifiedSafeAsFunKBig.kt: unsupported: a type test against kotlin
 casts/functions/reifiedSafeAsFunKSmall.kt: unsupported: a type test against kotlin.Function0 outside the VM modules
 casts/functions/safeAsFunKBig.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'require'.
 casts/functions/safeAsFunKSmall.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'require'.
-casts/genericReturnCast.kt: unsupported: a default argument to FUN …
 casts/intersectionTypeMultipleBounds.kt: unsupported: a call to <get-length>
 casts/intersectionTypeSmartcast.kt: unsupported: a call to <get-length>
 casts/is.kt: unsupported: a type test against java.lang.Runnable outside the VM modules
@@ -652,15 +645,14 @@ casts/mutableCollections/weirdMutableCasts.kt: IllegalStateException: UNRESOLVED
 casts/notIs.kt: unsupported: a type test against java.lang.Runnable outside the VM modules
 casts/nullableSafeCastToTypeParameterWithInterfaceUpperBound.kt: unsupported: a type test against {E of .foo & Any}
 casts/objectToPrimitiveWithAssertion.kt: unsupported: a type test against T of .f
-casts/parallelHierarchy.kt: unsupported: constructing Any
+casts/parallelHierarchy.kt: unsupported: a call to CONSTRUCTOR …
 casts/unitAsAny.kt: unsupported: a value of type kotlin.Unit
 casts/unitAsSafeAny.kt: unsupported: a value of type kotlin.Unit
 casts/unitNullableCast.kt: unsupported: a value of type kotlin.Unit
 checkcastOptimization/kt19246.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'firstOrNull'.
 checkcastOptimization/kt47851.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'getMethod' on receiver of type 'Any'.
-checkcastOptimization/kt50215.kt: unsupported: a default argument to FUN …
 classDelegation/withBridge.kt: unsupported: a bridge from FUN …
-classLiteral/bareArray.kt: unsupported: constructing Any
+classLiteral/bareArray.kt: unsupported: a call to CONSTRUCTOR …
 classLiteral/bound/primitives.kt: unsupported: the expression GET_CLASS …
 classLiteral/bound/sideEffect.kt: unsupported: the expression GET_CLASS …
 classLiteral/bound/simple.kt: unsupported: the expression GET_CLASS …
@@ -674,7 +666,6 @@ classes/comanionObjectFieldVsClassField.kt: IllegalStateException: CANNOT_INFER_
 classes/delegateConstructorCallWithKeywords.kt: unsupported: Int.toString
 classes/delegationJava.kt: unsupported: overriding FUN …
 classes/delegationMethodsWithArgs.kt: unsupported: a call to equals
-classes/extensionFunWithDefaultParam.kt: unsupported: a default argument to FUN …
 classes/implementComparableInSubclass.kt: unsupported: the supertype Comparable outside the VM modules
 classes/inheritSetAndHashSet.kt: unsupported: a call to CONSTRUCTOR …
 classes/inheritedInnerClass.kt: unsupported: the inner class InnerBase
@@ -689,34 +680,32 @@ classes/inner/properOuter.kt: unsupported: the inner class B
 classes/inner/properSuperLinking.kt: unsupported: the inner class B
 classes/innerClass.kt: unsupported: the inner class Inner
 classes/kt1018.kt: unsupported: a call to <get-size>
-classes/kt1120.kt: unsupported: constructing Any
-classes/kt1345.kt: unsupported: a default argument
+classes/kt1120.kt: unsupported: a call to CONSTRUCTOR …
 classes/kt1535.kt: unsupported: the supertype Function0 outside the VM modules
 classes/kt1538.kt: unsupported: a type test against java.util.HashMap outside the VM modules
-classes/kt1980.kt: unsupported: constructing ArrayList
+classes/kt1980.kt: unsupported: a call to CONSTRUCTOR …
 classes/kt2391.kt: unsupported: a call to append
-classes/kt2417.kt: unsupported: constructing HashSet
+classes/kt2417.kt: unsupported: a call to CONSTRUCTOR …
 classes/kt2566_2.kt: unsupported: the inner class E
 classes/kt2607.kt: unsupported: the inner class C
 classes/kt2711.kt: IllegalStateException: INAPPLICABLE_OPERATOR_MODIFIER: 'operator' modifier is not applicable to function: must return 'Boolean'.
 classes/kt3114.kt: unsupported: a call to compareTo
-classes/kt343.kt: unsupported: constructing ArrayList
+classes/kt343.kt: unsupported: a call to CONSTRUCTOR …
 classes/kt40332.kt: unsupported: inheriting FUN …
-classes/kt471.kt: unsupported: constructing Array
+classes/kt471.kt: unsupported: a call to CONSTRUCTOR …
 classes/kt48.kt: unsupported: Float, which needs 32-bit floats in the VM
 classes/kt508.kt: unsupported: overriding FUN …
-classes/kt5347.kt: unsupported: a default argument to FUN …
+classes/kt5347.kt: unsupported: Int.hashCode
 classes/kt6136.kt: unsupported: Int.hashCode
-classes/kt633.kt: unsupported: constructing Array
-classes/kt6816.kt: unsupported: a default argument
-classes/kt707.kt: unsupported: a default argument
+classes/kt633.kt: unsupported: a call to CONSTRUCTOR …
+classes/kt707.kt: unsupported: Int.toString
 classes/kt8011.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 classes/kt940.kt: unsupported: a call to <get-length>
 classes/outerThis.kt: unsupported: the inner class Inner
-classes/overloadBinaryOperator.kt: unsupported: constructing ArrayList
-classes/overloadPlusAssign.kt: unsupported: constructing ArrayList
-classes/overloadPlusAssignReturn.kt: unsupported: constructing ArrayList
-classes/overloadPlusToPlusAssign.kt: unsupported: constructing ArrayList
+classes/overloadBinaryOperator.kt: unsupported: a call to CONSTRUCTOR …
+classes/overloadPlusAssign.kt: unsupported: a call to CONSTRUCTOR …
+classes/overloadPlusAssignReturn.kt: unsupported: a call to CONSTRUCTOR …
+classes/overloadPlusToPlusAssign.kt: unsupported: a call to CONSTRUCTOR …
 classes/overloadUnaryOperator.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'reverse' on receiver of type 'ArrayList<T (of class ArrayWrapper<T>)>'.
 classes/privateOuterFunctions.kt: unsupported: the inner class Inner
 classes/privateOuterProperty.kt: unsupported: the inner class Inner
@@ -761,7 +750,6 @@ closures/kt3152.kt: unsupported: the inner class A
 closures/kt3523.kt: unsupported: the inner class Bar
 closures/kt4106.kt: unsupported: the inner class Inner
 closures/kt47894_inlineFunWithObjectWithNothing.kt: unsupported: a value of type kotlin.Nothing
-closures/kt5589.kt: unsupported: a default argument to FUN …
 collectionLiterals/array.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contentEquals' on receiver of type 'Array<CharSequence>'.
 collectionLiterals/companionBlockOf.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'joinToString' on receiver of type 'Array<out String>'.
 collectionLiterals/genericCollection.kt: unsupported: a call to iterator
@@ -772,13 +760,13 @@ collectionLiterals/resolvesToOperator.kt: unsupported: the expression VARARG …
 collectionLiterals/stdlibCollections.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'zip'.
 collectionLiterals/stdlibSequence.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'joinToString'.
 collectionLiterals/unsignedArrays.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
-collections/addCollectionStubWithCovariantOverride.kt: unsupported: a default argument
+collections/addCollectionStubWithCovariantOverride.kt: unsupported: a default argument to CONSTRUCTOR …
 collections/clashWithInternalMapMethod.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'emptySet'.
 collections/inSetWithSmartCast.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'setOf'.
 collections/inheritFromAbstractMutableListInt.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
-collections/internalRemove.kt: unsupported: a default argument
+collections/internalRemove.kt: unsupported: a default argument to CONSTRUCTOR …
 collections/kt41123.kt: IllegalStateException: NO_SET_METHOD: No 'set' operator method providing array access.
-collections/removeClash.kt: unsupported: a default argument
+collections/removeClash.kt: unsupported: a default argument to CONSTRUCTOR …
 companion/delegatedPropertyOnCompanion.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 companion/genericLambdaOnStringCompanion.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isEmpty' on receiver of type 'String'.
 companion/inlineFunctionCompanionPropertyAccess.kt: unsupported: inheriting FUN …
@@ -834,10 +822,8 @@ companionBlocksAndExtensions/topLevelInitTriggersCompanionBlock.kt: unsupported:
 companionBlocksAndExtensions/visibility.kt: unsupported: the static property privateProp
 compileKotlinAgainstKotlin/adaptedSuspendFunctionReference.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 compileKotlinAgainstKotlin/clashingFakeOverrideSignatures.kt: run: Execution result: RuntimeError(UncaughtException)
-compileKotlinAgainstKotlin/constructorVararg.kt: unsupported: a default argument
+compileKotlinAgainstKotlin/constructorVararg.kt: unsupported: an empty vararg
 compileKotlinAgainstKotlin/coroutinesBinary.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'x'. Specify it explicitly.
-compileKotlinAgainstKotlin/defaultConstructor.kt: unsupported: a default argument
-compileKotlinAgainstKotlin/delegatedDefault.kt: unsupported: a default argument to FUN …
 compileKotlinAgainstKotlin/inlineClasses/callDeserializedPropertyOnInlineClassType.kt: unsupported: the value class Foo
 compileKotlinAgainstKotlin/inlineClasses/constructorWithInlineClassParametersInBinaryDependencies.kt: unsupported: the value class S
 compileKotlinAgainstKotlin/inlineClasses/defaultWithInlineClassAndReceivers.kt: unsupported: the value class Z
@@ -857,13 +843,10 @@ compileKotlinAgainstKotlin/innerClassConstructor.kt: unsupported: the inner clas
 compileKotlinAgainstKotlin/internalSetterOverridden.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Derived'.
 compileKotlinAgainstKotlin/internalWithDefaultArgs.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'a'.
 compileKotlinAgainstKotlin/internalWithOtherModuleName.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'a'.
-compileKotlinAgainstKotlin/kt21775.kt: unsupported: a default argument
+compileKotlinAgainstKotlin/kt21775.kt: unsupported: a default argument to CONSTRUCTOR …
 compileKotlinAgainstKotlin/nestedClassInAnnotationArgument.kt: unsupported: the annotation class Anno
-compileKotlinAgainstKotlin/nestedFunctionTypeAliasExpansion.kt: unsupported: a default argument
-compileKotlinAgainstKotlin/privateSuperTypeDefaults.kt: unsupported: a default argument to FUN …
-compileKotlinAgainstKotlin/privateSuperTypeDefaults2.kt: unsupported: a default argument to FUN …
+compileKotlinAgainstKotlin/nestedFunctionTypeAliasExpansion.kt: unsupported: a default argument to CONSTRUCTOR …
 compileKotlinAgainstKotlin/propertyReference.kt: unsupported: a call to <get-length>
-compileKotlinAgainstKotlin/secondaryConstructors.kt: unsupported: a default argument
 compileKotlinAgainstKotlin/specialBridgesInDependencies.kt: unsupported: a call to CONSTRUCTOR …
 compileKotlinAgainstKotlin/useDeserializedFunInterface.kt: unsupported: the type operator SAM_CONVERSION
 constants/comparisonFalse.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
@@ -875,40 +858,33 @@ constants/numberLiteralCoercionToInferredType.kt: IllegalStateException: TYPE_IN
 contextParameters/arrayAccessCompositveOperators.kt: unsupported: Int.hashCode
 contextParameters/compoundAssignmentOperators.kt: unsupported: Int.hashCode
 contextParameters/contextFunInSam.kt: unsupported: the type operator SAM_CONVERSION
-contextParameters/contextParameterToDefaultArgument.kt: unsupported: a default argument to FUN …
 contextParameters/contextualCallableReference.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<Int, String>'.
 contextParameters/contextualCallableReferenceEquality.kt: unsupported: a type test against kotlin.Function1 outside the VM modules
 contextParameters/contextualInlineCall.kt: unsupported: a value of type kotlin.Nothing
 contextParameters/explicitPassing.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 contextParameters/genericPropertyWithContextParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mapOf'.
-contextParameters/invokeMultipleContextParametersOfSameType.kt: unsupported: a default argument
 contextParameters/kt51284.kt: unsupported: the type operator SAM_CONVERSION
 contextParameters/kt51475.kt: unsupported: inheriting FUN …
 contextParameters/kt51863.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 contextParameters/kt52207.kt: unsupported: inheriting FUN …
 contextParameters/kt52213.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
-contextParameters/kt52373.kt: unsupported: a default argument to FUN …
 contextParameters/kt52967.kt: unsupported: a call to arrayOfNulls
 contextParameters/kt53551.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 contextParameters/kt58476.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 contextParameters/kt65953.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 contextParameters/kt66368.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
-contextParameters/sameExtensionContextAndDispatchReceiver.kt: unsupported: a default argument
 contextParameters/substitutedContextReceivers.kt: unsupported: a call to toString
 contextParameters/suspendContextParemetersWithExtension.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'buildString'.
 contextParameters/suspendContextualWithExtension.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
 contextParameters/unaryOperators.kt: unsupported: Int.hashCode
 contextParameters/useFromAnotherModuleSuspending.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
-contextParameters/useFromAnotherModuleWithDefaultParameterValues.kt: unsupported: a default argument to FUN …
 contextParameters/withExtensionReceiverInSupertype.kt: unsupported: the supertype Function3 outside the VM modules
-contracts/contractForCast.kt: unsupported: a default argument
 contracts/destructuredVariable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'String'.
 contracts/exception.kt: unsupported: a call to error
 contracts/fieldInConstructorParens.kt: unsupported: inheriting FUN …
 contracts/forLoop.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 contracts/isNullString.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isNullOrBlank' on receiver of type 'String?'.
 contracts/kt39374.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
-contracts/kt45236.kt: unsupported: a default argument
 contracts/lambdaParameter.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 contracts/listAppend.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
 contracts/nestedLambdaInNonInlineCallExactlyOnce.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
@@ -920,7 +896,7 @@ controlStructures/breakContinueInExpressions/breakInLoopConditions.kt: unsupport
 controlStructures/breakContinueInExpressions/continueInExpr.kt: unsupported: a call to iterator
 controlStructures/breakContinueInExpressions/inlinedBreakContinue/continueInTryBlock.kt: unsupported: a call to iterator
 controlStructures/breakContinueInExpressions/inlinedBreakContinue/initializerBlock.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
-controlStructures/breakContinueInExpressions/inlinedBreakContinue/inlineConstructor.kt: unsupported: a jump out of an inlined lambda
+controlStructures/breakContinueInExpressions/inlinedBreakContinue/inlineConstructor.kt: unsupported: a call to CONSTRUCTOR …
 controlStructures/breakContinueInExpressions/inlinedBreakContinue/inlineFunctionWithMultipleParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 controlStructures/breakContinueInExpressions/inlinedBreakContinue/lambdaPassedToInlineFunction.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 controlStructures/breakContinueInExpressions/inlinedBreakContinue/loopWithinInlineFunction.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
@@ -932,11 +908,11 @@ controlStructures/breakContinueInExpressions/kt45704_elvisInInlineFun.kt: unsupp
 controlStructures/breakContinueInExpressions/popSizes.kt: unsupported: a value of type kotlin.Nothing
 controlStructures/breakContinueInExpressions/tryFinally1.kt: unsupported: a value of type kotlin.Nothing
 controlStructures/breakContinueInExpressions/tryFinally2.kt: unsupported: a call to iterator
-controlStructures/breakInWhen.kt: unsupported: constructing IntArray
+controlStructures/breakInWhen.kt: unsupported: a call to CONSTRUCTOR …
 controlStructures/continueInExpr.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 controlStructures/continueInFor.kt: unsupported: a call to iterator
 controlStructures/continueInForCondition.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-controlStructures/continueInWhen.kt: unsupported: constructing IntArray
+controlStructures/continueInWhen.kt: unsupported: a call to CONSTRUCTOR …
 controlStructures/continueToLabelInFor.kt: unsupported: a call to iterator
 controlStructures/doWhile.kt: unsupported: a call to <get-length>
 controlStructures/emptyFor.kt: unsupported: a call to iterator
@@ -951,7 +927,7 @@ controlStructures/forInArray/forInFieldUpdatedInLoopBody.kt: unsupported: a call
 controlStructures/forInArray/forInInlineClassArrayWithUpcast.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 controlStructures/forInArray/forIntArray.kt: unsupported: a call to arrayOfNulls
 controlStructures/forInArray/forNullableIntArray.kt: unsupported: a call to arrayOfNulls
-controlStructures/forInArray/forPrimitiveIntArray.kt: unsupported: constructing IntArray
+controlStructures/forInArray/forPrimitiveIntArray.kt: unsupported: a call to CONSTRUCTOR …
 controlStructures/forInArrayWithIndex/forInArrayOfObjectArrayWithIndex.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 controlStructures/forInArrayWithIndex/forInArrayOfPrimArrayWithIndex.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 controlStructures/forInArrayWithIndex/forInArrayWithIndexBreakAndContinue.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
@@ -1572,14 +1548,12 @@ dataClasses/copy/copyInObjectNestedDataClass.kt: unsupported: the inner class Ne
 dataClasses/copy/kt3033.kt: unsupported: Double.hashCode
 dataClasses/copy/valInConstructorParams.kt: unsupported: Int.hashCode
 dataClasses/copy/varInConstructorParams.kt: unsupported: Int.hashCode
-dataClasses/copy/withSecondaryConstructor.kt: unsupported: a default argument to FUN …
-dataClasses/dataClassWithManyFields.kt: unsupported: a default argument
+dataClasses/dataClassWithManyFields.kt: unsupported: defaults for more than 64 parameters
 dataClasses/doubleParam.kt: unsupported: Double.hashCode
 dataClasses/equalityChecksPrimitiveUnboxed.kt: unsupported: Boolean.hashCode
 dataClasses/equals/alreadyDeclared.kt: unsupported: Int.hashCode
 dataClasses/equals/genericarray.kt: unsupported: a call to dataClassArrayMemberToString
 dataClasses/equals/intarray.kt: unsupported: a call to dataClassArrayMemberToString
-dataClasses/equals/sameinstance.kt: unsupported: a default argument
 dataClasses/floatParam.kt: unsupported: Float, which needs 32-bit floats in the VM
 dataClasses/fromOtherModule.kt: unsupported: Int.hashCode
 dataClasses/hashCode/boolean.kt: unsupported: Boolean.hashCode
@@ -1605,93 +1579,36 @@ dataClasses/toString/unitComponent.kt: unsupported: the parameter type kotlin.Un
 dataClasses/twoValParams.kt: unsupported: Int.hashCode
 dataClasses/twoVarParams.kt: unsupported: Int.hashCode
 dataClasses/unitComponent.kt: unsupported: the parameter type kotlin.Unit
-defaultArguments/callDefaultFromInitializer.kt: unsupported: a default argument to FUN …
-defaultArguments/captureInTailrec.kt: unsupported: a default argument to FUN …
-defaultArguments/complexInheritance.kt: unsupported: a default argument to FUN …
+defaultArguments/captureInTailrec.kt: unsupported: a call to <get-length>
 defaultArguments/constructor/annotation.kt: unsupported: the annotation class A
 defaultArguments/constructor/annotationWithEmptyArray.kt: unsupported: the annotation class Anno
-defaultArguments/constructor/anonymousObjectAsDefaultParam.kt: unsupported: a default argument
-defaultArguments/constructor/defArgs1.kt: unsupported: a default argument
+defaultArguments/constructor/anonymousObjectAsDefaultParam.kt: unsupported: a call to plus
 defaultArguments/constructor/defArgs1InnerClass.kt: unsupported: the inner class B
-defaultArguments/constructor/defArgs2.kt: unsupported: a default argument
 defaultArguments/constructor/doubleDefArgs1InnerClass.kt: unsupported: the inner class B
-defaultArguments/constructor/enum.kt: unsupported: a default argument
-defaultArguments/constructor/enumWithOneDefArg.kt: unsupported: a default argument
-defaultArguments/constructor/enumWithTwoDefArgs.kt: unsupported: a default argument
-defaultArguments/constructor/enumWithTwoDoubleDefArgs.kt: unsupported: a default argument
 defaultArguments/constructor/innerClass32Args.kt: unsupported: the inner class B
 defaultArguments/constructor/kt2852.kt: unsupported: the inner class A
-defaultArguments/constructor/kt30517.kt: unsupported: a default argument
-defaultArguments/constructor/kt3060.kt: unsupported: a default argument
-defaultArguments/constructor/objectExpressionDelegatingToSecondaryConstructor.kt: unsupported: a default argument
-defaultArguments/convention/incWithDefaultInGetter.kt: unsupported: a default argument to FUN …
-defaultArguments/convention/incWithDefaults.kt: unsupported: a default argument to FUN …
-defaultArguments/convention/kt16520.kt: unsupported: a default argument to FUN …
-defaultArguments/convention/kt9140.kt: unsupported: a default argument to FUN …
-defaultArguments/convention/plusAssignWithDefaultInGetter.kt: unsupported: a default argument to FUN …
-defaultArguments/convention/plusAssignWithDefaults.kt: unsupported: a default argument to FUN …
-defaultArguments/defaultArgumentsInFunctionWithExpressionAsBody.kt: unsupported: a default argument to FUN …
-defaultArguments/function/abstractClass.kt: unsupported: a default argument to FUN …
-defaultArguments/function/complexInheritance.kt: unsupported: a default argument to FUN …
-defaultArguments/function/covariantOverride.kt: unsupported: a default argument to FUN …
 defaultArguments/function/covariantOverrideGeneric.kt: unsupported: a type test against T of .Bar
-defaultArguments/function/extensionFunctionManyArgs.kt: unsupported: a default argument to FUN …
-defaultArguments/function/extentionFunction.kt: unsupported: a default argument to FUN …
-defaultArguments/function/extentionFunctionDouble.kt: unsupported: a default argument to FUN …
-defaultArguments/function/extentionFunctionDoubleTwoArgs.kt: unsupported: a default argument to FUN …
-defaultArguments/function/extentionFunctionInClassObject.kt: unsupported: a default argument to FUN …
-defaultArguments/function/extentionFunctionInObject.kt: unsupported: a default argument to FUN …
-defaultArguments/function/extentionFunctionWithOneDefArg.kt: unsupported: a default argument to FUN …
-defaultArguments/function/funInTrait.kt: unsupported: a default argument to FUN …
-defaultArguments/function/funInTraitChain.kt: unsupported: a default argument to FUN …
-defaultArguments/function/innerExtentionFunction.kt: unsupported: a default argument to FUN …
-defaultArguments/function/innerExtentionFunctionDouble.kt: unsupported: a default argument to FUN …
-defaultArguments/function/innerExtentionFunctionDoubleTwoArgs.kt: unsupported: a default argument to FUN …
-defaultArguments/function/innerExtentionFunctionManyArgs.kt: unsupported: a default argument to FUN …
-defaultArguments/function/kt15971.kt: unsupported: a default argument to FUN …
-defaultArguments/function/kt15971_2.kt: unsupported: a default argument to FUN …
-defaultArguments/function/kt15971_3.kt: unsupported: a default argument to FUN …
-defaultArguments/function/kt36188.kt: unsupported: a default argument to FUN …
-defaultArguments/function/kt36188_2.kt: unsupported: a default argument to FUN …
-defaultArguments/function/kt5232.kt: unsupported: a default argument to FUN …
-defaultArguments/function/memberFunctionManyArgs.kt: unsupported: a default argument to FUN …
-defaultArguments/function/mixingNamedAndPositioned.kt: unsupported: a default argument to FUN …
-defaultArguments/function/topLevelManyArgs.kt: unsupported: a default argument to FUN …
-defaultArguments/function/trait.kt: unsupported: a default argument to FUN …
-defaultArguments/implementedByFake.kt: unsupported: a default argument to FUN …
-defaultArguments/implementedByFake2.kt: unsupported: a default argument to FUN …
-defaultArguments/implementedByFake3.kt: unsupported: a default argument to FUN …
-defaultArguments/inheritedFromInterfaceViaAbstractSuperclass.kt: unsupported: a default argument to FUN …
-defaultArguments/kt36853.kt: unsupported: a default argument to FUN …
+defaultArguments/function/extensionFunctionManyArgs.kt: unsupported: defaults for more than 64 parameters
+defaultArguments/function/innerExtentionFunctionManyArgs.kt: unsupported: defaults for more than 64 parameters
+defaultArguments/function/memberFunctionManyArgs.kt: unsupported: defaults for more than 64 parameters
+defaultArguments/function/topLevelManyArgs.kt: unsupported: defaults for more than 64 parameters
+defaultArguments/implementedByFake.kt: unsupported: a bridge from FUN …
+defaultArguments/implementedByFake2.kt: unsupported: a bridge from FUN …
+defaultArguments/implementedByFake3.kt: unsupported: a bridge from FUN …
 defaultArguments/kt36853_fibonacci.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Any?'.
-defaultArguments/kt36853_nestedObject.kt: unsupported: a default argument to FUN …
-defaultArguments/kt36853a.kt: unsupported: a default argument to FUN …
-defaultArguments/kt46189.kt: unsupported: a default argument to FUN …
-defaultArguments/kt47073.kt: unsupported: a default argument to FUN …
-defaultArguments/kt47073_nested.kt: unsupported: a default argument to FUN …
-defaultArguments/kt48391.kt: unsupported: a default argument to FUN …
-defaultArguments/kt52702.kt: unsupported: constructing Any
-defaultArguments/kt59326.kt: unsupported: a default argument
-defaultArguments/kt6382.kt: unsupported: a default argument to FUN …
-defaultArguments/private/clashingNames.kt: unsupported: a default argument to FUN …
+defaultArguments/kt46189.kt: unsupported: a call to <get-length>
+defaultArguments/kt48391.kt: unsupported: a type test against T of .A
+defaultArguments/kt52702.kt: unsupported: a call to CONSTRUCTOR …
+defaultArguments/private/clashingNames.kt: unsupported: a call to CONSTRUCTOR …
 defaultArguments/private/memberExtensionFunction.kt: unsupported: the inner class B
-defaultArguments/private/memberFunction.kt: unsupported: a default argument to FUN …
-defaultArguments/private/primaryConstructor.kt: unsupported: a default argument
-defaultArguments/private/secondaryConstructor.kt: unsupported: a default argument
-defaultArguments/protected.kt: unsupported: a default argument to FUN …
-defaultArguments/referenceAsArg.kt: unsupported: a default argument to FUN …
-defaultArguments/signature/kt2789.kt: unsupported: a default argument to FUN …
-defaultArguments/signature/kt9428.kt: unsupported: a default argument to FUN …
-defaultArguments/signature/kt9924.kt: unsupported: a default argument to FUN …
-defaultArguments/simpleFromOtherFile.kt: unsupported: a default argument to FUN …
 defaultArguments/suspendLambdaInTailrecDefault.kt: unsupported: a suspend lambda
-defaultArguments/useThisInLambda.kt: unsupported: a default argument to FUN …
+defaultArguments/useThisInLambda.kt: unsupported: calling FUN …
 delegatedProperty/accessTopLevelDelegatedPropertyInClinit.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/beforeDeclarationContainerOptimization.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/callableReferenceAsSecondArgumentOfDelegate.kt: IllegalStateException: DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE: Property delegate must have a 'getValue(SampleClass, KProperty1<SampleClass, ??? (Unresolved q
 delegatedProperty/capturePropertyInClosure.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/castGetReturnType.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-delegatedProperty/castSetParameter.kt: unsupported: a default argument
+delegatedProperty/castSetParameter.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/correctFieldsOrder.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
 delegatedProperty/delegateAsInnerClass.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/delegateByOtherProperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -1725,7 +1642,7 @@ delegatedProperty/delegateToFinalProperty/delegateToFinalProperty.kt: unsupporte
 delegatedProperty/delegateToFinalProperty/finalPropertyInAnotherFile.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/delegateToFinalProperty/initializeContainerOfTopLevelProperties.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/delegateToFinalProperty/memberExtensionPropertyAndImportFromObject.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-delegatedProperty/delegateToFinalProperty/memberExtensionPropertyAndLocalDelegatedProperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
+delegatedProperty/delegateToFinalProperty/memberExtensionPropertyAndLocalDelegatedProperty.kt: CompilationException: Back-end: Please report this problem https://kotl.in/issue
 delegatedProperty/delegateToSingleton/delegateToEnum.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/delegateToSingleton/delegateToEnumInAClass.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/delegateToSingleton/delegateToSingleton.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableMapOf'.
@@ -1843,8 +1760,6 @@ delegation/delegationToSAMInterface.kt: unsupported: the type operator SAM_CONVE
 delegation/ifWithCallableReferenceInLazy.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
 delegation/kt30102_comparable.kt: unsupported: the supertype Comparable outside the VM modules
 delegation/kt44199.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty<*>'.
-delegation/withDefaultParameters.kt: unsupported: a default argument to FUN …
-delegation/withDefaultsMultipleFilesOrder.kt: unsupported: a default argument to FUN …
 destructuringDeclInLambdaParam/extensionComponents.kt: unsupported: Int.toString
 destructuringDeclInLambdaParam/generic.kt: unsupported: Int.toString
 destructuringDeclInLambdaParam/lambdaInLambda.kt: IllegalStateException: CANNOT_INFER_IT_PARAMETER_TYPE: Cannot infer type for implicit value parameter 'it'. Specify it explicitly.
@@ -1852,13 +1767,9 @@ destructuringDeclInLambdaParam/otherParameters.kt: unsupported: Int.toString
 destructuringDeclInLambdaParam/stdlibUsages.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 destructuringDeclInLambdaParam/withIndexed.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 devirtualization/anonymousObject.kt: unsupported: a call to append
-devirtualization/getter_looking_as_box_function.kt: unsupported: a default argument
 devirtualization/inline_getter.kt: unsupported: the value class Child
 devirtualization/lateinitInterface.kt: unsupported: a call to <get-size>
 diagnostics/functions/tailRecursion/checkStackDepth.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'java' on receiver of type 'KClass<Thread>'.
-diagnostics/functions/tailRecursion/defaultArgs.kt: unsupported: a default argument to FUN …
-diagnostics/functions/tailRecursion/defaultArgsOverridden.kt: unsupported: a default argument to FUN …
-diagnostics/functions/tailRecursion/defaultArgsWithSideEffects.kt: unsupported: a default argument to FUN …
 diagnostics/functions/tailRecursion/kt47084_lambdaInDefaultArgument.kt: unsupported: a call to <get-length>
 diagnostics/functions/tailRecursion/labeledThisReferences.kt: unsupported: the inner class C
 diagnostics/functions/tailRecursion/realIteratorFoldl.kt: unsupported: overriding FUN …
@@ -1884,11 +1795,8 @@ enum/companionObjectInEnum.kt: unsupported: a call to values
 enum/constructorWithReordering.kt: unsupported: the enum entry A without a constructor call
 enum/deepInnerClassInEnumEntryClass.kt: unsupported: the inner class Inner
 enum/deepInnerClassInEnumEntryClass2.kt: unsupported: the inner class Inner
-enum/defaultCtor/constructorWithDefaultArguments.kt: unsupported: a default argument
 enum/defaultCtor/constructorWithVararg.kt: unsupported: a call to <get-size>
-enum/defaultCtor/entryClassConstructorWithDefaultArguments.kt: unsupported: a default argument
-enum/defaultCtor/entryClassConstructorWithVarargs.kt: unsupported: a default argument
-enum/defaultCtor/secondaryConstructorWithDefaultArguments.kt: unsupported: a default argument
+enum/defaultCtor/entryClassConstructorWithVarargs.kt: unsupported: an empty vararg
 enum/defaultCtor/secondaryConstructorWithVararg.kt: unsupported: a call to <get-size>
 enum/emptyEnumValuesValueOf.kt: unsupported: a call to <get-size>
 enum/enumCompanionInit.kt: unsupported: a call to get
@@ -1921,12 +1829,10 @@ enum/kt7257_boundReference1.kt: unsupported: the inner class Inner
 enum/kt7257_boundReference2.kt: unsupported: overriding FUN …
 enum/kt7257_boundReferenceWithImplicitReceiver.kt: unsupported: overriding FUN …
 enum/kt9711_2.kt: unsupported: the inner class D
-enum/lambdaInDefault.kt: unsupported: a default argument
+enum/lambdaInDefault.kt: unsupported: a call to <get-length>
 enum/loop.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-enum/manyDefaultParameters.kt: unsupported: a default argument
 enum/multipleModules.kt: unsupported: a call to get
 enum/overloadedEnumValues.kt: unsupported: a call to arrayOf
-enum/reorderedArguments.kt: unsupported: a default argument
 enum/sortEnumEntries.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'sort' on receiver of type 'Array<Game>'.
 enum/switchLowering.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 enum/throwingEntryInitializer.kt: unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
@@ -1934,7 +1840,7 @@ enum/valueOf2.kt: unsupported: a call to valueOf
 enum/valueof.kt: unsupported: a call to valueOf
 enum/values.kt: unsupported: a call to get
 enum/varargParam.kt: unsupported: a call to get
-escapeAnalysis/stack_array.kt: unsupported: constructing IntArray
+escapeAnalysis/stack_array.kt: unsupported: a call to CONSTRUCTOR …
 escapeAnalysis/test12.kt: unsupported: a call to get
 escapeAnalysis/zeroOutObjectOnAlloc.kt: unsupported: a call to iterator
 evaluate/annotationClassWithInner.kt: unsupported: the annotation class Anno
@@ -1986,7 +1892,7 @@ evaluate/ushortOperations.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_IN
 exceptions/catch1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 exceptions/catch2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 exceptions/catch7.kt: unsupported: a call to append
-exceptions/kt69534.kt: unsupported: a default argument
+exceptions/kt69534.kt: unsupported: a default argument to CONSTRUCTOR …
 exceptions/rethrow.kt: unsupported: a call to error
 exceptions/throw_from_catch.kt: unsupported: a call to error
 extensionFunctions/classMethodCallExtensionSuper.kt: unsupported: Int.toString
@@ -2005,12 +1911,11 @@ extensionFunctions/extensionFunctionInValueClass.kt: unsupported: the value clas
 extensionFunctions/extensionFunctionWithExtensionAsAReceiver.kt: unsupported: a type test against T of .test
 extensionFunctions/extensionFunctionWithExtensionInSAMInterface.kt: unsupported: a type test against T of .test
 extensionFunctions/extensionFunctionWithNestedReceiver.kt: unsupported: the inner class D
-extensionFunctions/kt1953.kt: unsupported: constructing StringBuilder
-extensionFunctions/kt1953_class.kt: unsupported: constructing StringBuilder
+extensionFunctions/kt1953.kt: unsupported: a call to CONSTRUCTOR …
+extensionFunctions/kt1953_class.kt: unsupported: a call to CONSTRUCTOR …
 extensionFunctions/kt23675.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'map' on receiver of type 'IntRange'.
-extensionFunctions/kt3969.kt: unsupported: a default argument to FUN …
-extensionFunctions/kt475.kt: unsupported: constructing ArrayList
-extensionFunctions/kt865.kt: unsupported: constructing ArrayList
+extensionFunctions/kt475.kt: unsupported: a call to CONSTRUCTOR …
+extensionFunctions/kt865.kt: unsupported: a call to CONSTRUCTOR …
 extensionFunctions/nested2.kt: unsupported: Int.toString
 extensionFunctions/nestedExtensionFunctionAsASupertype.kt: unsupported: the supertype Function2 outside the VM modules
 extensionFunctions/simple.kt: unsupported: a call to get
@@ -2054,8 +1959,6 @@ fir/inferenceWithTypeAliasFromOtherModule.kt: unsupported: a value of type kotli
 fir/initializationInLocalInnerClassWithSecondaryConstructor.kt: unsupported: the inner class Inner
 fir/kt68806.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'yield'.
 fir/listAssignmentInWhen.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
-fir/localOverrideWithDefaultInLocalOverridden.kt: unsupported: a default argument to FUN …
-fir/localOverrideWithDefaultInOverridden.kt: unsupported: a default argument to FUN …
 fir/missingDependencyClassInTypeArguments.kt: CompilationErrorException: Module "lib2" has a reference to symbol /Some|null[0]. Neither the module itself nor its dependencies contain such declaration.
 fir/toLong.kt: unsupported: Long.toString
 fp/addSubDenormalFloat.kt: unsupported: Float, which needs 32-bit floats in the VM
@@ -2149,16 +2052,11 @@ funInterface/suspendFunctionAndFunInterfaceSharedClassSplit.kt: IllegalStateExce
 funInterface/typealiasedFunInterface.kt: unsupported: the type operator SAM_CONVERSION
 function/defaults.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
 function/defaults1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
-function/defaults10.kt: unsupported: a default argument
 function/defaults2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
-function/defaults3.kt: unsupported: a default argument to FUN …
 function/defaults4.kt: unsupported: a call to append
 function/defaults5.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-function/defaults6.kt: unsupported: a default argument
 function/defaults7.kt: unsupported: a call to append
-function/defaults8.kt: unsupported: a default argument to FUN …
 function/defaults9.kt: unsupported: the inner class Bar
-function/defaultsFromFakeOverride.kt: unsupported: a default argument to FUN …
 function/defaultsWithInlineClasses.kt: unsupported: the value class Foo
 function/defaultsWithVarArg1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 function/defaultsWithVarArg2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
@@ -2170,25 +2068,17 @@ function/sum_mixed.kt: unsupported: Float, which needs 32-bit floats in the VM
 function/unreachableStatementAfterReturn.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 functions/bigArity/instanceOfCallableReference.kt: unsupported: a type test against kotlin.Function0 outside the VM modules
 functions/bigArity/subclass.kt: unsupported: the supertype Function42 outside the VM modules
-functions/defaultargs.kt: unsupported: a default argument to FUN …
 functions/defaultargs1.kt: unsupported: a call to toString
-functions/defaultargs2.kt: unsupported: a default argument to FUN …
-functions/defaultargs4.kt: unsupported: a default argument to FUN …
-functions/defaultargs5.kt: unsupported: a default argument to FUN …
-functions/defaultargs6.kt: unsupported: a default argument to FUN …
-functions/defaultargs7.kt: unsupported: a default argument to FUN …
 functions/delegatedPropertyWithMultipleOverriddens_generics.kt: unsupported: a type test against E6 of .MyArrayList
 functions/functionExpression/functionExpression.kt: unsupported: the annotation class A
 functions/functionExpression/functionLiteralExpression.kt: unsupported: a call to toString
 functions/invoke/castFunctionToExtension.kt: unsupported: a type test against @[ExtensionFunctionType] kotlin.Function1 outside the VM modules
 functions/invoke/implicitInvokeInCompanionObjectWithFunctionalArgument.kt: unsupported: a value of type kotlin.Nothing
 functions/invoke/implicitInvokeWithFunctionLiteralArgument.kt: unsupported: a value of type kotlin.Nothing
-functions/invoke/kt3190.kt: unsupported: constructing HashMap
+functions/invoke/kt3190.kt: unsupported: a call to CONSTRUCTOR …
 functions/invoke/kt3822invokeOnThis.kt: unsupported: the supertype Function0 outside the VM modules
 functions/kt1038.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'TItem'. Specify it explicitly.
 functions/kt1739.kt: unsupported: the supertype Runnable outside the VM modules
-functions/kt2270.kt: unsupported: a default argument
-functions/kt2271.kt: unsupported: a default argument to FUN …
 functions/kt2739.kt: unsupported: the expression VARARG …
 functions/kt2929.kt: unsupported: a call to compareTo
 functions/kt3214.kt: unsupported: a call to <get-size>
@@ -2197,11 +2087,8 @@ functions/kt48058.kt: unsupported: a type test against kotlin.Function0 outside 
 functions/kt873.kt: unsupported: converting Double to Int
 functions/localFunction.kt: unsupported: a call to iterator
 functions/localFunctions/boundTypeParameterInVararg.kt: unsupported: the expression VARARG …
-functions/localFunctions/kt3978.kt: unsupported: a default argument to FUN …
-functions/localFunctions/kt3978_2.kt: unsupported: a default argument to FUN …
 functions/localFunctions/kt4777.kt: unsupported: overriding FUN …
 functions/localFunctions/nameClashAcrossDifferentContainers.kt: unsupported: a call to <get-length>
-functions/localFunctions/parameterAsDefaultValue.kt: unsupported: a default argument to FUN …
 ieee754/anyCastToPrimitiveCompareTo1.kt: unsupported: compareTo on floating-point numbers
 ieee754/anyCastToPrimitiveCompareTo2.kt: unsupported: compareTo on floating-point numbers
 ieee754/anyToReal.kt: unsupported: Float, which needs 32-bit floats in the VM
@@ -2256,7 +2143,6 @@ inference/kt67609.kt: unsupported: a type test against E of .intersect
 inference/lambdasWithExtensionFunctionType.kt: IllegalStateException: CANNOT_INFER_IT_PARAMETER_TYPE: Cannot infer type for implicit value parameter 'it'. Specify it explicitly.
 inference/mapCollectChainWithNullResult.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 inference/noCoercionToUniForNullableLambdaReturnType.kt: unsupported: a call to toString
-inference/overrideGenericDefaultMethod.kt: unsupported: a default argument to FUN …
 inference/pcla/builderCallAsReturnTypeInLocalClass.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'add'.
 inference/pcla/callableReferenceAndCoercionToUnit.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'R'. Specify it explicitly.
 inference/pcla/callableReferencesProperCompletion.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'yield'.
@@ -2280,8 +2166,8 @@ inference/pcla/issues/kt50453.kt: unsupported: a type test against TV of .Builde
 inference/pcla/issues/kt50827b.kt: unsupported: a type test against TV of .Buildee
 inference/pcla/issues/kt51988.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 inference/pcla/issues/kt52757.kt: unsupported: a type test against TV of .Buildee
-inference/pcla/issues/kt52838b.kt: unsupported: constructing Any
-inference/pcla/issues/kt52838c.kt: unsupported: constructing Any
+inference/pcla/issues/kt52838b.kt: unsupported: a call to CONSTRUCTOR …
+inference/pcla/issues/kt52838c.kt: unsupported: a call to CONSTRUCTOR …
 inference/pcla/issues/kt53109.kt: unsupported: a type test against TV of .Buildee
 inference/pcla/issues/kt53422a.kt: unsupported: a type test against ITV …
 inference/pcla/issues/kt53553.kt: unsupported: a type test against PTV …
@@ -2387,14 +2273,14 @@ inference/pcla/topDownCompletionWithThreeBuilderInferenceCallsSameLevel.kt: Ille
 inference/pcla/topDownCompletionWithTwoBuilderInferenceCalls.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 inference/pcla/withoutAnnotation.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mapOf'.
 inference/plusAssignInsideLambda.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
-inference/referenceToCatchParameterFromLambdaExpression.kt: unsupported: a default argument
+inference/referenceToCatchParameterFromLambdaExpression.kt: unsupported: a default argument to CONSTRUCTOR …
 inference/safeCastWithElvis.kt: unsupported: a type test against {T of .foo & Any}
-inference/substituteIntersectionTypeInsideCapType.kt: unsupported: constructing Any
+inference/substituteIntersectionTypeInsideCapType.kt: unsupported: a call to CONSTRUCTOR …
 inference/sumOfOverloads.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 inference/suspendExtensionRecevierFromConstraint.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableMapOf'.
 inference/tryCatchAtAssignment.kt: unsupported: a type test against T of .materialize
 inference/tryCatchAtAssignmentWithSmartCast.kt: unsupported: a type test against T of .materialize
-inference/varargInConstructor.kt: unsupported: a default argument
+inference/varargInConstructor.kt: unsupported: an empty vararg
 inference/whenAtAssignment.kt: unsupported: a type test against T of .materialize
 inference/whenAtAssignmentWithSmartCast.kt: unsupported: a type test against T of .materialize
 inference/whenAtAssignmentWithSmartCastInsideCapturedLambda.kt: unsupported: a type test against T of .materialize
@@ -2421,14 +2307,14 @@ inline/classDeclarationInsideInline.kt: unsupported: overriding FUN …
 inline/classObject.kt: unsupported: inheriting FUN …
 inline/coercionToUnit.kt: unsupported: a value of type kotlin.Unit
 inline/crossModuleUnsignedLiterals.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
-inline/crossinlineLambdaAllocation.kt: unsupported: a call to foo
+inline/crossinlineLambdaAllocation.kt: unsupported: a captured variable
 inline/defaultArgs.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 inline/defaultArgsLateinitLowering.kt: unsupported: a call to <get-length>
 inline/extension.kt: unsupported: inheriting FUN …
 inline/fakeOverrideInliningCrossModule.kt: CompilationErrorException: Module "libB" has a reference to symbol /foo|foo(){}[0]. Neither the module itself nor its dependencies contain such declaration.
-inline/genericFunctionReference.kt: unsupported: constructing Array
+inline/genericFunctionReference.kt: unsupported: a call to CONSTRUCTOR …
 inline/getClass.kt: unsupported: the object Companion outside the VM modules
-inline/inline12.kt: unsupported: constructing Any
+inline/inline12.kt: unsupported: a call to CONSTRUCTOR …
 inline/inline16.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 inline/inline17.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 inline/inline2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
@@ -2439,7 +2325,7 @@ inline/inline7.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved refer
 inline/inline9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 inline/inlineCallNoInline.kt: unsupported: a call to iterator
 inline/inlineChainCrossModule.kt: CompilationErrorException: Module "mid" has a reference to symbol /baz|baz(){}[0]. Neither the module itself nor its dependencies contain such declaration.
-inline/inlineCtor.kt: unsupported: constructing IntArray
+inline/inlineCtor.kt: unsupported: a call to CONSTRUCTOR …
 inline/inlineIntSimple.kt: unsupported: inheriting FUN …
 inline/inlineLambdaNoCapture.kt: unsupported: a call to iterator
 inline/inlineLambdaWithCapture.kt: unsupported: Int.hashCode
@@ -2452,7 +2338,6 @@ inline/kt26117.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot in
 inline/kt26787.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 inline/kt66017.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 inline/kt66017_inlineFromTheSameModule.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
-inline/kt67024.kt: unsupported: a default argument to FUN …
 inline/kt67866.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inline/kt69041.kt: unsupported: inheriting FUN …
 inline/lambdaAsAny.kt: unsupported: a call to append
@@ -3305,7 +3190,6 @@ inlineEvaluationOrder/for.kt: unsupported: a call to iterator
 inlineEvaluationOrder/inlineFunctionAsParameterOfQualifiedCall.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'replace' on receiver of type 'String'.
 inlineEvaluationOrder/methodDecomposedWithBind.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Int'.
 inlineEvaluationOrder/methodInlineCallQualifierWithSideEffect.kt: unsupported: inheriting FUN …
-inlineEvaluationOrder/propertiesInitializationOrder.kt: unsupported: a default argument
 inlineEvaluationOrder/propertyAccessWithSideEffect.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 inlineEvaluationOrder/propertyWithSideEffectPassedToInlineFunction.kt: unsupported: a call to arrayOf
 inlineEvaluationOrder/whileConditionExtracted.kt: unsupported: a call to get
@@ -3345,14 +3229,12 @@ innerNested/kt63732.kt: unsupported: the inner class B
 innerNested/nestedInnerClass.kt: unsupported: the inner class Y
 innerNested/passingOuterRef.kt: unsupported: the inner class B1
 innerNested/superConstructorCall/deepInnerHierarchy.kt: unsupported: the inner class B
-innerNested/superConstructorCall/deepLocalHierarchy.kt: unsupported: a default argument
 innerNested/superConstructorCall/innerExtendsInnerViaSecondaryConstuctor.kt: unsupported: the inner class InClass
 innerNested/superConstructorCall/innerExtendsInnerWithProperOuterCapture.kt: unsupported: the inner class InClass
 innerNested/superConstructorCall/kt11833_1.kt: unsupported: the inner class InClass
 innerNested/superConstructorCall/kt11833_2.kt: unsupported: the inner class InClass
 innerNested/superConstructorCall/localClassOuterDiffersFromInnerOuter.kt: unsupported: the inner class Inner
 innerNested/superConstructorCall/localExtendsInner.kt: unsupported: the inner class InClass
-innerNested/superConstructorCall/objectExtendsClassDefaultArgument.kt: unsupported: a default argument
 innerNested/superConstructorCall/objectExtendsClassVararg.kt: unsupported: a call to get
 innerNested/superConstructorCall/objectExtendsInner.kt: unsupported: the inner class Inner
 innerNested/superConstructorCall/objectExtendsInnerDefaultArgument.kt: unsupported: the inner class Inner
@@ -3360,7 +3242,6 @@ innerNested/superConstructorCall/objectExtendsInnerOfLocalVarargAndDefault.kt: u
 innerNested/superConstructorCall/objectExtendsInnerOfLocalWithCapture.kt: unsupported: the inner class Inner
 innerNested/superConstructorCall/objectExtendsInnerWithDelegatingConstructor.kt: unsupported: the inner class Inner
 innerNested/superConstructorCall/objectOuterDiffersFromInnerOuter.kt: unsupported: the inner class Inner
-interfaceCallsNCasts/finalMethod.kt: unsupported: a default argument to FUN …
 interfaceCallsNCasts/interface0.kt: unsupported: a call to append
 intrinsics/ea35953.kt: unsupported: a call to equals
 intrinsics/kt10131.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
@@ -3369,8 +3250,8 @@ intrinsics/kt52163_doubleCompareToInt.kt: unsupported: compareTo on floating-poi
 intrinsics/kt8666.kt: unsupported: a call to plus
 intrinsics/longRangeWithExplicitDot.kt: unsupported: Long.rangeTo
 intrinsics/nullPlusString.kt: unsupported: a call to plus
-intrinsics/rangeFromCollection.kt: unsupported: constructing ArrayList
-intrinsics/stringFromCollection.kt: unsupported: constructing ArrayList
+intrinsics/rangeFromCollection.kt: unsupported: a call to CONSTRUCTOR …
+intrinsics/stringFromCollection.kt: unsupported: a call to CONSTRUCTOR …
 intrinsics/tostring.kt: unsupported: Byte.toString
 intrinsics/trimMarginWithBlankString.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimMargin' on receiver of type 'String'.
 ir/anonymousClassLeak.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
@@ -3380,14 +3261,13 @@ ir/closureConversion/innerClass2.kt: unsupported: the inner class Inner
 ir/closureConversion/mutablePrimitives.kt: unsupported: Float, which needs 32-bit floats in the VM
 ir/hashCodeOnGenericSubstitutedWithPrimitive.kt: unsupported: Boolean.hashCode
 ir/kt25405.kt: unsupported: the inner class TableColumn
-ir/kt40083.kt: unsupported: a default argument to FUN …
 ir/kt52677.kt: unsupported: the annotation class MySerializable
 ir/lambdaWithLoop.kt: IllegalStateException: MISSING_STDLIB_CLASS: Missing stdlib class.
 ir/primitiveNumberComparisons/comparableToDouble.kt: unsupported: overriding FUN …
 ir/primitiveNumberComparisons/floatEqeq.kt: unsupported: Float, which needs 32-bit floats in the VM
 ir/privateSignatures/privateLeakThroughInline.kt: unsupported: inheriting FUN …
-ir/recursiveGeneric.kt: unsupported: constructing Any
-ir/recursiveGeneric2.kt: unsupported: constructing Any
+ir/recursiveGeneric.kt: unsupported: a call to CONSTRUCTOR …
+ir/recursiveGeneric2.kt: unsupported: a call to CONSTRUCTOR …
 ir/serializationRegressions/anonFakeOverride.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toSet' on receiver of type 'LinkedHashSet<Uniform>'.
 ir/serializationRegressions/dispatchReceiverValue.kt: IllegalStateException: EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE: C: 'expect' and corresponding 'actual' are declared in the same module.
 ir/serializationRegressions/innerClassInEnumEntryClass.kt: unsupported: the inner class Inner
@@ -3398,14 +3278,14 @@ javaDirect/javaConstantQualifiedByJavaClassVsKotlinTopLevelConst.kt: unsupported
 javaDirect/javaConstantQualifiedByKotlinFacade.kt: AssertionFailedError: Java Compilation failed. Notice: This might be caused by a circular dependency between Java and Kotlin sources, which is not supported in 
 javaDirect/packagePrivateInheritedNestedClassNotVisibleAcrossPackages.kt: unsupported: overriding FUN …
 javaDirect/typeAliasNotVisibleFromJava.kt: AssertionFailedError: Java Compilation failed. Notice: This might be caused by a circular dependency between Java and Kotlin sources, which is not supported in 
-javaInterop/notNullAssertions/mapPut.kt: unsupported: constructing HashMap
+javaInterop/notNullAssertions/mapPut.kt: unsupported: a call to CONSTRUCTOR …
 javaInterop/objectMethods/cloneCallsConstructor.kt: unsupported: Int.hashCode
 javaInterop/objectMethods/cloneCallsSuper.kt: unsupported: a call to clone
 javaInterop/objectMethods/cloneCallsSuperAndModifies.kt: unsupported: a call to clone
 javaInterop/objectMethods/cloneableClassWithoutClone.kt: unsupported: a call to clone
-jdk/arrayList.kt: unsupported: constructing ArrayList
-jdk/hashMap.kt: unsupported: constructing HashMap
-jdk/iteratingOverHashMap.kt: unsupported: constructing HashMap
+jdk/arrayList.kt: unsupported: a call to CONSTRUCTOR …
+jdk/hashMap.kt: unsupported: a call to CONSTRUCTOR …
+jdk/iteratingOverHashMap.kt: unsupported: a call to CONSTRUCTOR …
 jdk/kt1397.kt: unsupported: a call to CONSTRUCTOR …
 jdk/noStringToCharArray.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toCharArray' on receiver of type 'String'.
 jsAstOptimizations/whileConditionFolding/doWhileWithNestedContinue.kt: unsupported: a call to iterator
@@ -3452,24 +3332,18 @@ localClass/objectExpressionInInitializer.kt: unsupported: the inner class InClas
 localClass/objectExpressionInProperty.kt: unsupported: the inner class InClass
 localClass/tryCatch.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 localClass/virtualCallFromConstructor.kt: unsupported: a call to <get-length>
-localClasses/anonymousObjectInParameterInitializer.kt: unsupported: a default argument
-localClasses/capturingInDefaultConstructorParameter.kt: unsupported: a default argument
 localClasses/closureOfInnerLocalClass.kt: unsupported: the inner class D
 localClasses/closureOfLambdaInLocalClass.kt: unsupported: a call to iterator
 localClasses/closureWithSelfInstantiation.kt: unsupported: the inner class D
-localClasses/defaultParameterInConstructor.kt: unsupported: a default argument
 localClasses/innerClassInLocalClass.kt: unsupported: the inner class C
 localClasses/innerOfLocalCaptureExtensionReceiver.kt: unsupported: the inner class Inner
 localClasses/kt10835.kt: unsupported: the inner class Y
 localClasses/kt10835a.kt: unsupported: the inner class Y
 localClasses/kt3389.kt: unsupported: Int.hashCode
-localClasses/kt3584.kt: unsupported: a default argument
-localClasses/localClassInParameterInitializer.kt: unsupported: a default argument
 localClasses/localClassUsedBeforeDeclaration.kt: unsupported: the inner class A
 localClasses/localDataClass.kt: unsupported: Int.hashCode
 localClasses/localExtendsInnerAndReferencesOuterMember.kt: unsupported: the inner class Inner
 localClasses/localGenericWithTypeParameters.kt: unsupported: the expression CLASS_REFERENCE …
-localClasses/nameWithWhitespace.kt: unsupported: a default argument
 localClasses/ownClosureOfInnerLocalClass.kt: unsupported: the inner class D
 localClasses/subclassingExtensionReceiverClass.kt: unsupported: the inner class AB
 localEscapeAnalysis/arraysFieldWrite.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
@@ -3501,7 +3375,7 @@ multiDecl/forIterator/longIterator/MultiDeclForComponentExtensions.kt: unsupport
 multiDecl/forIterator/longIterator/MultiDeclForComponentExtensionsValCaptured.kt: unsupported: overriding FUN …
 multiDecl/forIterator/longIterator/MultiDeclForComponentMemberExtensions.kt: unsupported: overriding FUN …
 multiDecl/forIterator/longIterator/MultiDeclForComponentMemberExtensionsInExtensionFunction.kt: unsupported: overriding FUN …
-multiDecl/forRange/UnderscoreNamesDontCallComponent.kt: unsupported: constructing Array
+multiDecl/forRange/UnderscoreNamesDontCallComponent.kt: unsupported: a call to CONSTRUCTOR …
 multiDecl/forRange/explicitRangeTo/int/MultiDeclForComponentExtensions.kt: unsupported: a call to iterator
 multiDecl/forRange/explicitRangeTo/int/MultiDeclForComponentExtensionsValCaptured.kt: unsupported: a call to iterator
 multiDecl/forRange/explicitRangeTo/int/MultiDeclForComponentMemberExtensions.kt: unsupported: a call to iterator
@@ -3537,7 +3411,7 @@ multiplatform/k2/annotations/optionalExpectation.kt: unsupported: the annotation
 multiplatform/k2/annotations/optionalExpectationAnnotation.kt: unsupported: the value class Some
 multiplatform/k2/anonymousObjectAndSpecificImplementationInDeserializedIr.kt: unsupported: a call to arrayOfNulls
 multiplatform/k2/basic/delegatedByExpectExtensionProperty.kt: IllegalStateException: DELEGATE_SPECIAL_FUNCTION_MISSING: Type 'KProperty0<String.() -> String>' has no method 'getValue(B, KProperty1<*, *>)', so it cannot ser
-multiplatform/k2/basic/expectActualDifferentExtensionReceiversOnOverloads.kt: unsupported: constructing BooleanArray
+multiplatform/k2/basic/expectActualDifferentExtensionReceiversOnOverloads.kt: unsupported: a call to CONSTRUCTOR …
 multiplatform/k2/basic/expectActualFakeOverridesWithTypeParameters2.kt: NoSuchElementException: List contains no element matching the predicate.
 multiplatform/k2/basic/expectActualNullabilityBasedOverloads.kt: unsupported: a call to plus
 multiplatform/k2/basic/expectActualTypeParameters.kt: unsupported: a type test against B of .A
@@ -3547,39 +3421,20 @@ multiplatform/k2/basic/extensionFunctionAsASupertype.kt: unsupported: the supert
 multiplatform/k2/basic/extensionFunctionAsASupertypeConversion.kt: unsupported: the supertype Function1 outside the VM modules
 multiplatform/k2/basic/extensionFunctionInDelegatedSam.kt: unsupported: the type operator SAM_CONVERSION
 multiplatform/k2/basic/interfaceMethodFromSuperTypeIsImplementedInOtherExpectSuperClass.kt: NoSuchElementException: List contains no element matching the predicate.
-multiplatform/k2/basic/intersectionOverrideWithDefaultParameterInCommonModule.kt: unsupported: a default argument to FUN …
-multiplatform/k2/basic/localIntersectionOverrideWithDefaultParameterInCommonModule.kt: unsupported: a default argument to FUN …
 multiplatform/k2/basic/nameBasedDestructuringFullForm.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 multiplatform/k2/basic/nameBasedDestructuringShortForm.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 multiplatform/k2/basic/removeExpectDeclarationsFromMetadata.kt: unsupported: the annotation class WithoutActual
 multiplatform/k2/commonFakeOverridePropertyRef.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 multiplatform/k2/commonInternal.kt: unsupported: the annotation class AnnInFriend
-multiplatform/k2/complexInheritanceWithDelegation.kt: unsupported: a default argument to FUN …
 multiplatform/k2/complexMatchings/expectCtorlessFinalToActualUnit.kt: unsupported: a value of type kotlin.Unit
 multiplatform/k2/defaultArguments/bothInExpectAndActual.kt: unsupported: a type test against kotlin.Array outside the VM modules
-multiplatform/k2/defaultArguments/bothInExpectAndActual2.kt: unsupported: a default argument to FUN …
-multiplatform/k2/defaultArguments/constructor.kt: unsupported: a default argument
-multiplatform/k2/defaultArguments/defaultArgumentInDelegatedFunction.kt: unsupported: a default argument
-multiplatform/k2/defaultArguments/delegatedExpectedInterface.kt: unsupported: a default argument to FUN …
-multiplatform/k2/defaultArguments/function.kt: unsupported: a default argument to FUN …
-multiplatform/k2/defaultArguments/functionFromOtherModule.kt: unsupported: a default argument to FUN …
-multiplatform/k2/defaultArguments/inheritedFromCommonClass.kt: unsupported: a default argument to FUN …
-multiplatform/k2/defaultArguments/inheritedFromExpectedClass.kt: unsupported: a default argument to FUN …
-multiplatform/k2/defaultArguments/inheritedFromExpectedInterface.kt: unsupported: a default argument to FUN …
-multiplatform/k2/defaultArguments/inheritedFromExpectedMethod.kt: unsupported: a default argument to FUN …
-multiplatform/k2/defaultArguments/inheritedInExpectedDeclarations.kt: unsupported: a default argument to FUN …
-multiplatform/k2/defaultArguments/inheritedViaAnotherInterfaceIndirectly.kt: unsupported: a default argument to FUN …
 multiplatform/k2/defaultArguments/inlineFunctionWithDefaultLambda.kt: unsupported: inheriting FUN …
-multiplatform/k2/defaultArguments/kt23239.kt: unsupported: a default argument to FUN …
 multiplatform/k2/defaultArguments/kt67488.kt: unsupported: the annotation class A
-multiplatform/k2/defaultArguments/nestedEnumEntryValue.kt: unsupported: a default argument
-multiplatform/k2/defaultArguments/parametersInArgumentValues.kt: unsupported: a default argument to FUN …
 multiplatform/k2/defaultArguments/superCall.kt: IllegalStateException: SUPER_CALL_WITH_DEFAULT_PARAMETERS: Super-calls with default arguments are prohibited. Specify all arguments of 'super.foo' explicitly.
 multiplatform/k2/defaultArguments/suspend.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
 multiplatform/k2/defaultArguments/typeAlias.kt: unsupported: the annotation class Foo2
 multiplatform/k2/defaultArguments/typeAlias2.kt: unsupported: the annotation class Foo2
 multiplatform/k2/defaultArguments/withTypeParameter.kt: unsupported: the inner class B
-multiplatform/k2/delegation/delegationToExpectInterfaceByExpectFun.kt: unsupported: a default argument
 multiplatform/k2/enumStaticMethods.kt: unsupported: a call to valueOf
 multiplatform/k2/expectRefinement.kt: IllegalStateException: EXPECT_REFINEMENT_ANNOTATION_MISSING: 'expect' declaration refinement is an experimental feature. Mark the declaration with the '@ExpectR
 multiplatform/k2/expectStatic.kt: unsupported: the static property a
@@ -3598,21 +3453,17 @@ multiplatform/k2/hmpp/friendDependency.kt: IllegalStateException: UNRESOLVED_REF
 multiplatform/k2/hmpp/genericTypealiasSameNameTwoLibs.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'first' on receiver of type 'List<T (of class LibPlatformFoo<T>)>'.
 multiplatform/k2/hmpp/kt83572.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsModule'.
 multiplatform/k2/hmpp/moveToDiagnostic/optInActual2-2.kt: unsupported: the annotation class Ann
-multiplatform/k2/hmpp/overloadAliasTwoLibs.kt: unsupported: a default argument
 multiplatform/k2/hmpp/overridingInternalFromFriend.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Foo'.
-multiplatform/k2/hmpp/propertyAliasTwoLibs.kt: unsupported: a default argument
 multiplatform/k2/hmpp/stdlibRegressions.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'code' on receiver of type 'Char'.
 multiplatform/k2/hmpp/typealiasNameClash.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'String'.
 multiplatform/k2/kt57391.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
-multiplatform/k2/kt59613.kt: unsupported: a default argument to FUN …
 multiplatform/k2/kt66970.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'js'.
 multiplatform/k2/migratedOldTests/mpp1.kt: unsupported: the inner class B
 multiplatform/k2/migratedOldTests/mpp_default_args.kt: unsupported: the inner class Inner
 multiplatform/k2/migratedOldTests/mpp_optional_expectation.kt: unsupported: the annotation class Optional
-multiplatform/k2/migratedOldTests/remap_expect_property_ref.kt: unsupported: a default argument to FUN …
+multiplatform/k2/migratedOldTests/remap_expect_property_ref.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 multiplatform/k2/multipleExpectsSameActual_On.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'repeat' on receiver of type 'String'.
-multiplatform/k2/privateConstructorWithDefaults.kt: unsupported: a default argument
-multiplatform/k2/regularAndDeprecatedOverloads.kt: unsupported: constructing Array
+multiplatform/k2/regularAndDeprecatedOverloads.kt: unsupported: a call to CONSTRUCTOR …
 nameBasedDestructuring/fakeOverridenFunctionReturnsDataClass.kt: unsupported: Int.hashCode
 nameBasedDestructuring/fullForm.kt: unsupported: Int.hashCode
 nameBasedDestructuring/fullFormExtraPropType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
@@ -3624,12 +3475,11 @@ nameBasedDestructuring/shortFormFromSmartCast.kt: IllegalStateException: UNRESOL
 nameBasedDestructuring/shortFormLoopsAndLambdas.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 nonLocalReturns/kt9644let.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 nonLocalReturns/suspendConversion.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'Continuation'.
-nothingValue/nothingValueException.kt: unsupported: constructing Any
+nothingValue/nothingValueException.kt: unsupported: a call to CONSTRUCTOR …
 nothingValue/toStringOnNothing.kt: unsupported: Int.toString
 object/fields2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 object/initialization1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 objectExpression/expr3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-objectExpression/multipleAnonymousObjectsInsideInlineFunction.kt: unsupported: a call to foo
 objectIntrinsics/objects.kt: unsupported: the object Companion outside the VM modules
 objects/companionObjectAccess/companionObjectInitOrderWithSuperinterface.kt: wrong result
 objects/companionObjectAccess/primitiveCompanion/byteCompanionObject.kt: unsupported: the object Companion outside the VM modules
@@ -3642,7 +3492,7 @@ objects/companionObjectAccess/primitiveCompanion/shortCompanionObject.kt: unsupp
 objects/companionObjectAccess/privateCompanionObjectAccessedFromMethodInlinedInNestedClass.kt: unsupported: inheriting FUN …
 objects/compoundAssignmentToArrayAccessToExtensionPropertyImportedFromObject.kt: unsupported: a call to intArrayOf
 objects/compoundAssignmentToArrayAccessToPropertyImportedFromObject.kt: unsupported: a call to intArrayOf
-objects/flist.kt: unsupported: a default argument to FUN …
+objects/flist.kt: unsupported: overriding FUN …
 objects/initializerBlockResetToDefault.kt: unsupported: Float, which needs 32-bit floats in the VM
 objects/innerClassInsideAnonymousObject.kt: unsupported: the inner class InnerLocal1
 objects/interfaceCompanionObjectReference.kt: unsupported: the annotation class Anno
@@ -3652,9 +3502,9 @@ objects/kt2663_2.kt: unsupported: the supertype Runnable outside the VM modules
 objects/kt32351.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'map' on receiver of type 'IntRange'.
 objects/kt3238.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'java' on receiver of type 'KClass<Obj.Inner>'.
 objects/kt32749.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
-objects/localFunctionInObjectInitializer_kt4516.kt: unsupported: constructing HashMap
+objects/localFunctionInObjectInitializer_kt4516.kt: unsupported: a call to CONSTRUCTOR …
 objects/objectExtendsInnerAndReferencesOuterMember.kt: unsupported: the inner class Inner
-objects/objectVsClassInitialization_kt5291.kt: unsupported: constructing StringBuilder
+objects/objectVsClassInitialization_kt5291.kt: unsupported: a call to CONSTRUCTOR …
 objects/substitutionFunctionFromSuper.kt: unsupported: the inner class Inner
 objects/throwingInitializersCompanionObjects.kt: unsupported: a Unit field
 objects/throwingInitializersObjects.kt: unsupported: a Unit field
@@ -3684,31 +3534,31 @@ package/jsExportNameClash.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unres
 package/jsExportNameClashIntermodule.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsExport'.
 package/nullablePrimitiveNoFieldInitializer.kt: unsupported: Double.toFloat
 package/referenceWithTheSameNameAsPackage.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
-platformTypes/primitives/assign.kt: unsupported: constructing ArrayList
-platformTypes/primitives/compareTo.kt: unsupported: constructing ArrayList
-platformTypes/primitives/dec.kt: unsupported: constructing ArrayList
-platformTypes/primitives/div.kt: unsupported: constructing ArrayList
-platformTypes/primitives/equals.kt: unsupported: constructing ArrayList
-platformTypes/primitives/hashCode.kt: unsupported: constructing ArrayList
-platformTypes/primitives/inc.kt: unsupported: constructing ArrayList
-platformTypes/primitives/minus.kt: unsupported: constructing ArrayList
-platformTypes/primitives/mod.kt: unsupported: constructing ArrayList
-platformTypes/primitives/not.kt: unsupported: constructing ArrayList
-platformTypes/primitives/notEquals.kt: unsupported: constructing ArrayList
-platformTypes/primitives/plus.kt: unsupported: constructing ArrayList
-platformTypes/primitives/plusAssign.kt: unsupported: constructing ArrayList
-platformTypes/primitives/rangeTo.kt: unsupported: constructing ArrayList
-platformTypes/primitives/times.kt: unsupported: constructing ArrayList
-platformTypes/primitives/toShort.kt: unsupported: constructing ArrayList
-platformTypes/primitives/toString.kt: unsupported: constructing ArrayList
-platformTypes/primitives/unaryMinus.kt: unsupported: constructing ArrayList
-platformTypes/primitives/unaryPlus.kt: unsupported: constructing ArrayList
+platformTypes/primitives/assign.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/compareTo.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/dec.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/div.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/equals.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/hashCode.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/inc.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/minus.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/mod.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/not.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/notEquals.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/plus.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/plusAssign.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/rangeTo.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/times.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/toShort.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/toString.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/unaryMinus.kt: unsupported: a call to CONSTRUCTOR …
+platformTypes/primitives/unaryPlus.kt: unsupported: a call to CONSTRUCTOR …
 primitiveTypes/booleanHashCode.kt: IllegalStateException: UNSAFE_CALL: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Boolean?'.
 primitiveTypes/charToByte.kt: unsupported: the annotation class Foo
 primitiveTypes/conversions.kt: unsupported: Float, which needs 32-bit floats in the VM
 primitiveTypes/equalityWithObject/boxedNanEquals.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'fromBits'.
 primitiveTypes/equalityWithObject/intEqualsNull.kt: unsupported: Int.equals
-primitiveTypes/equalityWithObject/kt42281.kt: unsupported: a default argument to FUN …
+primitiveTypes/equalityWithObject/kt42281.kt: IllegalStateException: No declaration of FUN name:intArrayOf visibility:public modality:FINAL <> (elements:kotlin.IntArray) returnType:kotlin.IntArray declares 
 primitiveTypes/equalsHashCodeToString.kt: unsupported: Float, which needs 32-bit floats in the VM
 primitiveTypes/kt13023.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 primitiveTypes/kt14868.kt: unsupported: overriding FUN …
@@ -3726,7 +3576,6 @@ primitiveTypes/kt4097.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolve
 primitiveTypes/kt4098.kt: unsupported: a call to get
 primitiveTypes/kt4210.kt: unsupported: a call to get
 primitiveTypes/kt518.kt: unsupported: a call to get
-primitiveTypes/kt665.kt: unsupported: a default argument to FUN …
 primitiveTypes/kt684.kt: unsupported: a call to <get-length>
 primitiveTypes/kt753.kt: unsupported: Long.toString
 primitiveTypes/kt756.kt: unsupported: a call to toString
@@ -3734,7 +3583,7 @@ primitiveTypes/kt757.kt: unsupported: Long.toString
 primitiveTypes/kt79977.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 primitiveTypes/kt79977_withIncrementalCompilation.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 primitiveTypes/kt887.kt: unsupported: a call to compareTo
-primitiveTypes/kt935.kt: unsupported: constructing StringBuilder
+primitiveTypes/kt935.kt: unsupported: a call to CONSTRUCTOR …
 primitiveTypes/nullableAsIndex.kt: unsupported: a call to arrayOf
 primitiveTypes/numberEqualsHashCodeToString.kt: unsupported: overriding FUN …
 primitiveTypes/numberToChar/abstractMethodInSuperinterface.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'code' on receiver of type 'Char'.
@@ -3749,10 +3598,7 @@ primitiveTypes/stringEqualsHashCodeToString.kt: unsupported: a call to equals
 primitiveTypes/virtualCallToCustomNumber.kt: unsupported: a call to CONSTRUCTOR …
 privateConstructors/inline.kt: unsupported: inheriting FUN …
 privateConstructors/inner.kt: unsupported: the inner class Inner
-privateConstructors/withArguments.kt: unsupported: a default argument
-privateConstructors/withDefault.kt: unsupported: a default argument
-privateConstructors/withLinkedClasses.kt: unsupported: a default argument
-privateConstructors/withVarargs.kt: unsupported: a default argument
+privateConstructors/withVarargs.kt: unsupported: an empty vararg
 properties/PrivatePropertyOfComplexGenericFunctionType.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'B'. Specify it explicitly.
 properties/PrivatePropertyOfGenericContravariantFunctionType.kt: unsupported: a call to <get-length>
 properties/augmentedAssignmentsAndIncrements.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -3769,7 +3615,6 @@ properties/backingField/supertypePropertyWithValueClassExplicitBackingField.kt: 
 properties/backingField/typeCheckSupertypeWithValueClassExplicitBackingField.kt: unsupported: the value class V
 properties/complexPropertyInitializer.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'yield'.
 properties/const/intermoduleInlineConst.kt: unsupported: a Unit field
-properties/const/kt52970.kt: unsupported: a default argument
 properties/eagerInitializationGlobal1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
 properties/eagerInitializationGlobal2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
 properties/eagerInitializationGlobal3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
@@ -3779,9 +3624,9 @@ properties/initializerOfConstValWithConst.kt: unsupported: Int.toString
 properties/initializerOfConstValWithConstExpr.kt: unsupported: Int.toString
 properties/initializerOfValWithConstExpr.kt: unsupported: Int.toString
 properties/initializerOfValWithNonConstExpr.kt: unsupported: Int.toString
-properties/kt1159.kt: unsupported: constructing Any
+properties/kt1159.kt: unsupported: a call to CONSTRUCTOR …
 properties/kt1398.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'uppercase' on receiver of type 'String'.
-properties/kt1714.kt: unsupported: constructing Integer
+properties/kt1714.kt: unsupported: a call to CONSTRUCTOR …
 properties/kt3556.kt: unsupported: a call to <get-length>
 properties/kt3930.kt: unsupported: the inner class Baz
 properties/kt4383.kt: unsupported: a Unit field
@@ -3796,7 +3641,7 @@ properties/lateinit/topLevel/uninitializedMemberAccess.kt: unsupported: a call t
 properties/lateinit/topLevel/uninitializedRead.kt: unsupported: the expression GET_CLASS …
 properties/primitiveOverrideDelegateAccessor.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 properties/twoAnnotatedExtensionPropertiesWithoutBackingFields.kt: unsupported: the annotation class Anno
-properties/unreachableUninitializedProperty.kt: unsupported: a default argument
+properties/unreachableUninitializedProperty.kt: unsupported: a default argument to CONSTRUCTOR …
 propertyAccess/privateClassesWithPrivateMembers.kt: unsupported: inheriting FUN …
 propertyCallableReference/dynamicReceiver.kt: unsupported: a call to append
 propertyCallableReference/multipleModules.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -4658,20 +4503,18 @@ regressions/directInvokeDestructuring.kt: IllegalStateException: UNRESOLVED_REFE
 regressions/directInvokeNameBasedDestructuring.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Char'.
 regressions/floatMerge.kt: unsupported: Float, which needs 32-bit floats in the VM
 regressions/generic.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
-regressions/hashCodeNPE.kt: unsupported: constructing Any
-regressions/kt10143.kt: unsupported: a default argument
+regressions/hashCodeNPE.kt: unsupported: a call to CONSTRUCTOR …
 regressions/kt1172.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 regressions/kt15196.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 regressions/kt1779.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'AbstractIterator'.
 regressions/kt1800.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
 regressions/kt2017.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
-regressions/kt2210.kt: unsupported: a default argument to FUN …
+regressions/kt2210.kt: IllegalStateException: No declaration of FUN name:arrayOf visibility:public modality:FINAL <T> (elements:kotlin.Array<out T of kotlin.arrayOf>) returnType:kotli
 regressions/kt2246.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'assert'.
 regressions/kt24913.kt: unsupported: a call to toString
 regressions/kt2509.kt: unsupported: a call to arrayOf
-regressions/kt32949.kt: unsupported: a default argument
+regressions/kt32949.kt: unsupported: a default argument to CONSTRUCTOR …
 regressions/kt33638.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'emptyList'.
-regressions/kt3421.kt: unsupported: a default argument to FUN …
 regressions/kt344.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'substring' on receiver of type 'String'.
 regressions/kt3442.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'hashMapOf'.
 regressions/kt344Runnable.kt: unsupported: Int.toString
@@ -4680,23 +4523,21 @@ regressions/kt47279.kt: unsupported: a value of type kotlin.Nothing
 regressions/kt5056.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'sorted' on receiver of type 'Array<String>'.
 regressions/kt5395.kt: unsupported: the inner class E
 regressions/kt57487.kt: unsupported: the expression VARARG …
-regressions/kt5786_privateWithDefault.kt: unsupported: a default argument to FUN …
 regressions/kt5953.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'it'. Specify it explicitly.
 regressions/kt6153.kt: unsupported: a call to append
 regressions/kt6434.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'minOrNull' on receiver of type 'Collection<Int>'.
 regressions/kt6434_2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Int'.
-regressions/kt68727.kt: unsupported: a default argument
 regressions/kt71119.kt: unsupported: Float, which needs 32-bit floats in the VM
-regressions/kt789.kt: unsupported: constructing ArrayList
+regressions/kt789.kt: unsupported: a call to CONSTRUCTOR …
 regressions/kt998.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 regressions/lambdaWithTypeParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Matches<T (of fun <T> lookupAttribute)>'.
-regressions/lambdaWrongReturnType.kt: unsupported: a default argument
+regressions/lambdaWrongReturnType.kt: unsupported: a default argument to CONSTRUCTOR …
 regressions/noCapturingForTypesWithTypeVariables.kt: unsupported: a call to arrayOf
 regressions/objectCaptureOuterConstructorProperty.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Any?'.
 regressions/objectInsideDelegation.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
 regressions/resolvedCallForGetOperator.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'String'.
-reified/arraysReification/jaggedArray.kt: unsupported: constructing Array
-reified/arraysReification/jaggedDeep.kt: unsupported: constructing Array
+reified/arraysReification/jaggedArray.kt: unsupported: a call to CONSTRUCTOR …
+reified/arraysReification/jaggedDeep.kt: unsupported: a call to CONSTRUCTOR …
 reified/callableReferenceInlinedFun.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'joinToString' on receiver of type 'Array<K (of fun <T, K> bal)>'.
 reified/callableReferenceInlinedFunFromOtherModule.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'joinToString' on receiver of type 'Array<K (of fun <T, K> bal)>'.
 reified/capture.kt: unsupported: overriding FUN …
@@ -4710,14 +4551,14 @@ reified/isNumber.kt: unsupported: Int.toFloat
 reified/kt16445.kt: unsupported: inheriting FUN …
 reified/kt39256_privateInlineWithAnonymousObject.kt: unsupported: the expression CLASS_REFERENCE …
 reified/lambda.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
-reified/method.kt: unsupported: a default argument
+reified/method.kt: unsupported: inheriting FUN …
 reified/newArrayInt.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 reified/nullableNothingArrayAsStringArray.kt: IllegalStateException: UNSUPPORTED: 'Array<Nothing?>' is not supported on the JVM.
 reified/overrideResolution.kt: unsupported: a bridge from FUN …
 reified/overrideResolutionWithInlinedFunInKlib.kt: unsupported: a bridge from FUN …
 reified/recursiveNewArray.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 reified/reifiedChain.kt: unsupported: a call to toString
-reified/reifiedIntersectionType.kt: unsupported: a default argument
+reified/reifiedIntersectionType.kt: unsupported: a default argument to CONSTRUCTOR …
 reified/reifiedIntersectionTypeArgument.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 reified/reifiedIntersectionTypeArgumentCrossModule.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 reified/reifiedNullableNothing3.kt: IllegalStateException: UNSUPPORTED: 'Array<Nothing?>' is not supported on the JVM.
@@ -4730,7 +4571,7 @@ reified/vararg.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved refer
 reified/varargs.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'joinToString' on receiver of type 'Array<String>'.
 returnInExpressionBody/returnInExpressionBody.kt: unsupported: a value of type kotlin.Nothing
 safeCall/genericNull.kt: unsupported: overriding FUN …
-safeCall/kt245.kt: unsupported: constructing ArrayList
+safeCall/kt245.kt: unsupported: a call to CONSTRUCTOR …
 safeCall/kt247.kt: unsupported: a call to <get-length>
 safeCall/kt52580.kt: unsupported: Int.toString
 safeCall/kt52743.kt: unsupported: a type test against T of .nullableFun
@@ -4763,18 +4604,13 @@ sam/samWithAbstractToString3.kt: unsupported: the type operator SAM_CONVERSION
 sam/samWithNullableUpperBound.kt: unsupported: the type operator SAM_CONVERSION
 sam/topLevelConversions.kt: unsupported: the type operator SAM_CONVERSION
 sameFileInSourceAndDependencies/differingNumberOfGenericTypeParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE_WRONG_RECEIVER: Candidate 'fun B<*>.foo(): Unit' is inapplicable because of a receiver type mismatch. Actual receive
-sameFileInSourceAndDependencies/memberFunctionWithDefaultArgumentsDeclaration.kt: unsupported: a default argument to FUN …
 sameFileInSourceAndDependencies/nestedClassDeclaration.kt: IllegalStateException: IrClassSymbolImpl is already bound. Signature: /Host|null[0]. Owner: CLASS CLASS name:Host modality:FINAL visibility:public superTypes:[k
 sealed/kt49752.kt: unsupported: Int.hashCode
 sealed/multipleFiles_enabled.kt: unsupported: the inner class D
 secondaryConstructors/basicNoPrimaryOneSink.kt: unsupported: Int.toString
 secondaryConstructors/basicPrimary.kt: unsupported: Int.toString
-secondaryConstructors/callFromPrimaryWithNamedArgs.kt: unsupported: a default argument
-secondaryConstructors/callFromPrimaryWithOptionalArgs.kt: unsupported: a default argument
 secondaryConstructors/clashingDefaultConstructors.kt: unsupported: Int.toString
 secondaryConstructors/dataClasses.kt: unsupported: Int.toString
-secondaryConstructors/defaultArgs.kt: unsupported: a default argument
-secondaryConstructors/defaultParametersNotDuplicated.kt: unsupported: a default argument
 secondaryConstructors/enums.kt: unsupported: Int.toString
 secondaryConstructors/fieldInitializerOptimization.kt: unsupported: Float, which needs 32-bit floats in the VM
 secondaryConstructors/innerClasses.kt: unsupported: the inner class A1
@@ -4785,7 +4621,7 @@ secondaryConstructors/superCallSecondary.kt: unsupported: Int.toString
 secondaryConstructors/varargs.kt: unsupported: the expression VARARG …
 serialization/deserializedMembers.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 serialization/serializedDefaultArgs.kt: unsupported: Int.hashCode
-serialization/serializedDoWhile.kt: unsupported: constructing StringBuilder
+serialization/serializedDoWhile.kt: unsupported: a call to CONSTRUCTOR …
 serialization/serializedVararg.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 size/add.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsExport'.
 size/helloWorld.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
@@ -4796,7 +4632,6 @@ smartCasts/kt44814.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved r
 smartCasts/kt44932.kt: unsupported: a call to iterator
 smartCasts/kt72391.kt: unsupported: Double.toString
 smartCasts/negativesmartCastAugmentedAssignment.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-smartCasts/smartCastInsideIf.kt: unsupported: a default argument
 smartCasts/smartCastedGenericWhenSubjectInRangeCheck.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'CharRange'.
 smartCasts/smartcastFromGenericToString.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'getValue' on receiver of type 'Map<String, V (of class Some<V : Any>)>'.
 smartCasts/smartcastToStarType.kt: unsupported: a type test against T of .Derived
@@ -4814,13 +4649,12 @@ specialBuiltins/irrelevantRemoveAtOverride.kt: unsupported: overriding FUN …
 specialBuiltins/maps.kt: unsupported: overriding FUN …
 specialBuiltins/noSpecialBridgeInSuperClass.kt: unsupported: overriding FUN …
 specialBuiltins/notEmptyListAny.kt: unsupported: overriding FUN …
-specialBuiltins/notEmptyMap.kt: unsupported: constructing Any
+specialBuiltins/notEmptyMap.kt: unsupported: a call to CONSTRUCTOR …
 specialBuiltins/redundantStubForSize.kt: unsupported: the supertype Collection outside the VM modules
 specialBuiltins/removeAtTwoSpecialBridges.kt: unsupported: a type test against E of .A0
 specialBuiltins/removeSetInt.kt: CompilationErrorException: There is still an unbound symbol Found unbound symbol:
 specialBuiltins/throwableComplex.kt: unsupported: calling FUN …
 specialBuiltins/throwableImpl.kt: unsupported: calling FUN …
-specialBuiltins/throwableImplWithSecondaryConstructor.kt: unsupported: a default argument
 specialBuiltins/valuesInsideEnum.kt: unsupported: a call to get
 storeStackBeforeInline/differentTypes.kt: unsupported: Int.toString
 storeStackBeforeInline/primitiveMerge.kt: unsupported: Boolean.toString
@@ -4853,12 +4687,12 @@ strings/forInString.kt: IllegalStateException: ITERATOR_MISSING: For-loop range 
 strings/interpolation.kt: unsupported: Int.toString
 strings/kt13213.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trim' on receiver of type 'String'.
 strings/kt13213a.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
-strings/kt2592.kt: unsupported: constructing String
+strings/kt2592.kt: unsupported: a call to CONSTRUCTOR …
 strings/kt3571.kt: unsupported: overriding FUN …
 strings/kt47917.kt: unsupported: a call to <get-length>
-strings/kt5389_stringBuilderGet.kt: unsupported: constructing StringBuilder
+strings/kt5389_stringBuilderGet.kt: unsupported: a call to CONSTRUCTOR …
 strings/kt5956.kt: unsupported: overriding FUN …
-strings/kt86478_stringBuilderSetLength.kt: unsupported: constructing StringBuilder
+strings/kt86478_stringBuilderSetLength.kt: unsupported: a call to CONSTRUCTOR …
 strings/kt894.kt: unsupported: a call to iterator
 strings/multilineStringsWithTemplates.kt: unsupported: a call to <get-length>
 strings/nestedConcat.kt: unsupported: a call to <get-length>
@@ -4890,7 +4724,7 @@ super/superConstructor/kt17464_linkedMapOf.kt: IllegalStateException: UNRESOLVED
 super/superConstructor/kt18356_2.kt: unsupported: the expression VARARG …
 super/superConstructor/objectExtendsInner.kt: unsupported: the inner class Inner
 super/superConstructor/objectExtendsLocalInner.kt: unsupported: the inner class Inner
-suppressions/suppressInvisible.kt: unsupported: constructing Any
+suppressions/suppressInvisible.kt: unsupported: a call to CONSTRUCTOR …
 suspendConversion/basicSuspendConversion.kt: unsupported: a suspend lambda
 suspendConversion/basicSuspendConversionDefault.kt: unsupported: a suspend lambda
 suspendConversion/basicSuspendConversionForCallableReference.kt: unsupported: a suspend lambda
@@ -4911,22 +4745,16 @@ syntheticAccessors/accessorForGenericMethod.kt: unsupported: the inner class Inn
 syntheticAccessors/accessorForGenericMethodWithDefaults.kt: unsupported: the inner class Inner
 syntheticAccessors/accessorForPrivatePropertyReference.kt: IllegalStateException: DELEGATE_SPECIAL_FUNCTION_MISSING: Type 'KProperty1<A, String>' has no method 'getValue(A.B, KProperty1<*, *>)', so it cannot serve as a 
 syntheticAccessors/accessorForProtectedPropertyReference.kt: unsupported: overriding FUN …
-syntheticAccessors/functionsWithDefaultValues/extensionFunction.kt: unsupported: a default argument to FUN …
 syntheticAccessors/functionsWithDefaultValues/extensionFunctionCrossModuleCase.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'bar'.
 syntheticAccessors/functionsWithDefaultValues/extensionFunctionCrossModuleTransitiveCase.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'baz'.
-syntheticAccessors/functionsWithDefaultValues/extensionFunctionTransitiveCase.kt: unsupported: a default argument to FUN …
-syntheticAccessors/functionsWithDefaultValues/memberFunction.kt: unsupported: a default argument to FUN …
+syntheticAccessors/functionsWithDefaultValues/memberFunction.kt: unsupported: inheriting FUN …
 syntheticAccessors/functionsWithDefaultValues/memberFunctionCrossModuleCase.kt: unsupported: inheriting FUN …
 syntheticAccessors/functionsWithDefaultValues/memberFunctionCrossModuleTransitiveCase.kt: unsupported: inheriting FUN …
-syntheticAccessors/functionsWithDefaultValues/memberFunctionTransitiveCase.kt: unsupported: a default argument to FUN …
-syntheticAccessors/functionsWithDefaultValues/severalDefaultValues.kt: unsupported: a default argument to FUN …
+syntheticAccessors/functionsWithDefaultValues/memberFunctionTransitiveCase.kt: unsupported: inheriting FUN …
 syntheticAccessors/functionsWithDefaultValues/severalDefaultValuesCrossModuleCase.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'bar'.
 syntheticAccessors/functionsWithDefaultValues/severalDefaultValuesCrossModuleTransitiveCase.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'baz'.
-syntheticAccessors/functionsWithDefaultValues/severalDefaultValuesTransitiveCase.kt: unsupported: a default argument to FUN …
-syntheticAccessors/functionsWithDefaultValues/topLevelFunction.kt: unsupported: a default argument to FUN …
 syntheticAccessors/functionsWithDefaultValues/topLevelFunctionCrossModuleCase.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'bar'.
 syntheticAccessors/functionsWithDefaultValues/topLevelFunctionCrossModuleTransitiveCase.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'baz'.
-syntheticAccessors/functionsWithDefaultValues/topLevelFunctionTransitiveCase.kt: unsupported: a default argument to FUN …
 syntheticAccessors/inline.kt: unsupported: inheriting FUN …
 syntheticAccessors/inlineInOtherClass.kt: unsupported: inheriting FUN …
 syntheticAccessors/protectedMemberReferenceAccessor/kt46597_crossinline_method.kt: unsupported: inheriting FUN …
@@ -4936,9 +4764,7 @@ toArray/kt3177-toTypedArray.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unr
 toArray/returnToTypedArray.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 topLevelInitializtion/failInInitializer1.kt: unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
 topLevelInitializtion/failInInitializer2.kt: unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
-traits/interfaceWithNonAbstractFunIndirect.kt: unsupported: a default argument to FUN …
-traits/interfaceWithNonAbstractFunIndirectGeneric.kt: unsupported: a default argument to FUN …
-traits/kt2399.kt: unsupported: constructing ArrayList
+traits/kt2399.kt: unsupported: a call to CONSTRUCTOR …
 traits/kt3500.kt: unsupported: Int.toString
 traits/multiple.kt: unsupported: a type test against {T of .ALE …
 traits/noPrivateDelegation.kt: unsupported: a call to <get-size>
@@ -4984,7 +4810,6 @@ typeErasure/outerClassWithTypeParameterAndChainOfInnerClassesWithTypeParameters.
 typeErasure/outerClassWithTypeParameterAndInlineFunctionWithTypeParameter.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 typeErasure/outerClassWithTypeParameterAndInnerClassWithTypeParameter.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 typeErasure/outerClassWithTypeParameterWithTwoUpperBounds.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-typeInfo/ifOrWhenSpecialCall.kt: unsupported: a default argument
 typeMapping/kt3863.kt: unsupported: a value of type kotlin.Nothing
 typeMapping/kt3976.kt: unsupported: a type test against T of .SessionAccessor
 typeMapping/nothing.kt: unsupported: a type test against kotlin.Nothing outside the VM modules
@@ -4999,7 +4824,7 @@ typealias/localTypeAliases.kt: unsupported: the inner class Inner
 typealias/nestedTypeAliasesAndStaticScope.kt: unsupported: the inner class Inner
 typealias/nestedTypeAliasesAndTypeArguments.kt: unsupported: the inner class Inner
 typealias/typeAliasAsBareType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-typealias/typeAliasConstructorForArray.kt: unsupported: constructing Array
+typealias/typeAliasConstructorForArray.kt: unsupported: a call to CONSTRUCTOR …
 typealias/typeAliasOnTypeAlias.kt: unsupported: the annotation class Ann
 typealias/typeAliasSecondaryConstructor.kt: unsupported: Int.toString
 typealias/typeArgumentsMappingForTopLevelTAWithInnerRHS.kt: unsupported: the inner class Inner
@@ -5076,15 +4901,15 @@ vararg/kt10926.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved refer
 vararg/kt1978.kt: unsupported: a call to get
 vararg/kt37715.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'toList'.
 vararg/kt37779.kt: unsupported: a call to get
-vararg/kt581.kt: unsupported: constructing IntRange
+vararg/kt581.kt: unsupported: a call to CONSTRUCTOR …
 vararg/kt6192.kt: unsupported: a call to iterator
 vararg/kt796_797.kt: unsupported: a call to get
 vararg/referenceToContainsFromVarargParameter.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains'.
 vararg/spreadCopiesArray.kt: unsupported: a call to arrayOf
 vararg/useSuspendFunResultAsVararg.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
-vararg/varargInFunParam.kt: unsupported: a default argument to FUN …
+vararg/varargInFunParam.kt: IllegalStateException: No declaration of FUN name:test1 visibility:public modality:FINAL <> (p:kotlin.IntArray) returnType:kotlin.String declares its defaults
 vararg/varargInTailrec.kt: IllegalStateException: SPREAD_OF_NULLABLE: The spread operator (*foo) cannot be applied to an argument of nullable type.
-vararg/varargsAndFunctionLiterals.kt: unsupported: a default argument to FUN …
+vararg/varargsAndFunctionLiterals.kt: IllegalStateException: No declaration of FUN name:foo visibility:public modality:FINAL <> (a:kotlin.Int, b:kotlin.IntArray, f:kotlin.Function1<kotlin.IntArray, 
 versionOverloads/basicWrappers.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 versionOverloads/callableRefDefault.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 versionOverloads/companions.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
@@ -5168,7 +4993,7 @@ when/switchOptimizationStatement.kt: IllegalStateException: UNRESOLVED_REFERENCE
 when/switchOptimizationTypes.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'map' on receiver of type 'IntRange'.
 when/switchOptimizationUnordered.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'map' on receiver of type 'IntRange'.
 when/switchOptimizationWithGap.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'map' on receiver of type 'IntRange'.
-when/whenArgumentIsEvaluatedOnlyOnce.kt: unsupported: constructing ArrayList
+when/whenArgumentIsEvaluatedOnlyOnce.kt: unsupported: a call to CONSTRUCTOR …
 when/whenSafeCallSubjectEvaluatedOnce.kt: unsupported: a call to <get-length>
 when/whenSubjectVariable/denseIntSwitchWithSubjectVariable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'map' on receiver of type 'IntRange'.
 when/whenSubjectVariable/ieee754Equality.kt: unsupported: Float, which needs 32-bit floats in the VM

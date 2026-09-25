@@ -113,6 +113,42 @@ internal class VmFunctionGenerator private constructor(
         return generateBody(irFunction)
     }
 
+    /** [irFunction]'s default arguments' stub; see [VmModuleGenerator.defaultStub]. */
+    private fun generateDefaultStub(): VmFunction {
+        val irFunction = irFunction!!
+        val paramTypes = function.symbol.paramTypes.drop(if (constructed != null) 1 else 0)
+        val incoming = irFunction.parameters.mapIndexed { index, parameter ->
+            function.newValue(paramTypes[index]).also {
+                function.params += it
+                values[parameter.symbol] = it
+            }
+        }
+        val mask = function.newValue(VmType.I64).also { function.params += it }
+        // In order, as a default may read the parameters before it.
+        irFunction.parameters.forEachIndexed { index, parameter ->
+            val default = parameter.defaultValue ?: return@forEachIndexed
+            val missing = newBlock()
+            val given = newBlock()
+            terminate(VmTerminator.Branch(binary(VmBinaryOp.AND, mask, constant(VmType.I64, 1L shl index)), missing.index, given.index))
+            current = missing
+            emit(VmInstruction.Copy(incoming[index], operandAs(default.expression, parameter.type, paramTypes[index])))
+            startBlock(given)
+        }
+        val result = when (irFunction) {
+            is IrConstructor -> {
+                emit(VmInstruction.Call(null, gen.staticTarget(irFunction).callee, listOf(constructed!!) + incoming))
+                null
+            }
+            // Through the selector for an open function, so an override is what the defaults are passed to.
+            is IrSimpleFunction -> {
+                val target = gen.callTarget(irFunction, isSuperCall = false)
+                target.symbol.returnType?.let(::newValue).also { emit(VmInstruction.Call(it, target.callee, incoming)) }
+            }
+        }
+        terminate(VmTerminator.Return(result))
+        return finish()
+    }
+
     private fun generateBody(irFunction: IrFunction): VmFunction {
         when (val body = irFunction.body) {
             is IrBlockBody -> body.statements.forEach(::statement)
@@ -218,12 +254,12 @@ internal class VmFunctionGenerator private constructor(
             ?: unsupported("the enum entry ${entry.name} without a constructor call")
         val constructor = call.symbol.owner
         val classIndex = gen.classIndex(constructor.constructedClass)!!
-        val args = constructorArguments(call, constructor)
+        val [target, args] = constructorInvocation(call, constructor)
         val instance = newValue(VmType.Ref(classIndex)).also { emit(VmInstruction.NewObject(it, classIndex)) }
         val name = newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, entry.name.asString())) }
         emit(VmInstruction.StoreField(instance, ENUM_NAME_FIELD, name))
         emit(VmInstruction.StoreField(instance, ENUM_ORDINAL_FIELD, constant(VmType.I64, ordinal.toLong())))
-        emit(VmInstruction.Call(null, gen.staticTarget(constructor).callee, listOf(instance) + args))
+        emit(VmInstruction.Call(null, VmCallee.Static(target), listOf(instance) + args))
         emit(VmInstruction.StoreGlobal(gen.enumEntryGlobal(entry), instance))
     }
 
@@ -239,6 +275,9 @@ internal class VmFunctionGenerator private constructor(
         internal const val ENUM_ORDINAL_FIELD = 1
 
         /** Unowned, as every initializer is. */
+        fun defaultStub(gen: VmModuleGenerator, function: IrFunction, symbol: VmFunctionSymbol): VmFunction =
+            VmFunctionGenerator(gen, function, symbol, owner = null).generateDefaultStub()
+
         fun classInitializer(gen: VmModuleGenerator, symbol: VmFunctionSymbol, parts: List<IrClass>): VmFunction =
             VmFunctionGenerator(gen, null, symbol, owner = null).generateClassInitializer(parts)
 
@@ -817,6 +856,13 @@ internal class VmFunctionGenerator private constructor(
         intrinsic(call, callee)?.let { return it.value }
         functionValueCall(call, callee)?.let { return it.value }
         sharedBoxAccess(call, callee)?.let { return it.value }
+        if (call.arguments.any { it == null }) {
+            if (call.superQualifierSymbol != null) unsupported("a super call leaving out a default argument")
+            val stub = gen.defaultStub(defaultsDeclaration(callee))
+            val dst = stub.returnType?.let(::newValue)
+            emit(VmInstruction.Call(dst, VmCallee.Static(stub), defaultArguments(call, defaultsDeclaration(callee), stub, leading = 0)))
+            return dst
+        }
         val target = gen.callTarget(callee, isSuperCall = call.superQualifierSymbol != null)
         val dst = target.symbol.returnType?.let(::newValue)
         emit(VmInstruction.Call(dst, target.callee, arguments(call, callee, target.symbol.paramTypes)))
@@ -921,6 +967,52 @@ internal class VmFunctionGenerator private constructor(
         IrConstKind.Float, IrConstKind.String -> false
     }
 
+    /**
+     * The declaration of [callee] or of what it overrides that declares its default arguments: the first found following
+     * each supertype in the order the class lists them, all the way up, as the JVM finds them.
+     */
+    private fun defaultsDeclaration(callee: IrFunction): IrFunction {
+        fun find(function: IrFunction): IrFunction? = when {
+            function.parameters.any { it.defaultValue != null } -> function
+            function is IrSimpleFunction -> function.overriddenSymbols.firstNotNullOfOrNull { find(it.owner) }
+            else -> null
+        }
+        return find(callee) ?: error("No declaration of ${callee.render()} declares its defaults")
+    }
+
+    /**
+     * What a call leaving arguments out passes the [stub] of [declaration]'s defaults, after the [leading] values a
+     * constructor's takes: the arguments given as its parameters take them, zero for each left out, and the mask
+     * naming those.
+     */
+    private fun defaultArguments(call: IrFunctionAccessExpression, declaration: IrFunction, stub: VmFunctionSymbol, leading: Int): List<VmValue> {
+        var mask = 0L
+        val args = call.arguments.mapIndexed { index, argument ->
+            val slot = stub.paramTypes[leading + index]
+            if (argument == null) {
+                // A vararg left out has no default, but an empty array.
+                if (declaration.parameters[index].defaultValue == null) unsupported("an empty vararg")
+                mask = mask or (1L shl index)
+                constant(slot, 0)
+            } else {
+                operandAs(argument, declaration.parameters[index].type, slot)
+            }
+        }
+        return args + constant(VmType.I64, mask)
+    }
+
+    /**
+     * The function a constructor call runs on the object it creates, and the arguments after the object, evaluated now,
+     * ahead of the object: the constructor, or its defaults' stub when the call leaves arguments out.
+     */
+    private fun constructorInvocation(call: IrFunctionAccessExpression, constructor: IrConstructor): Pair<VmFunctionSymbol, List<VmValue>> {
+        if (call.arguments.any { it == null }) {
+            val stub = gen.defaultStub(constructor)
+            return stub to defaultArguments(call, constructor, stub, leading = 1)
+        }
+        return gen.staticTarget(constructor).symbol to constructorArguments(call, constructor)
+    }
+
     /** A call's arguments as its callee's signature takes them, boxed or unboxed where the two differ. */
     private fun arguments(call: IrFunctionAccessExpression, callee: IrFunction, slots: List<VmType>): List<VmValue> =
         call.arguments.mapIndexed { index, argument ->
@@ -936,15 +1028,16 @@ internal class VmFunctionGenerator private constructor(
             emit(VmInstruction.StoreField(box, SHARED_BOX_ELEMENT_FIELD, reference(call.arguments[0]!!)))
             return box
         }
-        val args = constructorArguments(call, constructor)
         gen.runtimeThrowable(constructor.constructedClass)?.let { throwable ->
+            val args = constructorArguments(call, constructor)
             val exception = newValue(VmType.Ref(throwable)).also { emit(VmInstruction.NewObject(it, throwable)) }
             constructThrowable(exception, constructor, args)
             return exception
         }
+        val [target, args] = constructorInvocation(call, constructor)
         val classIndex = gen.classIndex(constructor.constructedClass) ?: unsupported("constructing ${constructor.constructedClass.name}")
         val obj = newValue(VmType.Ref(classIndex)).also { emit(VmInstruction.NewObject(it, classIndex)) }
-        emit(VmInstruction.Call(null, gen.staticTarget(constructor).callee, listOf(obj) + args))
+        emit(VmInstruction.Call(null, VmCallee.Static(target), listOf(obj) + args))
         return obj
     }
 
@@ -954,12 +1047,12 @@ internal class VmFunctionGenerator private constructor(
         // `Any`'s constructor does nothing, and `Enum`'s name and ordinal are stored by whatever creates the entry, so
         // the runtime declares neither.
         if (with(gen) { constructor.constructedClass.isAny() || constructor.constructedClass.isEnumBase() }) return
-        val args = constructorArguments(call, constructor)
         if (gen.runtimeThrowable(constructor.constructedClass) != null) {
-            constructThrowable(constructed!!, constructor, args)
+            constructThrowable(constructed!!, constructor, constructorArguments(call, constructor))
             return
         }
-        emit(VmInstruction.Call(null, gen.staticTarget(constructor).callee, listOf(constructed!!) + args))
+        val [target, args] = constructorInvocation(call, constructor)
+        emit(VmInstruction.Call(null, VmCallee.Static(target), listOf(constructed!!) + args))
     }
 
     /** A constructor's arguments as its parameters hold them; a throwable's runtime constructor takes references. */
@@ -995,7 +1088,8 @@ internal class VmFunctionGenerator private constructor(
     private fun intrinsic(call: IrCall, callee: IrSimpleFunction): Intrinsic? {
         val builtIns = gen.irBuiltIns
         val symbol = call.symbol
-        val args = call.arguments.map { it ?: unsupported("a default argument to ${callee.render()}") }
+        // No intrinsic declares a default, so a call leaving an argument out is an ordinary one.
+        val args = call.arguments.map { it ?: return null }
         val value = when (symbol) {
             builtIns.eqeqeqSymbol -> identityEquals(args[0], args[1])
             builtIns.eqeqSymbol -> equals(args[0], args[1])

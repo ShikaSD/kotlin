@@ -149,6 +149,9 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         // The VM starts a program from its entry module's first function.
         functions.singleOrNull(::isBox)?.let { module.functions += boxEntry(it as IrSimpleFunction) }
         bodies.mapTo(module.functions) { VmFunctionGenerator(this, it).generate() }
+        functions.filter { function -> function.parameters.any { it.defaultValue != null } }.mapTo(module.functions) {
+            VmFunctionGenerator.defaultStub(this, it, defaultStub(it))
+        }
         initializers.forEach { it() }
         for (declaration in classes) {
             module.classes[classIndices.getValue(declaration.symbol)] = classDefinition(declaration)
@@ -281,6 +284,25 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
 
     /** The owner whose initializer a static call to [function] runs first, if any. */
     internal fun ownerOf(function: IrFunction): VmOwner? = functionOwners[function.symbol]
+
+    /**
+     * The function filling in [function]'s default arguments, named after it: it takes the function's parameters and a
+     * mask with bit `i` set for each parameter `i` a call left out, computes those, and calls the function. Every
+     * module generates the stubs of its own functions, and imports another's from it.
+     */
+    internal fun defaultStub(function: IrFunction): VmFunctionSymbol = defaultStubs.getOrPut(function.symbol) {
+        if (function.parameters.size > Long.SIZE_BITS) unsupported("defaults for more than ${Long.SIZE_BITS} parameters")
+        val original = functionSymbol(function)
+        val symbol = VmFunctionSymbol(sanitized("${original.name}\$default"), original.paramTypes + VmType.I64, original.returnType)
+        when {
+            function.fileOrNull?.module == fragment -> {}
+            vmModuleOf(function) != null -> module.imports += VmImport(vmModuleOf(function)!!, symbol)
+            else -> unsupported("a default argument to ${function.render()} outside the VM modules")
+        }
+        symbol
+    }
+
+    private val defaultStubs = hashMapOf<IrFunctionSymbol, VmFunctionSymbol>()
 
     /** Adds a function only code generation creates, such as a lambda's body. */
     internal fun addFunction(function: VmFunction) {

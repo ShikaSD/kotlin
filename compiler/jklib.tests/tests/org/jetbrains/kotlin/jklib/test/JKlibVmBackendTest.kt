@@ -103,6 +103,15 @@ class JKlibVmBackendTest {
         assertTrue(output.contains("the VM backend does not support the annotation class Marker")) { output }
     }
 
+    /** A vararg left out is an empty array rather than a default, which the backend cannot make yet. */
+    @Test
+    fun testLeftOutVarargIsReported(@TempDir tempDir: File) {
+        val (output, exitCode) = compile(tempDir, "class Items(vararg val items: Int)\nfun make() = Items()")
+
+        assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
+        assertTrue(output.contains("the VM backend does not support an empty vararg")) { output }
+    }
+
     @Test
     fun testBoxReturningOk(@TempDir tempDir: File) {
         assertTrue(runBox(tempDir, """fun box(): String = "OK""""))
@@ -1722,6 +1731,136 @@ class JKlibVmBackendTest {
             fun same(a: Any) = a === (1 == 1)
 
             fun box(): String = if (same(true)) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testDefaultArgument(@TempDir tempDir: File) {
+        val source = """
+            fun greet(suffix: String = "K") = "O" + suffix
+
+            fun box(): String = greet()
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testDefaultReadsAnEarlierParameter(@TempDir tempDir: File) {
+        val source = """
+            fun next(a: Int, b: Int = a + 1) = b
+
+            fun box(): String = if (next(41) == 42) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testDefaultReadsThis(@TempDir tempDir: File) {
+        val source = """
+            class Greeter(val name: String) {
+                fun greet(who: String = name) = who
+            }
+
+            fun box(): String = Greeter("OK").greet()
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testConstructorDefaultArgument(@TempDir tempDir: File) {
+        val source = """
+            class Box(val value: String = "OK")
+
+            fun box(): String = Box().value
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testSuperConstructorCallLeavesOutAnArgument(@TempDir tempDir: File) {
+        val source = """
+            open class Base(val value: String = "OK")
+            class Derived : Base()
+
+            fun box(): String = Derived().value
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testEnumEntryLeavesOutAnArgument(@TempDir tempDir: File) {
+        val source = """
+            enum class E(val value: String = "OK") { A }
+
+            fun box(): String = E.A.value
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** An override declares no default of its own, and a call to it gets the overridden declaration's. */
+    @Test
+    fun testOverrideTakesTheBaseDeclarationsDefault(@TempDir tempDir: File) {
+        val source = """
+            open class Base {
+                open fun pick(x: String = "OK") = "fail"
+            }
+
+            class Derived : Base() {
+                override fun pick(x: String) = x
+            }
+
+            fun box(): String {
+                val base: Base = Derived()
+                return if (base.pick() == "OK" && Derived().pick() == "OK") "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testInterfaceMethodDefault(@TempDir tempDir: File) {
+        val source = """
+            interface Picker {
+                fun pick(x: String = "OK"): String
+            }
+
+            class Echo : Picker {
+                override fun pick(x: String) = x
+            }
+
+            fun box(): String {
+                val picker: Picker = Echo()
+                return picker.pick()
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testDefaultArgumentOfAnotherModule(@TempDir tempDir: File) {
+        val lib = """fun greet(suffix: String = "K") = "O" + suffix"""
+        val main = """fun box(): String = greet()"""
+        assertTrue(runBox(tempDir, listOf(mapOf("lib.kt" to lib), mapOf("main.kt" to main))))
+    }
+
+    /** A local class in a lambda an inline function takes is one class, whatever copies of the lambda inlining makes. */
+    @Test
+    fun testLocalClassInAnInlinedLambda(@TempDir tempDir: File) {
+        val source = """
+            inline fun <T> make(block: () -> T): T = block()
+
+            fun box(): String {
+                return make {
+                    open class Base {
+                        open fun text(suffix: String = "K") = "O" + suffix
+                    }
+                    class Derived : Base() {
+                        override fun text(suffix: String) = super.text(suffix)
+                    }
+                    Derived()
+                }.text()
+            }
         """
         assertTrue(runBox(tempDir, source))
     }

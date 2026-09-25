@@ -48,9 +48,12 @@ class JKlibVmBoxRunner(testServices: TestServices) : BinaryArtifactHandler<JKlib
         }
     }
 
-    /** The last line of a binary's [output] that says what went wrong: a panic's message rather than its `note:`. */
+    /**
+     * The last line of a binary's [output] that says what went wrong: a panic's message rather than its `note:`, without
+     * the temporary files it names, so a failure reads the same on every run.
+     */
     private fun lastMessage(output: String): String =
-        output.lines().lastOrNull { it.isNotBlank() && !it.startsWith("note:") } ?: ""
+        output.lines().lastOrNull { it.isNotBlank() && !it.startsWith("note:") }?.replace(Regex("/[^\\s:]+"), "") ?: ""
 
     /** Runs [binary], answering its exit code and output, or null when it runs past a time limit. */
     private fun exec(binary: File, vararg args: String): Pair<Int, String>? {

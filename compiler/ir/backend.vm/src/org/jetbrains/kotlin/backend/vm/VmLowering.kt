@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.backend.common.lower.LocalDeclarationsLowering
 import org.jetbrains.kotlin.backend.common.lower.SharedVariablesLowering
 import org.jetbrains.kotlin.backend.common.lower.TailrecLowering
 import org.jetbrains.kotlin.backend.common.lower.UpgradeCallableReferences
+import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineLambdasLowering
 import org.jetbrains.kotlin.backend.vm.vmir.VmModule
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -95,6 +96,9 @@ fun lowerForVm(context: VmLoweringContext, module: IrModuleFragment) {
     // Substituted, so a primitive type argument stays unboxed in the copy.
     val inlining = object : FunctionInlining(context, VmInlineFunctionResolver(upgrade), substituteNonReifiedTypeParameters = true) {}
     module.files.forEach(upgrade::lower)
+    // Out of the lambdas inlining copies first: a copied class would still override the original's members.
+    val localClassesInInlineLambdas = LocalClassesInInlineLambdasLowering(context)
+    module.files.forEach { localClassesInInlineLambdas.lower(it) }
     module.files.forEach(inlining::lower)
     // After inlining, so a tail call an inlined lambda holds becomes a jump too.
     val tailrec = TailrecLowering(context)
