@@ -2356,4 +2356,66 @@ class JKlibVmBackendTest {
         """
         assertTrue(runOutput(tempDir, listOf(mapOf("box.kt" to source))).lines().contains("hello from the VM"))
     }
+
+    /** An inner class keeps its outer instance, which its members read the outer class's state through. */
+    @Test
+    fun testInnerClassReadsItsOuterInstance(@TempDir tempDir: File) {
+        val source = """
+            class Outer(val text: String) {
+                inner class Inner {
+                    fun read() = text
+                }
+            }
+
+            fun box(): String = Outer("OK").Inner().read()
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testInnerClassSecondaryConstructorTakesTheOuterInstance(@TempDir tempDir: File) {
+        val source = """
+            class Outer(val prefix: String) {
+                inner class Inner(val suffix: String) {
+                    constructor() : this("K")
+                    fun read() = prefix + suffix
+                }
+            }
+
+            fun box(): String = Outer("O").Inner().read()
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A lambda converted to a `fun interface` is an instance of it, which calls the lambda. */
+    @Test
+    fun testLambdaConvertsToAFunInterface(@TempDir tempDir: File) {
+        val source = """
+            fun interface Transform {
+                fun apply(value: Int): Int
+            }
+
+            fun twice(transform: Transform, value: Int) = transform.apply(transform.apply(value))
+
+            fun box(): String = if (twice({ it + 20 }, 1) == 41) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A function value in a variable converts too, through the constructor-like call. */
+    @Test
+    fun testFunctionValueConvertsToAFunInterface(@TempDir tempDir: File) {
+        val source = """
+            fun interface Transform {
+                fun apply(value: Int): Int
+            }
+
+            fun box(): String {
+                val add: (Int) -> Int = { it + 1 }
+                val transform = Transform(add)
+                return if (transform.apply(40) == 41) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
 }

@@ -12,6 +12,9 @@ import org.jetbrains.kotlin.backend.common.ir.KlibSharedVariablesManager
 import org.jetbrains.kotlin.backend.common.ir.PreSerializationKlibSymbols
 import org.jetbrains.kotlin.backend.common.ir.SharedVariablesManager
 import org.jetbrains.kotlin.backend.common.lower.ArrayConstructorLowering
+import org.jetbrains.kotlin.backend.common.lower.InnerClassConstructorCallsLowering
+import org.jetbrains.kotlin.backend.common.lower.InnerClassesLowering
+import org.jetbrains.kotlin.backend.common.lower.InnerClassesMemberBodyLowering
 import org.jetbrains.kotlin.backend.common.lower.InnerClassesSupport
 import org.jetbrains.kotlin.backend.common.lower.loops.ForLoopsLowering
 import org.jetbrains.kotlin.backend.common.lower.LocalDeclarationPopupLowering
@@ -67,8 +70,7 @@ class VmLoweringContext(
         override fun isClassInlineLike(klass: IrClass): Boolean = false
     }
 
-    override val innerClassesSupport: InnerClassesSupport
-        get() = error("The VM backend lowers no inner classes yet")
+    override val innerClassesSupport: InnerClassesSupport = VmInnerClassesSupport(irFactory)
 
     /** Boxes a captured variable something assigns as the klib backends do, in `kotlin.internal.SharedVariableBox`. */
     override val sharedVariablesManager: SharedVariablesManager by lazy { KlibSharedVariablesManager(SharedVariableSymbols(irBuiltIns)) }
@@ -163,6 +165,9 @@ fun lowerForVm(context: VmLoweringContext, module: IrModuleFragment) {
     // After inlining, so a tail call an inlined lambda holds becomes a jump too.
     val tailrec = TailrecLowering(context)
     module.files.forEach { tailrec.lower(it) }
+    // A SAM conversion becomes a class implementing the interface, after inlining, which can copy one.
+    val sam = VmSingleAbstractMethodLowering(context)
+    module.files.forEach { sam.lower(it) }
     // A `for` over an array, a range or a progression becomes a loop counting its index or its value, rather than
     // calling an iterator; after inlining, so a loop an inlined body holds is counted too.
     val forLoops = ForLoopsLowering(context)
@@ -175,6 +180,14 @@ fun lowerForVm(context: VmLoweringContext, module: IrModuleFragment) {
     module.files.forEach { local.lower(it) }
     val popup = LocalDeclarationPopupLowering(context)
     module.files.forEach { popup.lower(it) }
+    // An inner class keeps its outer instance in a field, which each of its constructors takes first; after local
+    // declarations, which can be inner too.
+    val innerClasses = InnerClassesLowering(context)
+    val innerClassBodies = InnerClassesMemberBodyLowering(context)
+    val innerClassConstructorCalls = InnerClassConstructorCallsLowering(context)
+    module.files.forEach { innerClasses.lower(it) }
+    module.files.forEach { innerClassBodies.lower(it) }
+    module.files.forEach { innerClassConstructorCalls.lower(it) }
 }
 
 /**

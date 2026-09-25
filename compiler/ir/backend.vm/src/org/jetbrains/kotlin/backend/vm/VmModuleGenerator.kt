@@ -387,7 +387,6 @@ class VmModuleGenerator(
         when {
             declaration.kind == ClassKind.ANNOTATION_CLASS ->
                 unsupported("the ${declaration.kind.codeRepresentation ?: declaration.kind.name} ${declaration.name}")
-            declaration.isInner -> unsupported("the inner class ${declaration.name}")
             declaration.isValue -> unsupported("the value class ${declaration.name}")
         }
         classes += declaration
