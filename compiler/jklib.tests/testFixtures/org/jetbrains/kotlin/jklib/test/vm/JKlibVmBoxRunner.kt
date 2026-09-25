@@ -13,7 +13,8 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 
 /**
- * Links every module's binary IR with the VM runtime, from the VM checkout [vmRepository] names, and runs `box()`.
+ * Links every module's binary IR with the VM's kotlin.test and the VM runtime, from the VM checkout [vmRepository]
+ * names, and runs `box()`.
  * A failure's message starts with the step that failed, which is what [JKlibVmExpectedFailures] groups failures by.
  */
 class JKlibVmBoxRunner(testServices: TestServices) : BinaryArtifactHandler<JKlibVmArtifact>(
@@ -34,7 +35,8 @@ class JKlibVmBoxRunner(testServices: TestServices) : BinaryArtifactHandler<JKlib
         val container = File(testServices.temporaryDirectoryManager.getOrCreateTempDirectory("vm-output"), "main.vmc").path
 
         val runtime = File(repository, "runtime/src/runtime.ir").path
-        val link = exec(File(repository, "target/debug/link_ir"), container, *virs.toTypedArray(), runtime)
+        val kotlinTest = JKlibVmSourceRootConfigurator.kotlinTestVir.path
+        val link = exec(File(repository, "target/debug/link_ir"), container, *virs.toTypedArray(), kotlinTest, runtime)
             ?: throw AssertionError("timeout: link")
         if (link.first != 0) throw AssertionError("link: ${lastMessage(link.second)}")
         val execute = exec(File(repository, "target/debug/execute"), container)

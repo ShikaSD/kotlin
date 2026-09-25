@@ -695,7 +695,8 @@ internal class VmFunctionGenerator private constructor(
 
     /**
      * Runs one of the JVM's `Throwable` constructors, which take a message, a cause or both, on [exception]. The one
-     * taking only a cause makes the message the cause's `toString`, or null for a null cause.
+     * taking only a cause makes the message the cause's `toString`, or null for a null cause. `AssertionError`'s taking
+     * an `Object` makes the message its `String.valueOf`, and the object the cause too when it is a throwable.
      */
     private fun constructThrowable(exception: VmValue, constructor: IrConstructor, args: List<VmValue>) {
         var message: VmValue? = null
@@ -704,6 +705,18 @@ internal class VmFunctionGenerator private constructor(
             when {
                 parameter.type.isString() || parameter.type.isNullableString() -> message = args[index]
                 gen.testedClass(parameter.type) == gen.throwableClass -> cause = args[index]
+                parameter.type.isAny() || parameter.type.isNullableAny() -> {
+                    val detail = args[index]
+                    message = plus(newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, "")) }, detail)
+                    val throwable = newValue(gen.anyType).also { emit(VmInstruction.Constant(it, 0)) }
+                    val isThrowable = newBlock()
+                    val join = newBlock()
+                    terminate(VmTerminator.Branch(instanceOf(detail, gen.irBuiltIns.throwableType), isThrowable.index, join.index))
+                    current = isThrowable
+                    emit(VmInstruction.Copy(throwable, detail))
+                    startBlock(join)
+                    cause = throwable
+                }
                 else -> unsupported("the constructor ${constructor.render()}")
             }
         }

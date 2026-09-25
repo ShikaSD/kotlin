@@ -41,7 +41,7 @@ abstract class AbstractFirJKlibVmBoxTest : AbstractKotlinCompilerJKlibTest() {
 
         useConfigurators(
             ::CommonEnvironmentConfigurator,
-            ::JKlibSourceRootConfigurator,
+            ::JKlibVmSourceRootConfigurator,
             ::JKlibEnvironmentConfigurator,
             ::JKlibJavaSourceConfigurator,
         )

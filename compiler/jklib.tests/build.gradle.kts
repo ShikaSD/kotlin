@@ -50,6 +50,17 @@ projectTests {
             classpath.from(stdlibJvmIr.elements.map { it.filter { it.asFile.name.endsWith(".klib") } })
         }
         jvmArgumentProviders.add(klibProvider)
+        val vmKlibProvider = objects.newInstance<SystemPropertyClasspathProvider>().apply {
+            property.set("kotlin.stdlib.vm.for.test")
+            classpath.from(stdlibVm.elements.map { it.filter { it.asFile.name.endsWith(".klib") } })
+        }
+        jvmArgumentProviders.add(vmKlibProvider)
+        for ((property, extension) in listOf("kotlin.test.vm.klib" to ".klib", "kotlin.test.vm.vir" to ".vir")) {
+            jvmArgumentProviders.add(objects.newInstance<SystemPropertyClasspathProvider>().apply {
+                this.property.set(property)
+                classpath.from(kotlinTestVm.elements.map { it.filter { it.asFile.name.endsWith(extension) } })
+            })
+        }
 
         // The VM checkout the box tests link and run with, which they skip without. Its binaries and runtime are inputs,
         // so a changed VM reruns them.
@@ -73,11 +84,27 @@ val stdlibJvmIr = configurations.create("stdlibJvmIr") {
     isCanBeResolved = true
 }
 
+// The standard library and kotlin.test the VM tests compile against; see JKlibVmSourceRootConfigurator.
+val stdlibVm = configurations.create("stdlibVm") {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+val kotlinTestVm = configurations.create("kotlinTestVm") {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
 dependencies {
     stdlibJvmIr(project(":kotlin-stdlib-jklib-for-test", configuration = "distMinimalJKlib"))
     testRuntimeOnly(files(stdlibJvmIr))
+    stdlibVm(project(":kotlin-stdlib-vm", configuration = "distMinimalJKlib"))
+    testRuntimeOnly(files(stdlibVm))
+    kotlinTestVm(project(":kotlin-test-vm", configuration = "distKotlinTestVm"))
+    testRuntimeOnly(files(kotlinTestVm))
 }
 
 tasks.named("generateTestsWriteClassPath") {
     inputs.files(stdlibJvmIr)
+    inputs.files(stdlibVm)
+    inputs.files(kotlinTestVm)
 }

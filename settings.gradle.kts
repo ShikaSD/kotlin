@@ -753,6 +753,8 @@ include(
     ":kotlin-stdlib:samples",
     ":kotlin-stdlib-jvm-minimal-for-test",
     ":kotlin-stdlib-jklib-for-test",
+    ":kotlin-stdlib-vm",
+    ":kotlin-test-vm",
     ":tools:binary-compatibility-validator",
     ":tools:jdk-api-validator",
     ":tools:kotlin-stdlib-gen",
@@ -779,6 +781,8 @@ project(":kotlin-stdlib-jdk8").projectDir = File("$rootDir/libraries/stdlib/jdk8
 project(":kotlin-stdlib:samples").projectDir = File("$rootDir/libraries/stdlib/samples")
 project(":kotlin-stdlib-jvm-minimal-for-test").projectDir = File("$rootDir/libraries/stdlib/jvm-minimal-for-test")
 project(":kotlin-stdlib-jklib-for-test").projectDir = File("$rootDir/libraries/stdlib/jklib-for-test")
+project(":kotlin-stdlib-vm").projectDir = File("$rootDir/libraries/stdlib/vm")
+project(":kotlin-test-vm").projectDir = File("$rootDir/libraries/kotlin.test/vm")
 
 project(":tools").projectDir = File("$rootDir/libraries/tools")
 project(":tools:binary-compatibility-validator").projectDir = File("$rootDir/libraries/tools/binary-compatibility-validator")

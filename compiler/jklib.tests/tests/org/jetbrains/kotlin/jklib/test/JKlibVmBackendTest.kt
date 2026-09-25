@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.jklib.test
 
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.jklib.K2JKlibCompiler
-import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
+import org.jetbrains.kotlin.jklib.test.vm.JKlibVmSourceRootConfigurator
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit
  */
 class JKlibVmBackendTest {
     private val stdlibKlib: String
-        get() = ForTestCompileRuntime.jklibStdlibForTests().path
+        get() = JKlibVmSourceRootConfigurator.vmStdlib.path
 
     private data class Compilation(val output: String, val exitCode: ExitCode)
 
@@ -1377,5 +1377,33 @@ class JKlibVmBackendTest {
             }
         """
         assertTrue(runBox(tempDir, listOf(mapOf("base.kt" to base), mapOf("middle.kt" to middle), mapOf("main.kt" to main))))
+    }
+
+    /** The JVM's `AssertionError(Object)` takes the object's `String.valueOf` as its message. */
+    @Test
+    fun testAssertionErrorFromAnObjectShowsIt(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val detail: Any? = 42
+                val nothing: Any? = null
+                val ok = AssertionError(detail).message == "42" && AssertionError(nothing).message == "null"
+                return if (ok) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A throwable given to the JVM's `AssertionError(Object)` is its cause too. */
+    @Test
+    fun testAssertionErrorFromAThrowableHasItAsCause(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val cause = IllegalStateException("inner")
+                val detail: Any? = cause
+                val error = AssertionError(detail)
+                return if (error.cause === cause && AssertionError("x" as Any?).cause == null) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
     }
 }
