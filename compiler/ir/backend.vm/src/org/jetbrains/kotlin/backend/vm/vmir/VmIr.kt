@@ -14,6 +14,9 @@ package org.jetbrains.kotlin.backend.vm.vmir
 sealed interface VmType {
     data object I64 : VmType
     data object F64 : VmType
+
+    /** A `Float`: its bits in the register's low half, the high half zero. */
+    data object F32 : VmType
     data object I8 : VmType
     data object I16 : VmType
     data object I32 : VmType

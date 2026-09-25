@@ -30,6 +30,9 @@ internal class CallTarget(val callee: VmCallee, val symbol: VmFunctionSymbol)
 
 internal fun unsupported(what: String): Nothing = throw VmCodegenException("the VM backend does not support $what yet")
 
+/** A `Float`'s bits as a register holds them: in the low half, the high half zero. */
+internal fun floatBits(value: Float): Long = value.toRawBits().toLong() and 0xFFFF_FFFFL
+
 /** The module the VM repository's runtime/src/runtime.ir defines: the root class, the string class and their selectors. */
 const val VM_RUNTIME_MODULE = "vm.runtime"
 
@@ -199,7 +202,8 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
             IrConstKind.Char -> (initializer.value as Char).code.toLong()
             IrConstKind.Byte, IrConstKind.Short, IrConstKind.Int, IrConstKind.Long -> (initializer.value as Number).toLong()
             IrConstKind.Double -> (initializer.value as Double).toRawBits()
-            IrConstKind.Null, IrConstKind.String, IrConstKind.Float -> null
+            IrConstKind.Float -> floatBits(initializer.value as Float)
+            IrConstKind.Null, IrConstKind.String -> null
         }
     }
 
@@ -436,8 +440,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
 
     /** The runtime's `valueOf` for a primitive's box, which boxing calls. */
     internal fun valueOf(kind: PrimitiveType): VmFunctionSymbol {
-        val value = if (kind == PrimitiveType.DOUBLE) VmType.F64 else VmType.I64
-        return runtimeFunction("${boxName(kind)}::valueOf", listOf(value), VmType.Ref(boxClass(kind)))
+        return runtimeFunction("${boxName(kind)}::valueOf", listOf(primitiveVmType(kind)), VmType.Ref(boxClass(kind)))
     }
 
     private fun boxName(kind: PrimitiveType): String = when (kind) {
@@ -448,7 +451,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         PrimitiveType.CHAR -> "Character"
         PrimitiveType.BOOLEAN -> "Boolean"
         PrimitiveType.DOUBLE -> "Double"
-        PrimitiveType.FLOAT -> unsupported("Float, which needs 32-bit floats in the VM")
+        PrimitiveType.FLOAT -> "Float"
     }
 
     /** Kotlin's `String.plus(Any?)`; see `@String::plus` in the runtime. */
@@ -468,17 +471,18 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         else -> null
     }
 
+    /** How a value of a primitive [kind] is held: every integral kind, `Char` and `Boolean` as a whole word. */
+    internal fun primitiveVmType(kind: PrimitiveType): VmType = when (kind) {
+        PrimitiveType.DOUBLE -> VmType.F64
+        PrimitiveType.FLOAT -> VmType.F32
+        PrimitiveType.BOOLEAN, PrimitiveType.CHAR, PrimitiveType.BYTE, PrimitiveType.SHORT,
+        PrimitiveType.INT, PrimitiveType.LONG -> VmType.I64
+    }
+
     /** How a value of [type] is held, or null for a type with no values to hold: `Unit` and `Nothing`. */
     internal fun vmType(type: IrType): VmType? {
         if (type.isUnit() || type.isNothing()) return null
-        if (type.isPrimitiveType()) {
-            return when (type.getPrimitiveType()!!) {
-                PrimitiveType.DOUBLE -> VmType.F64
-                PrimitiveType.FLOAT -> unsupported("Float, which needs 32-bit floats in the VM")
-                PrimitiveType.BOOLEAN, PrimitiveType.CHAR, PrimitiveType.BYTE, PrimitiveType.SHORT,
-                PrimitiveType.INT, PrimitiveType.LONG -> VmType.I64
-            }
-        }
+        if (type.isPrimitiveType()) return primitiveVmType(type.getPrimitiveType()!!)
         if (type.isString() || type.isNullableString()) return stringType
         return anyType
     }

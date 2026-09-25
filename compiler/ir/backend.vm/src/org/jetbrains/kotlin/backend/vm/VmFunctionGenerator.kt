@@ -609,7 +609,8 @@ internal class VmFunctionGenerator private constructor(
             IrConstKind.Char -> (expression.value as Char).code.toLong()
             IrConstKind.Byte, IrConstKind.Short, IrConstKind.Int, IrConstKind.Long -> (expression.value as Number).toLong()
             IrConstKind.Double -> (expression.value as Double).toRawBits()
-            IrConstKind.Float, IrConstKind.String -> unsupported("the constant ${expression.render()}")
+            IrConstKind.Float -> floatBits(expression.value as Float)
+            IrConstKind.String -> unsupported("the constant ${expression.render()}")
         }
         return constant(type, bits)
     }
@@ -964,7 +965,8 @@ internal class VmFunctionGenerator private constructor(
         IrConstKind.Char -> value == 0.toChar()
         IrConstKind.Byte, IrConstKind.Short, IrConstKind.Int, IrConstKind.Long -> (value as Number).toLong() == 0L
         IrConstKind.Double -> (value as Double).toRawBits() == 0L
-        IrConstKind.Float, IrConstKind.String -> false
+        IrConstKind.Float -> (value as Float).toRawBits() == 0
+        IrConstKind.String -> false
     }
 
     /**
@@ -1161,7 +1163,7 @@ internal class VmFunctionGenerator private constructor(
         }
         val lhs = operandAs(args[0], lhsType)
         val rhs = operandAs(args[1], callee.parameters[1].type)
-        if (type == PrimitiveType.DOUBLE) {
+        if (type.isFloating()) {
             val op = when (comparison) {
                 Comparison.EQ -> VmBinaryOp.EQ
                 Comparison.LT -> VmBinaryOp.LT_S
@@ -1263,7 +1265,7 @@ internal class VmFunctionGenerator private constructor(
             "unaryMinus" -> {
                 val type = resultType()
                 if (type.isFloating()) {
-                    negateDouble(receiver)
+                    negateFloating(receiver, type)
                 } else {
                     val value = widen(receiver, receiverType, type)
                     narrow(newValue(value.vmType()).also { emit(VmInstruction.Unary(VmUnaryOp.NEG, it, value)) }, type)
@@ -1282,29 +1284,36 @@ internal class VmFunctionGenerator private constructor(
             "inv" -> newValue(VmType.I64).also { emit(VmInstruction.Unary(VmUnaryOp.NOT, it, receiver)) }
             "not" -> not(receiver)
             "shl", "shr", "ushr" -> shift(name, receiver, receiverType, argument())
-            "toByte", "toShort", "toInt", "toLong", "toChar", "toDouble" -> convert(receiver, receiverType, resultType())
+            "toByte", "toShort", "toInt", "toLong", "toChar", "toFloat", "toDouble" -> convert(receiver, receiverType, resultType())
             else -> unsupported("${receiverType.typeName}.$name")
         }
     }
 
-    /** The VM negates integers only, so a double's sign bit is flipped, which is exact for zeros and NaN too. */
-    private fun negateDouble(value: VmValue): VmValue {
+    /** The VM negates integers only, so a floating value's sign bit is flipped, which is exact for zeros and NaN too. */
+    private fun negateFloating(value: VmValue, type: PrimitiveType): VmValue {
         val bits = newValue(VmType.I64).also { emit(VmInstruction.Copy(it, value)) }
-        val flipped = binary(VmBinaryOp.XOR, bits, constant(VmType.I64, Long.MIN_VALUE))
-        return newValue(VmType.F64).also { emit(VmInstruction.Copy(it, flipped)) }
+        val sign = if (type == PrimitiveType.FLOAT) 0x8000_0000L else Long.MIN_VALUE
+        val flipped = binary(VmBinaryOp.XOR, bits, constant(VmType.I64, sign))
+        return newValue(gen.primitiveVmType(type)).also { emit(VmInstruction.Copy(it, flipped)) }
     }
 
     private fun PrimitiveType.isFloating() = this == PrimitiveType.DOUBLE || this == PrimitiveType.FLOAT
 
     private fun VmValue.vmType(): VmType = function.valueTypes[index]
 
-    private fun one(type: PrimitiveType): VmValue =
-        if (type.isFloating()) constant(VmType.F64, 1.0.toRawBits()) else constant(VmType.I64, 1)
+    private fun one(type: PrimitiveType): VmValue = when (type) {
+        PrimitiveType.DOUBLE -> constant(VmType.F64, 1.0.toRawBits())
+        PrimitiveType.FLOAT -> constant(VmType.F32, floatBits(1.0f))
+        else -> constant(VmType.I64, 1)
+    }
 
-    /** An integral value as a floating-point one when [to] is floating; the integral kinds share one representation. */
+    /**
+     * A value of kind [from] as one of [to], which it widens to: an integral value as a floating one, and a `Float` as
+     * a `Double`. The integral kinds share one representation.
+     */
     private fun widen(value: VmValue, from: PrimitiveType, to: PrimitiveType): VmValue {
-        if (!to.isFloating() || from.isFloating()) return value
-        return newValue(VmType.F64).also { emit(VmInstruction.Convert(it, value)) }
+        if (!to.isFloating() || from == to) return value
+        return newValue(gen.primitiveVmType(to)).also { emit(VmInstruction.Convert(it, value)) }
     }
 
     private fun arithmetic(
@@ -1319,8 +1328,8 @@ internal class VmFunctionGenerator private constructor(
         val lhs = widen(receiver, receiverType, resultType)
         val rhs = widen(operandAs(argument, parameterType), argumentType, resultType)
         if (resultType.isFloating()) {
-            if (op == VmBinaryOp.REM_S) unsupported("`rem` on floating-point numbers")
-            return binary(op, lhs, rhs, VmType.F64)
+            if (op == VmBinaryOp.REM_S && resultType == PrimitiveType.DOUBLE) unsupported("`rem` on doubles")
+            return binary(op, lhs, rhs, gen.primitiveVmType(resultType))
         }
         return narrow(binary(op, lhs, rhs), resultType)
     }
@@ -1358,10 +1367,29 @@ internal class VmFunctionGenerator private constructor(
     }
 
     private fun convert(value: VmValue, from: PrimitiveType, to: PrimitiveType): VmValue {
-        if (from.isFloating() == to.isFloating()) return narrow(value, to)
-        if (to.isFloating()) return widen(value, from, to)
-        // The VM's conversion saturates and takes NaN to zero, which is the JVM's rule for Long only.
-        if (to != PrimitiveType.LONG) unsupported("converting ${from.typeName} to ${to.typeName}")
-        return newValue(VmType.I64).also { emit(VmInstruction.Convert(it, value)) }
+        if (!from.isFloating() && !to.isFloating()) return narrow(value, to)
+        // Between floating kinds, and from an integral one, the VM rounds once, to the nearest.
+        if (to.isFloating()) return if (from == to) value else newValue(gen.primitiveVmType(to)).also { emit(VmInstruction.Convert(it, value)) }
+        // The VM's conversion saturates at a Long's bounds and takes NaN to zero, as the JVM's `d2l` and `f2l` do; the
+        // JVM's `d2i` and `f2i` saturate at an Int's, and a narrower kind is that Int narrowed.
+        val long = newValue(VmType.I64).also { emit(VmInstruction.Convert(it, value)) }
+        if (to == PrimitiveType.LONG) return long
+        return narrow(clampToInt(long), to)
+    }
+
+    /** [value], a Long, held to an Int's range. */
+    private fun clampToInt(value: VmValue): VmValue {
+        val result = newValue(VmType.I64).also { emit(VmInstruction.Copy(it, value)) }
+        for ([bound, below] in listOf(Int.MIN_VALUE.toLong() to true, Int.MAX_VALUE.toLong() to false)) {
+            val limit = constant(VmType.I64, bound)
+            val beyond = newBlock()
+            val within = newBlock()
+            val op = if (below) VmBinaryOp.LT_S else VmBinaryOp.GT_S
+            terminate(VmTerminator.Branch(binary(op, result, limit), beyond.index, within.index))
+            current = beyond
+            emit(VmInstruction.Copy(result, limit))
+            startBlock(within)
+        }
+        return result
     }
 }

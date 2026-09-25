@@ -1,10 +1,10 @@
 # Box tests under compiler/testData/codegen/box expected to fail on the VM; see JKlibVmExpectedFailures.
-# 4950 failures; the most common reasons:
+# 4883 failures; the most common reasons:
 #     430  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 #     275  IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 #     183  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
-#     138  unsupported: a call to CONSTRUCTOR …
-#     132  unsupported: a call to iterator
+#     140  unsupported: a call to CONSTRUCTOR …
+#     133  unsupported: a call to iterator
 #     123  IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'x'. Specify it explicitly.
 #     121  unsupported: the value class Z
 #     119  unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -14,12 +14,11 @@
 #      92  IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 #      84  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 #      82  unsupported: the type operator SAM_CONVERSION
-#      78  unsupported: overriding FUN …
+#      79  unsupported: overriding FUN …
 #      77  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 #      75  unsupported: the value class X
 #      74  unsupported: the value class IC
 #      72  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
-#      69  unsupported: Float, which needs 32-bit floats in the VM
 #      64  unsupported: the value class A
 #      50  unsupported: inheriting FUN …
 #      49  unsupported: a call to get
@@ -50,6 +49,7 @@
 #      21  unsupported: the expression VARARG …
 #      20  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'downTo' on receiver of type 'Int'.
 #      20  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'require'.
+#      19  IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 
 annotations/annotationWithDefaultArgInDifferentModule.kt: unsupported: the annotation class MyConfig
 annotations/annotations0.kt: unsupported: the annotation class Foo
@@ -99,16 +99,9 @@ annotations/selfReferentialAnnotation.kt: IllegalStateException: UNRESOLVED_REFE
 annotations/spreadOperatorInAnnotationArguments.kt: unsupported: the annotation class A
 annotations/spreadOperatorInArrayOf.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 annotations/typeAnnotations/checkingNotincorporatedInputTypes.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'R'. Specify it explicitly.
-argumentOrder/capturedInExtension.kt: unsupported: converting Double to Int
-argumentOrder/defaults.kt: unsupported: converting Double to Int
-argumentOrder/extension.kt: unsupported: converting Double to Int
-argumentOrder/extensionInClass.kt: unsupported: converting Double to Int
 argumentOrder/kt17691WithEnabledFeature.kt: unsupported: the expression VARARG …
-arithmetic/basic_charConversions.kt: unsupported: Float, which needs 32-bit floats in the VM
 arithmetic/basic_compareIntToFloat.kt: unsupported: compareTo on floating-point numbers
 arithmetic/basic_doubleBasic.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toBits' on receiver of type 'Double'.
-arithmetic/basic_integralToFloat.kt: unsupported: Float, which needs 32-bit floats in the VM
-arithmetic/basic_kt37412.kt: unsupported: converting Double to Int
 arithmetic/basic_uintTests.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 arithmetic/division.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 arithmetic/divisionByZero.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'div' for operator '/'.
@@ -218,7 +211,6 @@ associatedObjects/findAssociatedObjectLazyness.kt: IllegalStateException: UNRESO
 associatedObjects/kt88571.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
 basics/array_to_any.kt: unsupported: a call to CONSTRUCTOR …
 basics/canonical_name.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-basics/const_infinity.kt: unsupported: Float, which needs 32-bit floats in the VM
 basics/expression_as_statement.kt: unsupported: a call to CONSTRUCTOR …
 basics/k42000_1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 basics/k42000_2.kt: unsupported: a value of type kotlin.Nothing
@@ -266,11 +258,9 @@ binaryOp/bitwiseOp.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved r
 binaryOp/bitwiseOpAny.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'and' on receiver of type 'Short'.
 binaryOp/bitwiseOpNullable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'and' on receiver of type 'Short'.
 binaryOp/call.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
-binaryOp/callAny.kt: unsupported: Float, which needs 32-bit floats in the VM
 binaryOp/callNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
 binaryOp/eqNullableToPrimitiveWithSideEffects.kt: wrong result
 binaryOp/intrinsic.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
-binaryOp/intrinsicAny.kt: unsupported: Float, which needs 32-bit floats in the VM
 binaryOp/intrinsicNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
 binaryOp/primitiveEqualsSafeCall.kt: unsupported: Short.equals
 boxing/box_cache0.kt: unsupported: a call to iterator
@@ -287,14 +277,13 @@ boxing/boxing6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved refer
 boxing/boxing7.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 boxing/boxing8.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 boxing/boxing9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-boxing/kt53100_casts.kt: unsupported: Float, which needs 32-bit floats in the VM
+boxing/kt53100_casts.kt: unsupported: Double.toString
 boxing/kt84727.kt: unsupported: a type test against T of .uncheckedCastNull
 boxing/kt84727_if.kt: unsupported: a type test against T of .uncheckedCastNull
 boxing/kt84727_inline.kt: unsupported: a type test against T of .uncheckedCastNull
 boxing/missingValueClassUnboxing.kt: IllegalStateException: VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION: Value classes without '@JvmInline' annotation are not yet supported.
 boxingOptimization/boxedIntegersCmp.kt: unsupported: overriding FUN …
-boxingOptimization/boxedRealsCmp.kt: unsupported: Float, which needs 32-bit floats in the VM
-boxingOptimization/casts.kt: unsupported: converting Double to Int
+boxingOptimization/boxedRealsCmp.kt: unsupported: overriding FUN …
 boxingOptimization/checkcastAndInstanceOf.kt: unsupported: a type test against java.lang.Object outside the VM modules
 boxingOptimization/explicitEqualsOnDouble.kt: unsupported: Double.equals
 boxingOptimization/fold.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'x'. Specify it explicitly.
@@ -317,7 +306,6 @@ boxingOptimization/taintedValues.kt: IllegalStateException: UNRESOLVED_REFERENCE
 boxingOptimization/taintedValuesBox.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toList' on receiver of type 'IntArray'.
 boxingOptimization/unsafeRemoving.kt: unsupported: a call to CONSTRUCTOR …
 boxingOptimization/unsignedArrayForEach.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
-boxingOptimization/variables.kt: unsupported: Float, which needs 32-bit floats in the VM
 branching/when7.kt: unsupported: a call to arrayOfNulls
 branching/when_with_try1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toInt' on receiver of type 'String'.
 bridges/complexTraitImpl.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
@@ -482,7 +470,6 @@ callableReference/bound/kt12738.kt: unsupported: a call to toString
 callableReference/bound/kt15446.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 callableReference/bound/multiCase.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/bound/nullReceiver.kt: unsupported: overriding FUN …
-callableReference/bound/primitiveReceiver.kt: unsupported: Float, which needs 32-bit floats in the VM
 callableReference/bound/receiverEvaluatedOnce.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<String, String>'.
 callableReference/bound/simpleFunction.kt: unsupported: a call to get
 callableReference/bound/simpleProperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -600,9 +587,7 @@ callableReference/property/simpleTopLevel.kt: IllegalStateException: UNRESOLVED_
 callableReference/starProjectionCallableReference.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 callableReference/twoRefsOneScope.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 casts/as.kt: unsupported: a type test against java.lang.Runnable outside the VM modules
-casts/asForConstants.kt: unsupported: Float, which needs 32-bit floats in the VM
 casts/asSafe.kt: unsupported: a type test against java.lang.Runnable outside the VM modules
-casts/asSafeForConstants.kt: unsupported: Float, which needs 32-bit floats in the VM
 casts/asToNothing.kt: unsupported: a type test against kotlin.Nothing outside the VM modules
 casts/asUnit.kt: unsupported: a type test against kotlin.Unit outside the VM modules
 casts/asWithGeneric.kt: unsupported: a type test against T of .test1
@@ -621,7 +606,7 @@ casts/functions/safeAsFunKSmall.kt: IllegalStateException: UNRESOLVED_REFERENCE:
 casts/intersectionTypeMultipleBounds.kt: unsupported: a call to <get-length>
 casts/intersectionTypeSmartcast.kt: unsupported: a call to <get-length>
 casts/is.kt: unsupported: a type test against java.lang.Runnable outside the VM modules
-casts/isNullablePrimitive.kt: unsupported: Float, which needs 32-bit floats in the VM
+casts/isNullablePrimitive.kt: unsupported: a type test against kotlin.Function1? outside the VM modules
 casts/kt22714.kt: unsupported: a call to <get-size>
 casts/kt48927_privateMethodOnDerivedCastToBase.kt: unsupported: a call to get
 casts/kt53677.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
@@ -660,7 +645,6 @@ classLiteral/bound/smartCast.kt: unsupported: the expression GET_CLASS …
 classLiteral/classEquality.kt: unsupported: the expression GET_CLASS …
 classLiteral/java/kt11943.kt: IllegalStateException: RETURN_TYPE_MISMATCH: Return type mismatch: expected 'Class<*>', actual 'Unit'.
 classLiteral/primitiveClassEquality.kt: unsupported: the expression GET_CLASS …
-classes/boxPrimitiveTypeInClinitOfClassObject.kt: unsupported: Float, which needs 32-bit floats in the VM
 classes/classObjectsWithParentClasses.kt: unsupported: the inner class InnerClass
 classes/comanionObjectFieldVsClassField.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'R'. Specify it explicitly.
 classes/delegateConstructorCallWithKeywords.kt: unsupported: Int.toString
@@ -670,7 +654,6 @@ classes/implementComparableInSubclass.kt: unsupported: the supertype Comparable 
 classes/inheritSetAndHashSet.kt: unsupported: a call to CONSTRUCTOR …
 classes/inheritedInnerClass.kt: unsupported: the inner class InnerBase
 classes/initializerBlockDImpl.kt: unsupported: the inner class Item
-classes/initializerBlockResetToDefault.kt: unsupported: Float, which needs 32-bit floats in the VM
 classes/inner/extensionWithOuter.kt: unsupported: the inner class Inner
 classes/inner/instantiateInDerived.kt: unsupported: the inner class B
 classes/inner/instantiateInDerivedLabeled.kt: unsupported: the inner class B
@@ -693,7 +676,6 @@ classes/kt3114.kt: unsupported: a call to compareTo
 classes/kt343.kt: unsupported: a call to CONSTRUCTOR …
 classes/kt40332.kt: unsupported: inheriting FUN …
 classes/kt471.kt: unsupported: a call to CONSTRUCTOR …
-classes/kt48.kt: unsupported: Float, which needs 32-bit floats in the VM
 classes/kt508.kt: unsupported: overriding FUN …
 classes/kt5347.kt: unsupported: Int.hashCode
 classes/kt6136.kt: unsupported: Int.hashCode
@@ -1554,13 +1536,13 @@ dataClasses/equalityChecksPrimitiveUnboxed.kt: unsupported: Boolean.hashCode
 dataClasses/equals/alreadyDeclared.kt: unsupported: Int.hashCode
 dataClasses/equals/genericarray.kt: unsupported: a call to dataClassArrayMemberToString
 dataClasses/equals/intarray.kt: unsupported: a call to dataClassArrayMemberToString
-dataClasses/floatParam.kt: unsupported: Float, which needs 32-bit floats in the VM
+dataClasses/floatParam.kt: unsupported: Float.hashCode
 dataClasses/fromOtherModule.kt: unsupported: Int.hashCode
 dataClasses/hashCode/boolean.kt: unsupported: Boolean.hashCode
 dataClasses/hashCode/byte.kt: unsupported: Byte.hashCode
 dataClasses/hashCode/char.kt: unsupported: Char.hashCode
 dataClasses/hashCode/double.kt: unsupported: Double.hashCode
-dataClasses/hashCode/float.kt: unsupported: Float, which needs 32-bit floats in the VM
+dataClasses/hashCode/float.kt: unsupported: Float.hashCode
 dataClasses/hashCode/int.kt: unsupported: Int.hashCode
 dataClasses/hashCode/long.kt: unsupported: Long.hashCode
 dataClasses/hashCode/null.kt: unsupported: Int.hashCode
@@ -1844,18 +1826,13 @@ escapeAnalysis/stack_array.kt: unsupported: a call to CONSTRUCTOR …
 escapeAnalysis/test12.kt: unsupported: a call to get
 escapeAnalysis/zeroOutObjectOnAlloc.kt: unsupported: a call to iterator
 evaluate/annotationClassWithInner.kt: unsupported: the annotation class Anno
-evaluate/byteOperations.kt: unsupported: Float, which needs 32-bit floats in the VM
 evaluate/charOperations.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'code' on receiver of type 'Char'.
-evaluate/doubleOperations.kt: unsupported: Float, which needs 32-bit floats in the VM
-evaluate/floatOperations.kt: unsupported: Float, which needs 32-bit floats in the VM
 evaluate/inJavaLangPackage.kt: IllegalStateException: TYPE_CANT_BE_USED_FOR_CONST_VAL: Const 'val' has type 'Double'. Only primitive types and 'String' are allowed.
-evaluate/intOperations.kt: unsupported: Float, which needs 32-bit floats in the VM
 evaluate/intrinsicConst/bitwiseOperations.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_INITIALIZER: Const 'val' initializer must be a constant value.
 evaluate/intrinsicConst/charConstructor.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_INITIALIZER: Const 'val' initializer must be a constant value.
 evaluate/intrinsicConst/companions.kt: unsupported: the static property x
 evaluate/intrinsicConst/constTrim.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_INITIALIZER: Const 'val' initializer must be a constant value.
 evaluate/intrinsicConst/enumNameWithInit.kt: wrong result
-evaluate/intrinsicConst/equals_after.kt: unsupported: Float, which needs 32-bit floats in the VM
 evaluate/intrinsicConst/incDec.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_INITIALIZER: Const 'val' initializer must be a constant value.
 evaluate/intrinsicConst/kCallableName.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty1<A, Int>'.
 evaluate/intrinsicConst/kCallableNameWithSideEffect.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty1<A, String>'.
@@ -1864,7 +1841,6 @@ evaluate/intrinsicConst/lowerAndUpperCase.kt: IllegalStateException: CONST_VAL_W
 evaluate/intrinsicConst/nullableEnumName.kt: unsupported: a call to toString
 evaluate/kt55912.kt: unsupported: the annotation class Entity
 evaluate/kt9443.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'String'.
-evaluate/longOperations.kt: unsupported: Float, which needs 32-bit floats in the VM
 evaluate/objectConstValInAnnotationArgument.kt: unsupported: the annotation class Key
 evaluate/serialization/actualAnnotationOnFakeOverride.kt: unsupported: the annotation class A
 evaluate/serialization/annotationInArguments.kt: unsupported: the annotation class Annotation
@@ -1880,7 +1856,6 @@ evaluate/serialization/annotationWithDefaults.kt: unsupported: the annotation cl
 evaluate/serialization/intrinsicConst.kt: unsupported: the annotation class BinaryAnnotation
 evaluate/serialization/nestedTypeAnnotation.kt: unsupported: the annotation class TypeAnnotation
 evaluate/serialization/typeAnnotation.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
-evaluate/shortOperations.kt: unsupported: Float, which needs 32-bit floats in the VM
 evaluate/stdlibConst.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'code' on receiver of type 'Char'.
 evaluate/stringOperations.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 evaluate/thisPlusString.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
@@ -1930,8 +1905,6 @@ extensionProperties/extensionPropertyInSAMInterface.kt: unsupported: the type op
 extensionProperties/extensionPropertyWithExtensionAsReceiver.kt: unsupported: a type test against T of .foo
 extensionProperties/extensionPropertyWithExtensionNestedType.kt: unsupported: a type test against @[ExtensionFunctionType] kotlin.Function2.A, @[ExtensionFunctionType] kotlin.Function1.A, kotlin.String>, kotlin.String> outside the VM modu
 extensionProperties/extensionPropertyWithInline.kt: unsupported: overriding FUN …
-extensionProperties/genericValForPrimitiveType.kt: unsupported: Float, which needs 32-bit floats in the VM
-extensionProperties/genericVarForPrimitiveType.kt: unsupported: Float, which needs 32-bit floats in the VM
 extensionProperties/kt46952.kt: unsupported: the value class C
 extensionProperties/kt9897.kt: unsupported: a call to <get-length>
 extensionProperties/kt9897_topLevel.kt: unsupported: a call to <get-length>
@@ -1961,7 +1934,6 @@ fir/kt68806.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved referenc
 fir/listAssignmentInWhen.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 fir/missingDependencyClassInTypeArguments.kt: CompilationErrorException: Module "lib2" has a reference to symbol /Some|null[0]. Neither the module itself nor its dependencies contain such declaration.
 fir/toLong.kt: unsupported: Long.toString
-fp/addSubDenormalFloat.kt: unsupported: Float, which needs 32-bit floats in the VM
 fp/addSubZeroInfinityDouble.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isNaN' on receiver of type 'Double'.
 fp/addSubZeroInfinityFloat.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isNaN' on receiver of type 'Float'.
 fp/atan2ZeroGuadrantsDouble.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'atan2'.
@@ -1969,12 +1941,10 @@ fp/denormalGradualDoubleBits.kt: IllegalStateException: UNRESOLVED_REFERENCE: Un
 fp/denormalGradualFloatBits.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'fromBits'.
 fp/divZeroAndNanDouble.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isNaN' on receiver of type 'Double'.
 fp/divZeroAndNanFloat.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isNaN' on receiver of type 'Float'.
-fp/divisionOfZeroFloat.kt: unsupported: Float, which needs 32-bit floats in the VM
 fp/mulZeroInfinityDouble.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isNaN' on receiver of type 'Double'.
 fp/mulZeroInfinityFloat.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isNaN' on receiver of type 'Float'.
 fp/powDouble.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'pow' on receiver of type 'Double'.
 fp/powFloat.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'pow' on receiver of type 'Float'.
-fp/precisionAround2p53Float.kt: unsupported: Float, which needs 32-bit floats in the VM
 fp/remainderMixedFpInfinitiesNans.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isNaN' on receiver of type 'Double'.
 fp/remainderMixedFpSubnormalDivisor.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isNaN' on receiver of type 'Double'.
 fp/remainderMixedIntFp.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isNaN' on receiver of type 'Double'.
@@ -2060,11 +2030,10 @@ function/defaults9.kt: unsupported: the inner class Bar
 function/defaultsWithInlineClasses.kt: unsupported: the value class Foo
 function/defaultsWithVarArg1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 function/defaultsWithVarArg2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
-function/eqeq.kt: unsupported: Float, which needs 32-bit floats in the VM
+function/eqeq.kt: unsupported: the parameter type kotlin.Nothing
 function/localFunction.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 function/manglingImportedFromObjectWithNI.kt: unsupported: inheriting FUN …
-function/sum.kt: unsupported: Float, which needs 32-bit floats in the VM
-function/sum_mixed.kt: unsupported: Float, which needs 32-bit floats in the VM
+function/sum.kt: unsupported: `rem` on doubles
 function/unreachableStatementAfterReturn.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 functions/bigArity/instanceOfCallableReference.kt: unsupported: a type test against kotlin.Function0 outside the VM modules
 functions/bigArity/subclass.kt: unsupported: the supertype Function42 outside the VM modules
@@ -2084,45 +2053,26 @@ functions/kt2929.kt: unsupported: a call to compareTo
 functions/kt3214.kt: unsupported: a call to <get-size>
 functions/kt47449.kt: unsupported: a value of type kotlin.Unit
 functions/kt48058.kt: unsupported: a type test against kotlin.Function0 outside the VM modules
-functions/kt873.kt: unsupported: converting Double to Int
 functions/localFunction.kt: unsupported: a call to iterator
 functions/localFunctions/boundTypeParameterInVararg.kt: unsupported: the expression VARARG …
 functions/localFunctions/kt4777.kt: unsupported: overriding FUN …
 functions/localFunctions/nameClashAcrossDifferentContainers.kt: unsupported: a call to <get-length>
 ieee754/anyCastToPrimitiveCompareTo1.kt: unsupported: compareTo on floating-point numbers
 ieee754/anyCastToPrimitiveCompareTo2.kt: unsupported: compareTo on floating-point numbers
-ieee754/anyToReal.kt: unsupported: Float, which needs 32-bit floats in the VM
 ieee754/asComparableToDouble.kt: unsupported: overriding FUN …
 ieee754/asComparableToDouble_properIeeeComparisons.kt: unsupported: overriding FUN …
-ieee754/comparableToTWithT_properIeeeComparisons.kt: unsupported: Float, which needs 32-bit floats in the VM
 ieee754/comparableTypeCast.kt: unsupported: overriding FUN …
 ieee754/dataClass.kt: unsupported: Double.hashCode
 ieee754/differentTypesComparison.kt: unsupported: compareTo on floating-point numbers
-ieee754/equalsFloat_properIeeeComparisons.kt: unsupported: Float, which needs 32-bit floats in the VM
 ieee754/equalsNaN_properIeeeComparisons.kt: unsupported: a call to get
-ieee754/equalsNullableFloat_properIeeeComparisons.kt: unsupported: Float, which needs 32-bit floats in the VM
 ieee754/explicitCompareCall.kt: unsupported: compareTo on floating-point numbers
 ieee754/explicitEqualsCall.kt: unsupported: Double.equals
-ieee754/generic.kt: unsupported: Float, which needs 32-bit floats in the VM
-ieee754/greaterFloat_properIeeeComparisons.kt: unsupported: Float, which needs 32-bit floats in the VM
 ieee754/inline.kt: unsupported: overriding FUN …
-ieee754/lessFloat_properIeeeComparisons.kt: unsupported: Float, which needs 32-bit floats in the VM
-ieee754/nullableAnyToReal.kt: unsupported: Float, which needs 32-bit floats in the VM
-ieee754/nullableFloatEquals.kt: unsupported: Float, which needs 32-bit floats in the VM
-ieee754/nullableFloatNotEquals.kt: unsupported: Float, which needs 32-bit floats in the VM
 ieee754/safeCall.kt: unsupported: Double.equals
-ieee754/smartCastOnWhenSubjectAfterCheckInBranch_properIeeeComparisons.kt: unsupported: Float, which needs 32-bit floats in the VM
-ieee754/smartCastToDifferentTypesWithNumericPromotion_properIeeeComparisons.kt: unsupported: Float, which needs 32-bit floats in the VM
-ieee754/smartCastToDifferentTypes_properIeeeComparisons.kt: unsupported: Float, which needs 32-bit floats in the VM
-ieee754/smartCastToDoubleAndComparableToDouble.kt: unsupported: Float, which needs 32-bit floats in the VM
 increment/arrayElement.kt: unsupported: a call to arrayOf
-increment/augmentedAssignmentWithComplexRhs.kt: unsupported: converting Double to Int
 increment/classVarargGetSet.kt: unsupported: a call to iterator
 increment/classVarargGetSetEvaluationOrder.kt: unsupported: a call to iterator
-increment/classWithGetSet.kt: unsupported: Float, which needs 32-bit floats in the VM
-increment/genericClassWithGetSet.kt: unsupported: Float, which needs 32-bit floats in the VM
 increment/mutableListElement.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
-increment/nullable.kt: unsupported: Float, which needs 32-bit floats in the VM
 inference/builderInferenceLeakingVariable.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 inference/capturedSelfInsideIntersection2.kt: unsupported: a type test against T of .EntityImpl.isEqualTo
 inference/capturedSelfInsideIntersection3.kt: unsupported: a type test against T of .EntityImpl.isEqualTo
@@ -3258,13 +3208,11 @@ ir/anonymousClassLeak.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolve
 ir/anonymousObjectInForLoopIteratorAndBody.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ir/closureConversion/innerClass1.kt: unsupported: the inner class Inner
 ir/closureConversion/innerClass2.kt: unsupported: the inner class Inner
-ir/closureConversion/mutablePrimitives.kt: unsupported: Float, which needs 32-bit floats in the VM
 ir/hashCodeOnGenericSubstitutedWithPrimitive.kt: unsupported: Boolean.hashCode
 ir/kt25405.kt: unsupported: the inner class TableColumn
 ir/kt52677.kt: unsupported: the annotation class MySerializable
 ir/lambdaWithLoop.kt: IllegalStateException: MISSING_STDLIB_CLASS: Missing stdlib class.
 ir/primitiveNumberComparisons/comparableToDouble.kt: unsupported: overriding FUN …
-ir/primitiveNumberComparisons/floatEqeq.kt: unsupported: Float, which needs 32-bit floats in the VM
 ir/privateSignatures/privateLeakThroughInline.kt: unsupported: inheriting FUN …
 ir/recursiveGeneric.kt: unsupported: a call to CONSTRUCTOR …
 ir/recursiveGeneric2.kt: unsupported: a call to CONSTRUCTOR …
@@ -3361,8 +3309,6 @@ lower/forLoopsLowering/withIndexUInt.kt: IllegalStateException: ITERATOR_MISSING
 lower/localDelegatedProperty.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
 mangling/internal.kt: unsupported: the inner class B
 mangling/multipleConstructors.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mapOf'.
-mixedNamedPosition/defaults.kt: unsupported: converting Double to Int
-mixedNamedPosition/simple.kt: unsupported: converting Double to Int
 mixedNamedPosition/varargs.kt: unsupported: a call to get
 mixedNamedPosition/varargsEvaluationOrder.kt: unsupported: a call to get
 multiDecl/component.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'substring' on receiver of type 'String'.
@@ -3485,7 +3431,7 @@ objects/companionObjectAccess/companionObjectInitOrderWithSuperinterface.kt: wro
 objects/companionObjectAccess/primitiveCompanion/byteCompanionObject.kt: unsupported: the object Companion outside the VM modules
 objects/companionObjectAccess/primitiveCompanion/charCompanionObject.kt: unsupported: the object Companion outside the VM modules
 objects/companionObjectAccess/primitiveCompanion/doubleCompanionObject.kt: unsupported: the object Companion outside the VM modules
-objects/companionObjectAccess/primitiveCompanion/floatCompanionObject.kt: unsupported: Float, which needs 32-bit floats in the VM
+objects/companionObjectAccess/primitiveCompanion/floatCompanionObject.kt: unsupported: the object Companion outside the VM modules
 objects/companionObjectAccess/primitiveCompanion/intCompanionObject.kt: unsupported: the object Companion outside the VM modules
 objects/companionObjectAccess/primitiveCompanion/longCompanionObject.kt: unsupported: the object Companion outside the VM modules
 objects/companionObjectAccess/primitiveCompanion/shortCompanionObject.kt: unsupported: the object Companion outside the VM modules
@@ -3493,7 +3439,6 @@ objects/companionObjectAccess/privateCompanionObjectAccessedFromMethodInlinedInN
 objects/compoundAssignmentToArrayAccessToExtensionPropertyImportedFromObject.kt: unsupported: a call to intArrayOf
 objects/compoundAssignmentToArrayAccessToPropertyImportedFromObject.kt: unsupported: a call to intArrayOf
 objects/flist.kt: unsupported: overriding FUN …
-objects/initializerBlockResetToDefault.kt: unsupported: Float, which needs 32-bit floats in the VM
 objects/innerClassInsideAnonymousObject.kt: unsupported: the inner class InnerLocal1
 objects/interfaceCompanionObjectReference.kt: unsupported: the annotation class Anno
 objects/kt1047.kt: unsupported: the static field out outside the VM modules
@@ -3528,11 +3473,9 @@ operatorConventions/reassignmentLhsCaching.kt: unsupported: a call to set
 operatorConventions/suspendOperators.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 operatorConventions/untilOperator.kt: CompilationErrorException: Module "main" has a reference to symbol kotlin.ranges/ClosedRange|null[0]. Neither the module itself nor its dependencies contain suc
 optimizations/kt20844.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'a'. Specify it explicitly.
-package/boxPrimitiveTypeInClinit.kt: unsupported: Float, which needs 32-bit floats in the VM
 package/initializationOrder.kt: unsupported: a Unit property
 package/jsExportNameClash.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsExport'.
 package/jsExportNameClashIntermodule.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsExport'.
-package/nullablePrimitiveNoFieldInitializer.kt: unsupported: Double.toFloat
 package/referenceWithTheSameNameAsPackage.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
 platformTypes/primitives/assign.kt: unsupported: a call to CONSTRUCTOR …
 platformTypes/primitives/compareTo.kt: unsupported: a call to CONSTRUCTOR …
@@ -3555,11 +3498,11 @@ platformTypes/primitives/unaryMinus.kt: unsupported: a call to CONSTRUCTOR …
 platformTypes/primitives/unaryPlus.kt: unsupported: a call to CONSTRUCTOR …
 primitiveTypes/booleanHashCode.kt: IllegalStateException: UNSAFE_CALL: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Boolean?'.
 primitiveTypes/charToByte.kt: unsupported: the annotation class Foo
-primitiveTypes/conversions.kt: unsupported: Float, which needs 32-bit floats in the VM
+primitiveTypes/conversions.kt: unsupported: a call to iterator
 primitiveTypes/equalityWithObject/boxedNanEquals.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'fromBits'.
 primitiveTypes/equalityWithObject/intEqualsNull.kt: unsupported: Int.equals
 primitiveTypes/equalityWithObject/kt42281.kt: IllegalStateException: No declaration of FUN name:intArrayOf visibility:public modality:FINAL <> (elements:kotlin.IntArray) returnType:kotlin.IntArray declares 
-primitiveTypes/equalsHashCodeToString.kt: unsupported: Float, which needs 32-bit floats in the VM
+primitiveTypes/equalsHashCodeToString.kt: unsupported: Byte.equals
 primitiveTypes/kt13023.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 primitiveTypes/kt14868.kt: unsupported: overriding FUN …
 primitiveTypes/kt1508.kt: unsupported: overriding FUN …
@@ -3570,7 +3513,7 @@ primitiveTypes/kt2275.kt: unsupported: overriding FUN …
 primitiveTypes/kt2768.kt: unsupported: Byte.toString
 primitiveTypes/kt3078.kt: unsupported: compareTo on floating-point numbers
 primitiveTypes/kt3517.kt: unsupported: Boolean.equals
-primitiveTypes/kt3576.kt: unsupported: Float, which needs 32-bit floats in the VM
+primitiveTypes/kt3576.kt: unsupported: Float.equals
 primitiveTypes/kt37505.kt: unsupported: Byte.hashCode
 primitiveTypes/kt4097.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'LongRange'.
 primitiveTypes/kt4098.kt: unsupported: a call to get
@@ -4501,7 +4444,6 @@ regressions/dataClassInInlineFunctionWithTypeParameters.kt: unsupported: Int.has
 regressions/dataClassInRegularFunctionWithTypeParameters.kt: unsupported: Int.hashCode
 regressions/directInvokeDestructuring.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Char'.
 regressions/directInvokeNameBasedDestructuring.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Char'.
-regressions/floatMerge.kt: unsupported: Float, which needs 32-bit floats in the VM
 regressions/generic.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
 regressions/hashCodeNPE.kt: unsupported: a call to CONSTRUCTOR …
 regressions/kt1172.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
@@ -4527,7 +4469,7 @@ regressions/kt5953.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE:
 regressions/kt6153.kt: unsupported: a call to append
 regressions/kt6434.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'minOrNull' on receiver of type 'Collection<Int>'.
 regressions/kt6434_2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Int'.
-regressions/kt71119.kt: unsupported: Float, which needs 32-bit floats in the VM
+regressions/kt71119.kt: unsupported: a call to CONSTRUCTOR …
 regressions/kt789.kt: unsupported: a call to CONSTRUCTOR …
 regressions/kt998.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 regressions/lambdaWithTypeParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Matches<T (of fun <T> lookupAttribute)>'.
@@ -4547,7 +4489,6 @@ reified/extensionMethod.kt: unsupported: inheriting FUN …
 reified/filterIsInstance.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 reified/innerObject.kt: unsupported: a type test against T of foo.
 reified/instanceof.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'require'.
-reified/isNumber.kt: unsupported: Int.toFloat
 reified/kt16445.kt: unsupported: inheriting FUN …
 reified/kt39256_privateInlineWithAnonymousObject.kt: unsupported: the expression CLASS_REFERENCE …
 reified/lambda.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
@@ -4612,7 +4553,7 @@ secondaryConstructors/basicPrimary.kt: unsupported: Int.toString
 secondaryConstructors/clashingDefaultConstructors.kt: unsupported: Int.toString
 secondaryConstructors/dataClasses.kt: unsupported: Int.toString
 secondaryConstructors/enums.kt: unsupported: Int.toString
-secondaryConstructors/fieldInitializerOptimization.kt: unsupported: Float, which needs 32-bit floats in the VM
+secondaryConstructors/fieldInitializerOptimization.kt: unsupported: a call to CONSTRUCTOR …
 secondaryConstructors/innerClasses.kt: unsupported: the inner class A1
 secondaryConstructors/innerClassesInheritance.kt: unsupported: the inner class A1
 secondaryConstructors/localClasses.kt: unsupported: Int.toString
@@ -4678,11 +4619,8 @@ strings/charSequenceGet.kt: unsupported: a call to get
 strings/charSequenceSubSequence.kt: unsupported: a call to get
 strings/concatDynamicWithConstants.kt: unsupported: a call to <get-length>
 strings/concatDynamicWithSpecialSymbols.kt: unsupported: a call to <get-length>
-strings/concatGenericWithNullablePrimitiveUpperBound.kt: unsupported: Float, which needs 32-bit floats in the VM
-strings/concatGenericWithPrimitiveUpperBound.kt: unsupported: Float, which needs 32-bit floats in the VM
 strings/concatGenericWithStringUpperBound.kt: unsupported: a call to plus
-strings/concatNullableGenericWithPrimitiveUpperBound.kt: unsupported: Float, which needs 32-bit floats in the VM
-strings/constInStringTemplate.kt: unsupported: Float, which needs 32-bit floats in the VM
+strings/constInStringTemplate.kt: unsupported: Double.toString
 strings/forInString.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 strings/interpolation.kt: unsupported: Int.toString
 strings/kt13213.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trim' on receiver of type 'String'.
@@ -4698,7 +4636,6 @@ strings/multilineStringsWithTemplates.kt: unsupported: a call to <get-length>
 strings/nestedConcat.kt: unsupported: a call to <get-length>
 strings/rawStringsWithManyQuotes.kt: unsupported: the expression VARARG …
 strings/simpleStringPlus.kt: unsupported: a call to plus
-strings/stringBuilderAppend.kt: unsupported: Float, which needs 32-bit floats in the VM
 strings/stringPlusOnlyWorksOnString.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'E'. Specify it explicitly.
 strings/trimOptimization.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 strings/twoArgumentNullableStringOperatorPlus.kt: unsupported: a call to plus
@@ -4830,8 +4767,6 @@ typealias/typeAliasSecondaryConstructor.kt: unsupported: Int.toString
 typealias/typeArgumentsMappingForTopLevelTAWithInnerRHS.kt: unsupported: the inner class Inner
 unaryOp/call.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
 unaryOp/callNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
-unaryOp/intrinsic.kt: unsupported: Float, which needs 32-bit floats in the VM
-unaryOp/intrinsicNullable.kt: unsupported: Float, which needs 32-bit floats in the VM
 underscoredTypeArguments/backTicked.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Any?'.
 underscoredTypeArguments/simple.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Any?'.
 unit/UnitValue.kt: unsupported: a value of type kotlin.Unit
@@ -4996,8 +4931,6 @@ when/switchOptimizationWithGap.kt: IllegalStateException: UNRESOLVED_REFERENCE: 
 when/whenArgumentIsEvaluatedOnlyOnce.kt: unsupported: a call to CONSTRUCTOR …
 when/whenSafeCallSubjectEvaluatedOnce.kt: unsupported: a call to <get-length>
 when/whenSubjectVariable/denseIntSwitchWithSubjectVariable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'map' on receiver of type 'IntRange'.
-when/whenSubjectVariable/ieee754Equality.kt: unsupported: Float, which needs 32-bit floats in the VM
-when/whenSubjectVariable/ieee754EqualityWithSmartCast.kt: unsupported: Float, which needs 32-bit floats in the VM
 when/whenSubjectVariable/kt33641_inlineClass.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Result'.
 when/whenSubjectVariable/rangeCheckOnSubjectVariable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contains' on receiver of type 'IntRange'.
 when/whenSubjectVariable/sparseIntSwitchWithSubjectVariable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'map' on receiver of type 'IntRange'.

@@ -1864,4 +1864,128 @@ class JKlibVmBackendTest {
         """
         assertTrue(runBox(tempDir, source))
     }
+
+    /** 2^24 + 1 is no float, so adding 1 to 2^24 leaves it, where a double would not. */
+    @Test
+    fun testFloatArithmeticIsSinglePrecision(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val big = 16777216f
+                return if (big + 1f == big && big.toDouble() + 1.0 != big.toDouble()) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A float prints with its own shortest digits, not those of the double it widens to. */
+    @Test
+    fun testFloatInATemplate(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val tenth = 0.1f
+                val text = "${'$'}tenth"
+                return if (text == "0.1") "OK" else "fail: ${'$'}text"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testFloatToIntSaturates(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val huge = 1e20f
+                val nan = 0f / 0f
+                val ok = 2.75f.toInt() == 2 && huge.toInt() == Int.MAX_VALUE && (-huge).toInt() == Int.MIN_VALUE && nan.toInt() == 0
+                return if (ok) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testDoubleToIntSaturates(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val huge = 1e20
+                val ok = (-2.75).toInt() == -2 && huge.toInt() == Int.MAX_VALUE && (-huge).toInt() == Int.MIN_VALUE
+                return if (ok) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** Through a double, 2^53 + 2^29 + 1 would round twice and land on 2^53. */
+    @Test
+    fun testLongToFloatRoundsOnce(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val value = 9007199791611905L
+                return if (value.toFloat() == 9.0071998E15f && value.toFloat() != 9007199254740992L.toFloat()) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testFloatWidensAndDoubleNarrows(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val tenth = 0.1f
+                val widened = tenth.toDouble()
+                return if (widened != 0.1 && widened.toFloat() == tenth && 0.1.toFloat() == tenth) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testNegatingAFloatFlipsTheSignOfZero(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val zero = 0f
+                return if (1f / -zero < 0f) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testFloatRemainder(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val a = 5.5f
+                val b = 2f
+                return if (a % b == 1.5f && -a % b == -1.5f) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testNullableFloatsCompareAsIeee(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val zero: Float? = 0f
+                val negative: Float? = -0f
+                return if (zero == negative) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** As `Float.equals`: `0.0f` and `-0.0f` differ, and NaN equals itself. */
+    @Test
+    fun testBoxedFloatsEqualByBits(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val zero: Any = 0f
+                val negative: Any = -0f
+                val nan: Any = 0f / 0f
+                val otherNan: Any = 0f / 0f
+                return if (zero != negative && nan == otherNan) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
 }
