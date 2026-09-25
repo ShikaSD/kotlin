@@ -1071,6 +1071,20 @@ internal class VmFunctionGenerator private constructor(
             if (constructor.parameters.size != 1) unsupported("the constructor ${constructor.render()}")
             return newArray(call.type, operand(call.arguments[0]!!))
         }
+        // A new runtime `java.lang.StringBuilder`: empty, or holding the text it is given. A capacity it ignores.
+        if (constructor.constructedClass.fqNameWhenAvailable?.asString() == "java.lang.StringBuilder") {
+            val builderClass = gen.stringBuilderClass
+            val builder = newValue(gen.anyType).also { emit(VmInstruction.NewObject(it, builderClass)) }
+            emit(VmInstruction.Call(null, VmCallee.Static(gen.stringBuilderFunction("init", emptyList(), null)), listOf(builder)))
+            val initial = call.arguments.singleOrNull()
+            if (initial != null && !initial.type.isInt()) {
+                val append = gen.stringBuilderFunction("append", listOf(gen.stringType), gen.anyType)
+                emit(VmInstruction.Call(newValue(gen.anyType), VmCallee.Static(append), listOf(builder, text(initial))))
+            } else if (initial != null) {
+                operand(initial)
+            }
+            return builder
+        }
         if (gen.isSharedVariableBox(constructor.constructedClass)) {
             val boxClass = gen.sharedVariableBoxClass
             val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.NewObject(it, boxClass)) }
@@ -1159,6 +1173,7 @@ internal class VmFunctionGenerator private constructor(
             builtIns.arrayOfNulls -> newArray(call.type, operand(args[0]))
             else -> {
                 arrayMember(callee, args)?.let { return it }
+                stringBuilderMember(callee, args)?.let { return it }
                 enumMember(callee, args)?.let { return Intrinsic(it) }
                 // `arrayOf` and `intArrayOf` and the like, whose vararg is the array they return.
                 if (callee.isArrayOf()) return Intrinsic(operand(args[0]))
@@ -1177,6 +1192,10 @@ internal class VmFunctionGenerator private constructor(
                     "kotlin.random.randomSeed" -> return Intrinsic(newValue(VmType.I64).also {
                         emit(VmInstruction.Call(it, VmCallee.Static(gen.randomSeed), emptyList()))
                     })
+                    "kotlin.io.printString" -> {
+                        emit(VmInstruction.Call(null, VmCallee.Static(gen.print), listOf(operand(args[0]))))
+                        return Intrinsic(null)
+                    }
                 }
                 val owner = callee.parentClassOrNull?.defaultType
                 if (callee.body != null || owner == null || !owner.isPrimitiveType()) return null
@@ -1214,6 +1233,44 @@ internal class VmFunctionGenerator private constructor(
             "<get-size>" -> Intrinsic(newValue(VmType.I64).also { emit(VmInstruction.ArrayLength(it, operand(args[0]))) })
             else -> null
         }
+    }
+
+    /**
+     * A member of `java.lang.StringBuilder`, which the runtime implements, or null for any other callee. Every `append` of
+     * one value appends its text, as `String.valueOf` gives it.
+     */
+    private fun stringBuilderMember(callee: IrSimpleFunction, args: List<IrExpression>): Intrinsic? {
+        if (callee.parentClassOrNull?.fqNameWhenAvailable?.asString() != "java.lang.StringBuilder") return null
+        val name = callee.name.asString()
+        val builder = operand(args[0])
+        val value = when (name) {
+            "append" -> {
+                if (args.size != 2 || gen.arrayClassOf(args[1].type) != null) unsupported("StringBuilder.append(${callee.render()})")
+                val append = gen.stringBuilderFunction("append", listOf(gen.stringType), gen.anyType)
+                newValue(gen.anyType).also { emit(VmInstruction.Call(it, VmCallee.Static(append), listOf(builder, text(args[1])))) }
+            }
+            "setLength" -> {
+                val setLength = gen.stringBuilderFunction("setLength", listOf(VmType.I64), null)
+                emit(VmInstruction.Call(null, VmCallee.Static(setLength), listOf(builder, operand(args[1]))))
+                null
+            }
+            "toString" -> newValue(gen.stringType).also { emit(VmInstruction.Call(it, VmCallee.Virtual(gen.toStringSelector), listOf(builder))) }
+            "length", "<get-length>" -> newValue(VmType.I64).also {
+                emit(VmInstruction.Call(it, VmCallee.Static(gen.stringBuilderFunction("length", emptyList(), VmType.I64)), listOf(builder)))
+            }
+            "get", "charAt" -> newValue(VmType.I64).also {
+                val get = gen.stringBuilderFunction("get", listOf(VmType.I64), VmType.I64)
+                emit(VmInstruction.Call(it, VmCallee.Static(get), listOf(builder, operand(args[1]))))
+            }
+            else -> unsupported("StringBuilder.$name")
+        }
+        return Intrinsic(value)
+    }
+
+    /** [expression]'s text: a string as it is, anything else as `String.valueOf` writes it — `null` included. */
+    private fun text(expression: IrExpression): VmValue {
+        if (expression.type.isString()) return operand(expression)
+        return plus(newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, "")) }, reference(expression))
     }
 
     /** A new array of [type], an array type, holding [length] elements, each zero, false or null. */
@@ -1434,11 +1491,13 @@ internal class VmFunctionGenerator private constructor(
             "not" -> not(receiver)
             "shl", "shr", "ushr" -> shift(name, receiver, receiverType, argument())
             "toByte", "toShort", "toInt", "toLong", "toChar", "toFloat", "toDouble" -> convert(receiver, receiverType, resultType())
-            // As the JVM's box answers it, which the runtime's implements; the receiver is boxed already where `Any`'s
-            // member is what the call names.
-            "hashCode" -> newValue(VmType.I64).also {
+            // As the JVM's box answers them, which the runtime's implements; the receiver is boxed already where
+            // `Any`'s member is what the call names.
+            "hashCode", "toString" -> {
                 val boxed = if (receiver.vmType() is VmType.Ref) receiver else box(receiver, args[0].type)
-                emit(VmInstruction.Call(it, VmCallee.Virtual(gen.hashCodeSelector), listOf(boxed)))
+                val selector = if (name == "hashCode") gen.hashCodeSelector else gen.toStringSelector
+                val type = if (name == "hashCode") VmType.I64 else gen.stringType
+                newValue(type).also { emit(VmInstruction.Call(it, VmCallee.Virtual(selector), listOf(boxed))) }
             }
             // A new `IntRange`, `LongRange` or `CharRange` from its constructor.
             "rangeTo" -> {

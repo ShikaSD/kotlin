@@ -110,6 +110,8 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
             "kotlin/random/XorWowRandom.kt",
             "kotlin/internal/serializationUtil.kt",
             "kotlin/util/Preconditions.kt",
+            "kotlin/text/StringBuilder.kt",
+            "kotlin/text/Appendable.kt",
             "kotlin/internal/throwNoWhenBranchMatchedException.kt",
             "kotlin/concurrent/atomics/AtomicArrays.common.kt",
             "kotlin/concurrent/atomics/Atomics.common.kt",
@@ -128,6 +130,7 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
     from(stdlibProjectDir.resolve("common/src")) {
         include(
             "generated/_Ranges.kt",
+            "kotlin/ioH.kt",
             "kotlin/ExceptionsH.kt",
             "kotlin/JvmAnnotationsH.kt"
         )
@@ -157,6 +160,7 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
             "runtime/kotlin/jvm/internal/FunctionBase.kt",
             "runtime/kotlin/jvm/annotations/JvmPlatformAnnotations.kt",
             "src/kotlin/internal/throwNoWhenBranchMatchedException.kt",
+            "src/kotlin/text/StringBuilderJVM.kt",
         )
         into("src/jvm")
     }

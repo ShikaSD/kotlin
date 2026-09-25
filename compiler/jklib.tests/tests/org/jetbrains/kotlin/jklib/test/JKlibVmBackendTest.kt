@@ -59,7 +59,11 @@ class JKlibVmBackendTest {
      * Compiles each of [modules], a module's files by name, against the ones before it, links them against the VM
      * runtime and runs them. The last module is `main`, holding `box()`; the others are `lib0`, `lib1` and so on.
      */
-    private fun runBox(tempDir: File, modules: List<Map<String, String>>): Boolean {
+    private fun runBox(tempDir: File, modules: List<Map<String, String>>): Boolean =
+        runOutput(tempDir, modules).lines().any { it == "r0 = 1" }
+
+    /** What running [modules] as [runBox] does writes, the program's own output first. */
+    private fun runOutput(tempDir: File, modules: List<Map<String, String>>): String {
         val repo = System.getProperty("kotlin.vm.repo")
         assumeTrue(repo != null, "KOTLIN_VM_REPO names no VM checkout to run on")
         val names = modules.indices.map { if (it == modules.lastIndex) "main" else "lib$it" }
@@ -74,8 +78,7 @@ class JKlibVmBackendTest {
         val virs = names.asReversed().map { File(tempDir, "$it.vir").path }
         val stdlib = JKlibVmSourceRootConfigurator.vmStdlibVir.path
         run(File(repo, "target/debug/link_ir"), container, *virs.toTypedArray(), stdlib, runtime)
-        val result = run(File(repo, "target/debug/execute"), container)
-        return result.lines().any { it == "r0 = 1" }
+        return run(File(repo, "target/debug/execute"), container)
     }
 
     private fun run(binary: File, vararg args: String): String {
@@ -2311,5 +2314,46 @@ class JKlibVmBackendTest {
             }
         """
         assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testIntToStringIsItsDecimalDigits(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if ((-42).toString() == "-42") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** Every `append` of one value appends its text, a `Char` its one unit. */
+    @Test
+    fun testStringBuilderAppendsEachValue(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = StringBuilder().append("O").append('K').toString()
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `appendLine` is inline in the standard library, so its `append`s land in the program. */
+    @Test
+    fun testAppendLineEndsTheLine(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val text = StringBuilder().appendLine("a").toString()
+                return if (text == "a\n") "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `println` writes to the VM's output, through the runtime's `vm.io.print`. */
+    @Test
+    fun testPrintlnWritesALine(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                println("hello from the VM")
+                return "OK"
+            }
+        """
+        assertTrue(runOutput(tempDir, listOf(mapOf("box.kt" to source))).lines().contains("hello from the VM"))
     }
 }

@@ -45,6 +45,7 @@ private val RUNTIME_TYPES = mapOf(
     "kotlin.Number" to "java.lang.Number",
     "kotlin.Comparable" to "java.lang.Comparable",
     "kotlin.CharSequence" to "java.lang.CharSequence",
+    "java.lang.StringBuilder" to "java.lang.StringBuilder",
 )
 
 /**
@@ -489,6 +490,15 @@ class VmModuleGenerator(
 
     /** The runtime's `vm.random.seed`, which the VM stdlib's `kotlin.random.randomSeed` is. */
     internal val randomSeed: VmFunctionSymbol by lazy { runtimeFunction("vm.random.seed", emptyList(), VmType.I64) }
+
+    /** The runtime's `vm.io.print`, which the VM stdlib's `kotlin.io.printString` is. */
+    internal val print: VmFunctionSymbol by lazy { runtimeFunction("vm.io.print", listOf(stringType), null) }
+
+    /** A function of the runtime's `java.lang.StringBuilder`, which Kotlin's `StringBuilder` is an alias of. */
+    internal fun stringBuilderFunction(name: String, params: List<VmType>, returnType: VmType?): VmFunctionSymbol =
+        runtimeFunction("StringBuilder::$name", listOf(anyType) + params, returnType)
+
+    internal val stringBuilderClass: Int get() = runtimeClass("java.lang.StringBuilder")
 
     /** The runtime class implementing [declaration], one of [RUNTIME_THROWABLES], or null for any other class. */
     internal fun runtimeThrowable(declaration: IrClass): Int? =

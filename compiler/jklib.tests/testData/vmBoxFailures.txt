@@ -1,55 +1,55 @@
 # Box tests under compiler/testData/codegen/box expected to fail on the VM; see JKlibVmExpectedFailures.
-# 4362 failures; the most common reasons:
+# 4246 failures; the most common reasons:
 #     430  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
-#     183  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
+#     184  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
 #     161  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-#     152  unsupported: the expression RICH_PROPERTY_REFERENCE …
+#     153  unsupported: the expression RICH_PROPERTY_REFERENCE …
 #     136  IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 #     123  IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'x'. Specify it explicitly.
 #     121  unsupported: the value class Z
-#     101  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
-#      99  unsupported: the inner class Inner
-#      93  IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
-#      88  unsupported: the type operator SAM_CONVERSION
-#      87  unsupported: a call to CONSTRUCTOR …
-#      86  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+#     102  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
+#     100  unsupported: the inner class Inner
+#      95  IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
+#      89  unsupported: the type operator SAM_CONVERSION
+#      81  unsupported: a call to CONSTRUCTOR …
 #      77  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 #      76  unsupported: the value class X
 #      74  unsupported: the value class IC
-#      71  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
-#      65  unsupported: the value class A
-#      56  unsupported: a call to append
-#      51  unsupported: Int.toString
+#      72  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
+#      67  unsupported: the value class A
+#      56  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+#      49  unsupported: a call to illegalArgumentException
 #      44  IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 #      44  unsupported: a type test against CT of .Buildee
+#      42  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 #      42  unsupported: the value class R
 #      40  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'UInt'.
 #      39  unsupported: the value class S
-#      38  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 #      38  unsupported: the value class Foo
-#      32  unsupported: a bridge from FUN …
+#      36  unsupported: a bridge from FUN …
 #      29  unsupported: the inner class B
-#      27  unsupported: a call to illegalArgumentException
 #      26  unsupported: the value class UInt
 #      25  IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'c'. Specify it explicitly.
 #      25  unsupported: a type test against TV of .Buildee
-#      24  unsupported: overriding FUN …
-#      23  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
+#      25  unsupported: overriding FUN …
+#      24  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
 #      23  unsupported: a suspend lambda
+#      22  run: Execution result: RuntimeError(UncaughtException)
 #      22  unsupported: the value class Result
 #      21  IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
 #      21  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
-#      21  run: Execution result: RuntimeError(UncaughtException)
+#      20  link: missing register allocation
+#      20  unsupported: the expression GET_CLASS …
 #      19  IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
-#      19  link: missing register allocation
-#      19  unsupported: the expression GET_CLASS …
 #      18  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Result'.
 #      18  unsupported: the annotation class A
 #      17  unsupported: the value class Value
 #      17  unsupported: the value class Z1
+#      16  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
+#      16  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.toString_eb51da6900093cd3" }
 #      15  IllegalStateException: MISSING_STDLIB_CLASS: Missing stdlib class.
 #      15  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty<*>'.
-#      14  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.toString_eb51da6900093cd3" }
+#      13  IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
 
 annotations/annotationWithDefaultArgInDifferentModule.kt: unsupported: the annotation class MyConfig
 annotations/annotations0.kt: unsupported: the annotation class Foo
@@ -106,7 +106,6 @@ arithmetic/basic_uintTests.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYP
 arithmetic/division.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 arithmetic/divisionByZero.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'div' for operator '/'.
 arithmetic/github1856.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-arrays/arrayConstructorsSimple.kt: unsupported: Int.toString
 arrays/arrayInstanceOf.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.IntArray::iterator_6fe46d4f69aa1616" }
 arrays/arraysAreCloneable.kt: CompilationErrorException: There are still 9 unbound symbols Found unbound symbol:
 arrays/arraysOfInlineClass/accessArrayOfInlineClass.kt: unsupported: the value class Z
@@ -150,7 +149,6 @@ arrays/kt42932.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved refer
 arrays/kt7009.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Int'.
 arrays/kt7288.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.IntArray::iterator_6fe46d4f69aa1616" }
 arrays/kt950.kt: unsupported: a call to CONSTRUCTOR …
-arrays/nonLocalReturnArrayConstructor.kt: unsupported: Int.toString
 arrays/primitiveArrays.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'copyOf' on receiver of type 'BooleanArray'.
 arrays/stdlib.kt: unsupported: a type test against T of .MutableArray
 assert/alwaysDisable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'assert'.
@@ -161,25 +159,22 @@ associatedObjects/findAssociatedObjectAndDCE.kt: IllegalStateException: UNRESOLV
 associatedObjects/findAssociatedObjectInSeparatedFile.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
 associatedObjects/findAssociatedObjectLazyness.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'AssociatedObjectKey'.
 associatedObjects/kt88571.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
-basics/canonical_name.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 basics/expression_as_statement.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 basics/k42000_1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 basics/k42000_crossmodule.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 basics/kt7972.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
 basics/null_check.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
-basics/safe_cast.kt: unsupported: Boolean.toString
 basics/spread_operator_0.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-basics/statements0.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-basics/unchecked_cast1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+basics/unchecked_cast1.kt: unsupported: a type test against T of .foo
 basics/unchecked_cast10.kt: unsupported: a type test against T of .foo
 basics/unchecked_cast12.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::compareTo_81219ebc22bef5b2" }
 basics/unchecked_cast13.kt: wrong result
 basics/unchecked_cast2.kt: unsupported: a type test against T of .cast
-basics/unchecked_cast3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
+basics/unchecked_cast3.kt: unsupported: a type test against T of .testCast
 basics/unchecked_cast4.kt: unsupported: a type test against R of .uncheckedCast
 basics/unchecked_cast6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 basics/unchecked_cast7.kt: unsupported: a type test against T of .uncheckedCast
-basics/unchecked_cast8.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
+basics/unchecked_cast8.kt: run: Execution result: RuntimeError(UncaughtException)
 basics/unchecked_cast9.kt: unsupported: a type test against T of .foo
 basics/unit1.kt: unsupported: a value of type kotlin.Unit
 basics/unit2.kt: unsupported: a value of type kotlin.Unit
@@ -198,20 +193,12 @@ binaryOp/eqNullableToPrimitiveWithSideEffects.kt: wrong result
 binaryOp/intrinsic.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
 binaryOp/intrinsicNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
 binaryOp/primitiveEqualsSafeCall.kt: unsupported: Short.equals
-boxing/boxing1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-boxing/boxing11.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-boxing/boxing12.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-boxing/boxing13.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-boxing/boxing14.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-boxing/boxing2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-boxing/boxing3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-boxing/boxing4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-boxing/boxing5.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-boxing/boxing6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-boxing/boxing7.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-boxing/boxing8.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-boxing/boxing9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-boxing/kt53100_casts.kt: unsupported: Double.toString
+boxing/boxing1.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
+boxing/boxing12.kt: unsupported: overriding FUN …
+boxing/boxing13.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+boxing/boxing2.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
+boxing/boxing8.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+boxing/boxing9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 boxing/kt84727.kt: unsupported: a type test against T of .uncheckedCastNull
 boxing/kt84727_if.kt: unsupported: a type test against T of .uncheckedCastNull
 boxing/kt84727_inline.kt: unsupported: a type test against T of .uncheckedCastNull
@@ -267,26 +254,22 @@ bridges/returnTypeSignature.kt: unsupported: a call to CONSTRUCTOR …
 bridges/special.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.MutableMap::replaceAll_704a8cc35f5776cf" }
 bridges/specialGeneric.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::spliterator_8a56e74d22ceafe7" }
 bridges/strListContains.kt: unsupported: a type test against E of .forceContains
-bridges/test0.kt: unsupported: Int.toString
-bridges/test1.kt: unsupported: Int.toString
-bridges/test10.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-bridges/test11.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-bridges/test12.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-bridges/test13.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-bridges/test14.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+bridges/test10.kt: unsupported: a bridge from FUN …
+bridges/test11.kt: unsupported: a bridge from FUN …
+bridges/test13.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.toString_eb51da6900093cd3" }
+bridges/test14.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 bridges/test15.kt: unsupported: a type test against T of .A
 bridges/test18.kt: link: missing register allocation
 bridges/test19.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
-bridges/test2.kt: unsupported: Int.toString
 bridges/test20.kt: unsupported: a type test against T of .A
 bridges/test21.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 bridges/test23.kt: unsupported: a value of type kotlin.Unit
-bridges/test24.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
+bridges/test24.kt: unsupported: a value of type kotlin.Unit
 bridges/test25.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'UByteArray'.
 bridges/test3.kt: unsupported: a type test against T of .A
-bridges/test4.kt: unsupported: Int.toString
+bridges/test4.kt: unsupported: a bridge from FUN …
 bridges/test5.kt: unsupported: a type test against T of .A
-bridges/test6.kt: unsupported: Int.toString
+bridges/test6.kt: unsupported: a bridge from FUN …
 bridges/test7.kt: unsupported: a bridge from FUN …
 bridges/test8.kt: unsupported: a bridge from FUN …
 bridges/twoParentsWithDifferentMethodsTwoBridges.kt: unsupported: a bridge from FUN …
@@ -301,7 +284,6 @@ builtinStubMethods/extendJavaClasses/hashSet.kt: CompilationErrorException: Ther
 builtinStubMethods/extendJavaClasses/overrideAbstractSetMethod.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AbstractSet'.
 callableReference/adaptedReferences/adaptedSecondArgArray.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::toString_eaddb89afd7fd476" }
 callableReference/adaptedReferences/adaptedSecondArgTypeVariable.kt: unsupported: a type test against T of .foo
-callableReference/adaptedReferences/bothWithCoercionToUnit.kt: unsupported: Int.toString
 callableReference/adaptedReferences/contextFunctionAnonymous.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/adaptedReferences/contextFunctionWithExtensionProperty.kt: unsupported: a type test against T of .
 callableReference/adaptedReferences/contextFunctionWithSam.kt: unsupported: the type operator SAM_CONVERSION
@@ -352,14 +334,12 @@ callableReference/adaptedReferences/suspendConversion/withContextParametersAsASu
 callableReference/adaptedReferences/suspendConversion/withParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
 callableReference/adaptedReferences/suspendUnitConversion.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 callableReference/adaptedReferences/varargViewedAsPrimitiveArray.kt: unsupported: overriding FUN …
-callableReference/arrayConstructorArgument.kt: unsupported: Char.toString
+callableReference/arrayConstructorArgument.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::get_ec7b181d2900b7e7" }
 callableReference/arrayOfNulls.kt: IllegalStateException: RETURN_TYPE_MISMATCH: Return type mismatch: expected 'String', actual 'Char'.
 callableReference/bound/array.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-callableReference/bound/arrayConstructorArgument.kt: unsupported: Char.toString
-callableReference/bound/boundPrimitiveAndReferenceReceiverSharedClassSplit.kt: unsupported: Int.toString
+callableReference/bound/arrayConstructorArgument.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::get_ec7b181d2900b7e7" }
 callableReference/bound/coercionToUnit.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 callableReference/bound/companionObjectReceiverInheritsFromOuter.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-callableReference/bound/dontShareReceiver.kt: unsupported: Int.toString
 callableReference/bound/emptyLHS.kt: unsupported: the inner class B
 callableReference/bound/enumEntryMember.kt: wrong result
 callableReference/bound/equals/receiverInEquals.kt: wrong result
@@ -427,7 +407,6 @@ callableReference/function/sortListOfStrings.kt: IllegalStateException: UNRESOLV
 callableReference/function/traitImplMethodWithClassReceiver.kt: unsupported: the inner class C
 callableReference/functionAndKFunctionSharedClassSplit.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<String, Int>'.
 callableReference/genericConstructorReference.kt: unsupported: the inner class Inner
-callableReference/inlineArrayConstructors.kt: unsupported: Char.toString
 callableReference/interfaceMethodReference.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.toString_eb51da6900093cd3" }
 callableReference/kt21014.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/kt21092a.kt: unsupported: the value class Z
@@ -533,7 +512,6 @@ classLiteral/java/kt11943.kt: IllegalStateException: RETURN_TYPE_MISMATCH: Retur
 classLiteral/primitiveClassEquality.kt: unsupported: the expression GET_CLASS …
 classes/classObjectsWithParentClasses.kt: unsupported: the inner class InnerClass
 classes/comanionObjectFieldVsClassField.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'R'. Specify it explicitly.
-classes/delegateConstructorCallWithKeywords.kt: unsupported: Int.toString
 classes/delegationJava.kt: unsupported: overriding FUN …
 classes/delegationMethodsWithArgs.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::equals_405e6e1ae79275d7" }
 classes/inheritSetAndHashSet.kt: unsupported: a call to CONSTRUCTOR …
@@ -551,14 +529,12 @@ classes/kt1120.kt: unsupported: a call to CONSTRUCTOR …
 classes/kt1535.kt: unsupported: implementing the function type Function0
 classes/kt1538.kt: unsupported: a type test against java.util.HashMap outside the VM modules
 classes/kt1980.kt: unsupported: a call to CONSTRUCTOR …
-classes/kt2391.kt: unsupported: a call to append
 classes/kt2417.kt: unsupported: a call to CONSTRUCTOR …
 classes/kt2566_2.kt: unsupported: the inner class E
 classes/kt2607.kt: unsupported: the inner class C
 classes/kt3114.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::compareTo_81219ebc22bef5b2" }
 classes/kt343.kt: unsupported: a call to CONSTRUCTOR …
 classes/kt508.kt: unsupported: a call to CONSTRUCTOR …
-classes/kt707.kt: unsupported: Int.toString
 classes/kt8011.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 classes/kt940.kt: unsupported: the supertype Comparator outside the VM modules
 classes/outerThis.kt: unsupported: the inner class Inner
@@ -572,7 +548,7 @@ classes/privateOuterProperty.kt: unsupported: the inner class Inner
 classes/privateToThis.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.toString_eb51da6900093cd3" }
 classes/propertyInInitializer.kt: unsupported: the inner class InnerBase
 closures/anonymousObjectAsLastExpressionInLambda.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Pair'.
-closures/captureExtensionReceiver.kt: unsupported: Int.toString
+closures/captureExtensionReceiver.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 closures/captureInSuperConstructorCall/constructorParameterAndLocalCapturedInLambdaInLocalClass.kt: unsupported: the inner class Inner
 closures/captureInSuperConstructorCall/constructorParameterCapturedInLambdaInLocalClass.kt: unsupported: the inner class Inner
 closures/captureInSuperConstructorCall/constructorParameterCapturedInLambdaInLocalClass2.kt: unsupported: the inner class Inner
@@ -718,7 +694,7 @@ contextParameters/kt58476.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unres
 contextParameters/kt65953.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 contextParameters/kt66368.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 contextParameters/substitutedContextReceivers.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.toString_eb51da6900093cd3" }
-contextParameters/suspendContextParemetersWithExtension.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'buildString'.
+contextParameters/suspendContextParemetersWithExtension.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
 contextParameters/suspendContextualWithExtension.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
 contextParameters/useFromAnotherModuleSuspending.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 contextParameters/withExtensionReceiverInSupertype.kt: unsupported: implementing the function type Function3
@@ -730,7 +706,6 @@ contracts/lambdaParameter.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE
 contracts/listAppend.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
 contracts/nestedLambdaInNonInlineCallExactlyOnce.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 controlStructures/breakContinueInExpressions/breakInLoopConditions.kt: unsupported: a value of type kotlin.Nothing
-controlStructures/breakContinueInExpressions/inlinedBreakContinue/continueInTryBlock.kt: unsupported: Int.toString
 controlStructures/breakContinueInExpressions/inlinedBreakContinue/initializerBlock.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 controlStructures/breakContinueInExpressions/inlinedBreakContinue/inlineFunctionWithMultipleParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 controlStructures/breakContinueInExpressions/inlinedBreakContinue/lambdaPassedToInlineFunction.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
@@ -816,8 +791,7 @@ controlStructures/forUserType.kt: link: Failed to link: UnresolvedImport { modul
 controlStructures/kt237.kt: unsupported: a value of type kotlin.Unit
 controlStructures/kt3273.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 controlStructures/kt42455.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-controlStructures/kt513.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
-controlStructures/kt769.kt: unsupported: Int.toString
+controlStructures/kt513.kt: unsupported: a call to CONSTRUCTOR …
 controlStructures/kt88544.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 controlStructures/kt910.kt: unsupported: a call to CONSTRUCTOR …
 controlStructures/slowDsl/slowHtmlLikeDsl.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
@@ -825,24 +799,20 @@ controlStructures/tryCatchExpression.kt: unsupported: a value of type kotlin.Uni
 controlStructures/tryCatchInExpressions/tryCatchAfterWhileTrue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
 controlStructures/tryCatchInExpressions/tryFinallyOfTypeUnit.kt: link: missing register allocation
 controlStructures/tryFinally.kt: unsupported: a value of type kotlin.Unit
-controlflow/break.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-controlflow/break1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+controlflow/break.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 controlflow/callOnSmarcastedNothing.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
-controlflow/for_loops.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-controlflow/for_loops_array_break_continue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+controlflow/for_loops.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+controlflow/for_loops_array_break_continue.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 controlflow/for_loops_array_indices.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-controlflow/for_loops_array_mutation.kt: unsupported: a call to append
-controlflow/for_loops_array_nested.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-controlflow/for_loops_array_nullable.kt: unsupported: a call to append
-controlflow/for_loops_array_side_effects.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-controlflow/for_loops_call_order.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+controlflow/for_loops_array_nested.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+controlflow/for_loops_array_side_effects.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+controlflow/for_loops_call_order.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 controlflow/for_loops_coroutines.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'yield'.
 controlflow/for_loops_errors.kt: unsupported: a call to illegalArgumentException
-controlflow/for_loops_let_with_nullable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-controlflow/for_loops_nested.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-controlflow/for_loops_overflow.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-controlflow/for_loops_types.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-controlflow/unreachable1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+controlflow/for_loops_let_with_nullable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+controlflow/for_loops_nested.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+controlflow/for_loops_overflow.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+controlflow/for_loops_types.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 coroutines/32defaultParametersInSuspend.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'x'. Specify it explicitly.
 coroutines/accessorForSuspend.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
 coroutines/anonymousObject.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
@@ -1337,7 +1307,7 @@ coroutines/varSpilling/kt75926.kt: IllegalStateException: CANNOT_INFER_VALUE_PAR
 coroutines/varSpilling/kt79276.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
 coroutines/varSpilling/kt85203.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
 coroutines/varSpilling/kt85203_2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
-coroutines/varSpilling/lvtWithInlineOnly.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
+coroutines/varSpilling/lvtWithInlineOnly.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 coroutines/varSpilling/nullSpilling.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'x'. Specify it explicitly.
 coroutines/varSpilling/safeCallElvis.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 coroutines/varValueConflictsWithTable.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'x'. Specify it explicitly.
@@ -1352,12 +1322,9 @@ dataClasses/doubleParam.kt: unsupported: a call to CONSTRUCTOR …
 dataClasses/equals/genericarray.kt: unsupported: a call to dataClassArrayMemberToString
 dataClasses/equals/intarray.kt: unsupported: a call to dataClassArrayMemberToString
 dataClasses/floatParam.kt: unsupported: a call to CONSTRUCTOR …
-dataClasses/multiDeclarationFor.kt: unsupported: Int.toString
 dataClasses/toString/arrayParams.kt: unsupported: a call to dataClassArrayMemberToString
 dataClasses/toString/primitiveArrays.kt: unsupported: a call to dataClassArrayMemberToString
 dataClasses/toString/unitComponent.kt: unsupported: a Unit field
-dataClasses/twoValParams.kt: unsupported: Int.toString
-dataClasses/twoVarParams.kt: unsupported: Int.toString
 dataClasses/unitComponent.kt: unsupported: a Unit field
 defaultArguments/captureInTailrec.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 defaultArguments/constructor/annotation.kt: unsupported: the annotation class A
@@ -1460,7 +1427,7 @@ delegatedProperty/kt4138.kt: unsupported: the expression RICH_PROPERTY_REFERENCE
 delegatedProperty/kt45431.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
 delegatedProperty/kt6722.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
 delegatedProperty/kt9712.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
-delegatedProperty/lazy.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+delegatedProperty/lazy.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
 delegatedProperty/lazyDelegateInObject.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
 delegatedProperty/local.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty<*>'.
 delegatedProperty/local/capturedLocalVal.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -1539,22 +1506,17 @@ delegation/delegationToInnerClassOfGenericClass.kt: unsupported: the inner class
 delegation/delegationToSAMInterface.kt: unsupported: the type operator SAM_CONVERSION
 delegation/ifWithCallableReferenceInLazy.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
 delegation/kt44199.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty<*>'.
-destructuringDeclInLambdaParam/extensionComponents.kt: unsupported: Int.toString
-destructuringDeclInLambdaParam/generic.kt: unsupported: Int.toString
 destructuringDeclInLambdaParam/lambdaInLambda.kt: IllegalStateException: CANNOT_INFER_IT_PARAMETER_TYPE: Cannot infer type for implicit value parameter 'it'. Specify it explicitly.
-destructuringDeclInLambdaParam/otherParameters.kt: unsupported: Int.toString
 destructuringDeclInLambdaParam/stdlibUsages.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 destructuringDeclInLambdaParam/withIndexed.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-devirtualization/anonymousObject.kt: unsupported: a call to append
 devirtualization/inline_getter.kt: unsupported: the value class Child
 diagnostics/functions/tailRecursion/checkStackDepth.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'java' on receiver of type 'KClass<Thread>'.
 diagnostics/functions/tailRecursion/kt47084_lambdaInDefaultArgument.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 diagnostics/functions/tailRecursion/labeledThisReferences.kt: unsupported: the inner class C
-diagnostics/functions/tailRecursion/realStringEscape.kt: unsupported: a call to toString
-diagnostics/functions/tailRecursion/realStringRepeat.kt: unsupported: a call to toString
+diagnostics/functions/tailRecursion/realStringEscape.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
+diagnostics/functions/tailRecursion/realStringRepeat.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 diagnostics/functions/tailRecursion/recursiveCallInInlineLambdaWithCapture.kt: IllegalStateException: RETURN_NOT_ALLOWED: 'return' is prohibited here.
 directInvokeOptimization/boundInnerContructorRef.kt: unsupported: the inner class Inner
-directInvokeOptimization/contextParameters.kt: unsupported: Int.toString
 directInvokeOptimization/samConversion.kt: unsupported: the type operator SAM_CONVERSION
 directInvokeOptimization/unboundInnerContructorRef.kt: unsupported: the inner class Inner
 elvis/genericElvisWithMoreSpecificLHS.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
@@ -1584,7 +1546,7 @@ enum/enumEntryReferenceFromInnerClassConstructor2.kt: unsupported: the inner cla
 enum/enumEntryReferenceFromInnerClassConstructor3.kt: unsupported: the inner class Inner
 enum/enumMultiModule.kt: link: Failed to link: UnresolvedImport { module: "lib", symbol: "FooEnum::valueOf_bf00f4a63037aeef" }
 enum/enumValueOf.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'assertContains'.
-enum/getEnumEntityByOrdinal.kt: unsupported: Char.toString
+enum/getEnumEntityByOrdinal.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::get_ec7b181d2900b7e7" }
 enum/initEntriesInCompanionObject.kt: unsupported: a call to valueOf
 enum/initEntriesInCompanionObject2.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.enumValueOf_494a7f06ff1f1ac6" }
 enum/initEntriesInValueOf.kt: unsupported: a call to valueOf
@@ -1601,10 +1563,10 @@ enum/kt7257_boundReference2.kt: unsupported: the expression RICH_PROPERTY_REFERE
 enum/kt7257_boundReferenceWithImplicitReceiver.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 enum/kt9711_2.kt: unsupported: the inner class D
 enum/lambdaInDefault.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
-enum/loop.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+enum/loop.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 enum/multipleModules.kt: link: Failed to link: UnresolvedImport { module: "lib", symbol: "a.A::valueOf_bf00f4a63037aeef" }
 enum/sortEnumEntries.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'sort' on receiver of type 'Array<Game>'.
-enum/switchLowering.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+enum/switchLowering.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 enum/throwingEntryInitializer.kt: unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
 enum/valueOf2.kt: unsupported: a call to valueOf
 enum/valueof.kt: unsupported: a call to valueOf
@@ -1646,11 +1608,8 @@ evaluate/uintOperations.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECL
 evaluate/ulongOperations.kt: IllegalStateException: MISSING_STDLIB_CLASS: Missing stdlib class.
 evaluate/unsignedConst.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 evaluate/ushortOperations.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_INITIALIZER: Const 'val' initializer must be a constant value.
-exceptions/catch1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-exceptions/catch2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-exceptions/catch7.kt: unsupported: a call to append
-extensionFunctions/classMethodCallExtensionSuper.kt: unsupported: Int.toString
-extensionFunctions/defaultMethodInterfaceCallExtensionSuper.kt: unsupported: Int.toString
+exceptions/catch1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+exceptions/catch2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 extensionFunctions/delegatedPropertyWithExtensionType.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 extensionFunctions/extensionFunctionAsASupertypeOfValueClass.kt: unsupported: the value class ValueClass
 extensionFunctions/extensionFunctionAsATypeLocal.kt: unsupported: implementing the function type Function1
@@ -1664,14 +1623,11 @@ extensionFunctions/extensionFunctionInValueClass.kt: unsupported: the value clas
 extensionFunctions/extensionFunctionWithExtensionAsAReceiver.kt: unsupported: a type test against T of .test
 extensionFunctions/extensionFunctionWithExtensionInSAMInterface.kt: unsupported: a type test against T of .test
 extensionFunctions/extensionFunctionWithNestedReceiver.kt: unsupported: the inner class D
-extensionFunctions/kt1953.kt: unsupported: a call to CONSTRUCTOR …
-extensionFunctions/kt1953_class.kt: unsupported: a call to CONSTRUCTOR …
 extensionFunctions/kt23675.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'map' on receiver of type 'IntRange'.
 extensionFunctions/kt475.kt: unsupported: a call to CONSTRUCTOR …
 extensionFunctions/kt865.kt: unsupported: a call to CONSTRUCTOR …
-extensionFunctions/nested2.kt: unsupported: Int.toString
 extensionFunctions/nestedExtensionFunctionAsASupertype.kt: unsupported: implementing the function type Function2
-extensionFunctions/simple.kt: unsupported: a call to get
+extensionFunctions/simple.kt: link: Failed to link: ImportSignatureMismatch { module: "vm.runtime", symbol: "StringBuilder::get" }
 extensionFunctions/suspendConversionForExtensionFunAsAFunType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend Int.() -> Unit'.
 extensionFunctions/suspendConversionForExtensionFunAsAPropertyType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend Int.() -> Unit'.
 extensionFunctions/suspendConversionForExtensionFunAsASuperType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend Int.() -> Unit'.
@@ -1702,7 +1658,6 @@ fir/initializationInLocalInnerClassWithSecondaryConstructor.kt: unsupported: the
 fir/kt68806.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'yield'.
 fir/listAssignmentInWhen.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 fir/missingDependencyClassInTypeArguments.kt: CompilationErrorException: Module "lib2" has a reference to symbol /Some|null[0]. Neither the module itself nor its dependencies contain such declaration.
-fir/toLong.kt: unsupported: Long.toString
 fp/addSubZeroInfinityFloat.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isNaN' on receiver of type 'Float'.
 fp/atan2ZeroGuadrantsDouble.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'atan2'.
 fp/denormalGradualDoubleBits.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toBits' on receiver of type 'Double'.
@@ -1752,7 +1707,7 @@ funInterface/equality/localFunctionReferences.kt: unsupported: the type operator
 funInterface/equality/simpleLambdas.kt: unsupported: the type operator SAM_CONVERSION
 funInterface/funConversionInVararg.kt: unsupported: the type operator SAM_CONVERSION
 funInterface/funInterfaceCallInLambda.kt: unsupported: the type operator SAM_CONVERSION
-funInterface/funInterfaceInheritance.kt: unsupported: Int.toString
+funInterface/funInterfaceInheritance.kt: unsupported: the type operator SAM_CONVERSION
 funInterface/funInterfaceTypealias.kt: unsupported: the type operator SAM_CONVERSION
 funInterface/funInterfaceWithReceiver.kt: unsupported: the type operator SAM_CONVERSION
 funInterface/funInterfaceWithSuspendMethod.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'Continuation'.
@@ -1786,17 +1741,10 @@ funInterface/subtypeOfFunctionalTypeToFunInterfaceConversion.kt: unsupported: th
 funInterface/suspendFunInterfaceConversionCodegen.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'KSuspendFunction0<Unit>'.
 funInterface/suspendFunctionAndFunInterfaceSharedClassSplit.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'Continuation'.
 funInterface/typealiasedFunInterface.kt: unsupported: the type operator SAM_CONVERSION
-function/defaults.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
-function/defaults1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
-function/defaults2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
-function/defaults4.kt: unsupported: a call to append
-function/defaults5.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-function/defaults7.kt: unsupported: a call to append
 function/defaults9.kt: unsupported: the inner class Bar
 function/defaultsWithInlineClasses.kt: unsupported: the value class Foo
-function/defaultsWithVarArg1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+function/defaultsWithVarArg1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 function/defaultsWithVarArg2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
-function/localFunction.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 function/sum.kt: unsupported: `rem` on doubles
 function/unreachableStatementAfterReturn.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 functions/bigArity/instanceOfCallableReference.kt: wrong result
@@ -1985,13 +1933,10 @@ inference/whenAtAssignmentWithSmartCast.kt: unsupported: a type test against T o
 inference/whenAtAssignmentWithSmartCastInsideCapturedLambda.kt: unsupported: a type test against T of .materialize
 initializers/files/simple.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 initializers/files/simpleMultiModule.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
-initializers/initializers0.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-initializers/initializers1.kt: unsupported: a call to append
-initializers/initializers2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-initializers/initializers9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+initializers/initializers0.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+initializers/initializers2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 initializers/static_arrays.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'joinToString' on receiver of type 'IntArray'.
 initializers/static_list.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-initializers/throw2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 inline/callableReferenceOfLocalFun.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.toString_eb51da6900093cd3" }
 inline/callableReferenceOfLocalInline.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
 inline/callableReferenceOfLocalKT77102.kt: unsupported: a Unit property
@@ -1999,22 +1944,19 @@ inline/classDeclarationInsideInline.kt: unsupported: overriding FUN …
 inline/coercionToUnit.kt: link: missing register allocation
 inline/crossModuleUnsignedLiterals.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 inline/crossinlineLambdaAllocation.kt: unsupported: a captured variable
-inline/defaultArgs.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 inline/defaultArgsLateinitLowering.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 inline/fakeOverrideInliningCrossModule.kt: CompilationErrorException: Module "libB" has a reference to symbol /foo|foo(){}[0]. Neither the module itself nor its dependencies contain such declaration.
 inline/getClass.kt: unsupported: the expression GET_CLASS …
 inline/inline12.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 inline/inline16.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 inline/inline17.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-inline/inline2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-inline/inline21.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-inline/inline24.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-inline/inline6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-inline/inline7.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-inline/inline9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+inline/inline21.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+inline/inline24.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+inline/inline6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+inline/inline7.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+inline/inline9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 inline/inlineChainCrossModule.kt: CompilationErrorException: Module "mid" has a reference to symbol /baz|baz(){}[0]. Neither the module itself nor its dependencies contain such declaration.
 inline/inlineLambdaNoCapture.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
-inline/inlinedLambdaWithErasedParamType.kt: unsupported: Char.toString
 inline/innerInlineFunCapturesOuter.kt: unsupported: the inner class Inner
 inline/iteratorOnInlineFunctionResult.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Array::iterator_6fe46d4f69aa1616" }
 inline/kt26117.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'R'. Specify it explicitly.
@@ -2022,9 +1964,7 @@ inline/kt26787.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved refer
 inline/kt66017.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 inline/kt66017_inlineFromTheSameModule.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 inline/kt67866.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-inline/lambdaAsAny.kt: unsupported: a call to append
 inline/lateinitProperty.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
-inline/localFunctionInInitializerBlock.kt: unsupported: a call to append
 inline/localInlineExtensionFunction.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
 inline/localInlineFunction.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
 inline/localInlineFunctionComplex.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
@@ -2033,12 +1973,10 @@ inline/localInlineFunctionNameClash.kt: IllegalStateException: NOT_YET_SUPPORTED
 inline/localInlineFunctionReference.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
 inline/localObjectReturnedFromWhen.kt: unsupported: implementing the function type Function0
 inline/multipleInheritanceClash.kt: CompilationException: Back-end: Please report this problem https://kotl.in/issue
-inline/propertyAccessorInline.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-inline/returnLocalClassFromBlock.kt: unsupported: a call to append
+inline/propertyAccessorInline.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 inline/sharedVar.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 inline/simpleEnum.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.toString_eb51da6900093cd3" }
 inline/statementAsLastExprInBlock.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Int$Companion::INSTANCE" }
-inline/twiceInlinedObject.kt: unsupported: a call to append
 inline/typeSubstitutionInFakeOverride.kt: unsupported: the expression CLASS_REFERENCE …
 inlineArgsInPlace/arrayDequeRemoveAll.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toTypedArray' on receiver of type 'Collection<E (of class ArrayDeque<E>)>'.
 inlineArgsInPlace/breakInArgumentExpression.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'linkedMapOf'.
@@ -2312,8 +2250,8 @@ inlineClasses/contextsAndAccessors/inlineLambdaInInlineClassFun.kt: unsupported:
 inlineClasses/contextsAndAccessors/inlineLambdaInInlineClassFunGeneric.kt: unsupported: the value class R
 inlineClasses/contextsAndAccessors/kt26858.kt: unsupported: the value class Direction
 inlineClasses/contextsAndAccessors/kt26858Generic.kt: unsupported: the value class Direction
-inlineClasses/contextsAndAccessors/kt27513.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'append'.
-inlineClasses/contextsAndAccessors/kt27513Generic.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'append'.
+inlineClasses/contextsAndAccessors/kt27513.kt: unsupported: the value class A
+inlineClasses/contextsAndAccessors/kt27513Generic.kt: unsupported: the value class A
 inlineClasses/contextsAndAccessors/kt30780.kt: unsupported: the value class Test
 inlineClasses/contextsAndAccessors/kt30780Generic.kt: unsupported: the value class Test
 inlineClasses/contextsAndAccessors/lambdaInInlineClassFun.kt: unsupported: the value class R
@@ -2841,7 +2779,7 @@ inlineClasses/whenWithSubjectGeneric.kt: unsupported: the value class InlineLong
 inlineClasses/withReturnTypeMangling.kt: unsupported: the value class S
 inlineClasses/withReturnTypeManglingGeneric.kt: unsupported: the value class S
 inlineEvaluationOrder/arrayAccessLhsDecomposed.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-inlineEvaluationOrder/continueInExtractedDoWhile.kt: unsupported: Int.toString
+inlineEvaluationOrder/continueInExtractedDoWhile.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::get_ec7b181d2900b7e7" }
 inlineEvaluationOrder/inlineFunctionAsParameterOfQualifiedCall.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'replace' on receiver of type 'String'.
 inlineEvaluationOrder/methodDecomposedWithBind.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Int'.
 inlineEvaluationOrder/propertyAccessWithSideEffect.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
@@ -2860,7 +2798,7 @@ innerClass/inheritanceMultipleModules3.kt: unsupported: the inner class Inner1
 innerClass/multipleModules.kt: unsupported: the inner class Inner
 innerClass/noPrimaryConstructor.kt: unsupported: the inner class Inner
 innerClass/qualifiedThis.kt: unsupported: the inner class B
-innerClass/secondaryConstructor.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+innerClass/secondaryConstructor.kt: unsupported: the inner class Inner
 innerClass/simple.kt: unsupported: the inner class Inner
 innerClass/superOuter.kt: unsupported: the inner class Inner
 innerNested/considerPropertyInitValueFromNestedClass.kt: unsupported: the annotation class Ann
@@ -2891,8 +2829,7 @@ innerNested/superConstructorCall/objectExtendsInnerOfLocalVarargAndDefault.kt: u
 innerNested/superConstructorCall/objectExtendsInnerOfLocalWithCapture.kt: unsupported: the inner class Inner
 innerNested/superConstructorCall/objectExtendsInnerWithDelegatingConstructor.kt: unsupported: the inner class Inner
 innerNested/superConstructorCall/objectOuterDiffersFromInnerOuter.kt: unsupported: the inner class Inner
-interfaceCallsNCasts/interface0.kt: unsupported: a call to append
-intrinsics/ea35953.kt: unsupported: Int.toString
+intrinsics/ea35953.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::equals_405e6e1ae79275d7" }
 intrinsics/kt10131.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 intrinsics/kt10131a.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'fold' on receiver of type 'CharArray'.
 intrinsics/kt52163_doubleCompareToInt.kt: unsupported: compareTo on floating-point numbers
@@ -2900,7 +2837,7 @@ intrinsics/kt8666.kt: link: Failed to link: UnresolvedImport { module: "kotlin-s
 intrinsics/nullPlusString.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 intrinsics/rangeFromCollection.kt: unsupported: a call to CONSTRUCTOR …
 intrinsics/stringFromCollection.kt: unsupported: a call to CONSTRUCTOR …
-intrinsics/tostring.kt: unsupported: Byte.toString
+intrinsics/tostring.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.toString_eb51da6900093cd3" }
 intrinsics/trimMarginWithBlankString.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimMargin' on receiver of type 'String'.
 ir/anonymousClassLeak.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lazy'.
 ir/anonymousObjectInForLoopIteratorAndBody.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
@@ -2909,8 +2846,8 @@ ir/closureConversion/innerClass2.kt: unsupported: the inner class Inner
 ir/kt25405.kt: unsupported: the inner class TableColumn
 ir/kt52677.kt: unsupported: the annotation class MySerializable
 ir/lambdaWithLoop.kt: IllegalStateException: MISSING_STDLIB_CLASS: Missing stdlib class.
-ir/recursiveGeneric.kt: unsupported: Boolean.toString
-ir/recursiveGeneric2.kt: unsupported: Boolean.toString
+ir/recursiveGeneric.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
+ir/recursiveGeneric2.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 ir/serializationRegressions/anonFakeOverride.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toSet' on receiver of type 'LinkedHashSet<Uniform>'.
 ir/serializationRegressions/dispatchReceiverValue.kt: IllegalStateException: EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE: C: 'expect' and corresponding 'actual' are declared in the same module.
 ir/serializationRegressions/innerClassInEnumEntryClass.kt: unsupported: the inner class Inner
@@ -2935,35 +2872,27 @@ jvm8/defaults/enable/kt55083_indyLambdaForFunInterface.kt: unsupported: the type
 kclass/kclass1.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 klib/kt33411.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'getK'.
 labels/nestedLabelsInlinedClashingAtFunctionsWithClosure.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
-labels/siblingLabelsInlinedClashing.kt: unsupported: Int.toString
-lambda/lambda1.kt: unsupported: a call to append
-lambda/lambda10.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-lambda/lambda11.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-lambda/lambda12.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-lambda/lambda13.kt: unsupported: a call to append
-lambda/lambda2.kt: unsupported: a call to toString
-lambda/lambda3.kt: unsupported: a call to append
+lambda/lambda10.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+lambda/lambda11.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+lambda/lambda12.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 lambda/lambda4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-lambda/lambda5.kt: unsupported: a call to append
-lambda/lambda6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+lambda/lambda6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 lambda/lambda8.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-lambda/lambda9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+lambda/lambda9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 lambda/lambda_kt49360_trivial.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 lambda/lambda_kt49360_withFlow.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
 lambda/lambda_kt49360_wrapBlock.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
 lateinit/globalIsInitialized.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isInitialized' on receiver of type 'KMutableProperty0<String>'.
 lateinit/innerIsInitialized.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isInitialized' on receiver of type 'KMutableProperty0<String>'.
 lateinit/isInitialized.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isInitialized' on receiver of type 'KMutableProperty0<String>'.
-lateinit/localCapturedNotInitialized.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-lateinit/localNotInitialized.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-lateinit/notInitialized.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+lateinit/localCapturedNotInitialized.kt: wrong result
+lateinit/localNotInitialized.kt: link: missing register allocation
 literals/listof1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
-localClass/innerTakesCapturedFromOuter.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+localClass/innerTakesCapturedFromOuter.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 localClass/innerWithCapture.kt: unsupported: the inner class Inner
 localClass/noPrimaryConstructor.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 localClass/objectExpressionInInitializer.kt: unsupported: the inner class InClass
 localClass/objectExpressionInProperty.kt: unsupported: the inner class InClass
-localClass/tryCatch.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
 localClass/virtualCallFromConstructor.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 localClasses/closureOfInnerLocalClass.kt: unsupported: the inner class D
 localClasses/closureWithSelfInstantiation.kt: unsupported: the inner class D
@@ -2976,7 +2905,7 @@ localClasses/localExtendsInnerAndReferencesOuterMember.kt: unsupported: the inne
 localClasses/localGenericWithTypeParameters.kt: unsupported: the expression CLASS_REFERENCE …
 localClasses/ownClosureOfInnerLocalClass.kt: unsupported: the inner class D
 localClasses/subclassingExtensionReceiverClass.kt: unsupported: the inner class AB
-localEscapeAnalysis/arraysFieldWrite.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+localEscapeAnalysis/arraysFieldWrite.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'contentToString' on receiver of type 'IntArray'.
 lower/forLoopsLowering/arrays.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 lower/forLoopsLowering/lists.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 lower/forLoopsLowering/listsCME.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mutableListOf'.
@@ -3010,7 +2939,7 @@ multiplatform/k2/basic/expectActualFakeOverridesWithTypeParameters2.kt: NoSuchEl
 multiplatform/k2/basic/expectActualNullabilityBasedOverloads.kt: NoSuchElementException: List contains no element matching the predicate.
 multiplatform/k2/basic/expectActualTypeParameters.kt: unsupported: a type test against B of .A
 multiplatform/k2/basic/expectActualTypealiasCoercion.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
-multiplatform/k2/basic/expectProperty.kt: unsupported: Char.toString
+multiplatform/k2/basic/expectProperty.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::get_ec7b181d2900b7e7" }
 multiplatform/k2/basic/extensionFunctionAsASupertype.kt: unsupported: implementing the function type Function1
 multiplatform/k2/basic/extensionFunctionAsASupertypeConversion.kt: unsupported: implementing the function type Function1
 multiplatform/k2/basic/extensionFunctionInDelegatedSam.kt: unsupported: the type operator SAM_CONVERSION
@@ -3048,7 +2977,7 @@ multiplatform/k2/hmpp/moveToDiagnostic/optInActual2-2.kt: unsupported: the annot
 multiplatform/k2/hmpp/overridingInternalFromFriend.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Foo'.
 multiplatform/k2/hmpp/stdlibRegressions.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.doubleArrayOf_43c58aefc57c329c" }
 multiplatform/k2/hmpp/typealiasNameClash.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
-multiplatform/k2/kt57391.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
+multiplatform/k2/kt57391.kt: IllegalStateException: CLI phase returned null. See errors in the message collector
 multiplatform/k2/kt66970.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'js'.
 multiplatform/k2/migratedOldTests/mpp1.kt: unsupported: the inner class B
 multiplatform/k2/migratedOldTests/mpp_default_args.kt: unsupported: the inner class Inner
@@ -3064,10 +2993,10 @@ nameBasedDestructuring/shortFormLoopsAndLambdas.kt: IllegalStateException: UNRES
 nonLocalReturns/kt9644let.kt: unsupported: the type operator SAM_CONVERSION
 nonLocalReturns/suspendConversion.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'Continuation'.
 nothingValue/nothingValueException.kt: unsupported: a type test against T of .something
-nothingValue/toStringOnNothing.kt: unsupported: Int.toString
-object/fields2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-object/initialization1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-objectExpression/expr3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+nothingValue/toStringOnNothing.kt: IllegalStateException: Boxing a value of the non-primitive kotlin.Nothing
+object/fields2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+object/initialization1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+objectExpression/expr3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 objectIntrinsics/objects.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Int$Companion::INSTANCE" }
 objects/companionObjectAccess/companionObjectInitOrderWithSuperinterface.kt: wrong result
 objects/companionObjectAccess/primitiveCompanion/byteCompanionObject.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Byte$Companion::INSTANCE" }
@@ -3085,10 +3014,8 @@ objects/kt1737.kt: unsupported: the supertype Runnable outside the VM modules
 objects/kt2663_2.kt: unsupported: the supertype Runnable outside the VM modules
 objects/kt32351.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'map' on receiver of type 'IntRange'.
 objects/kt3238.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'java' on receiver of type 'KClass<Obj.Inner>'.
-objects/kt32749.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
 objects/localFunctionInObjectInitializer_kt4516.kt: unsupported: a call to CONSTRUCTOR …
 objects/objectExtendsInnerAndReferencesOuterMember.kt: unsupported: the inner class Inner
-objects/objectVsClassInitialization_kt5291.kt: unsupported: a call to CONSTRUCTOR …
 objects/substitutionFunctionFromSuper.kt: unsupported: the inner class Inner
 objects/throwingInitializersCompanionObjects.kt: unsupported: a Unit field
 objects/throwingInitializersObjects.kt: unsupported: a Unit field
@@ -3102,7 +3029,7 @@ operatorConventions/compareTo/intDouble.kt: unsupported: compareTo on floating-p
 operatorConventions/compareTo/longDouble.kt: unsupported: compareTo on floating-point numbers
 operatorConventions/kt14227.kt: IllegalStateException: NO_SET_METHOD: No 'set' operator method providing array access.
 operatorConventions/kt20387.kt: unsupported: the inner class Inner
-operatorConventions/kt44647.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'set' on receiver of type 'StringBuilder'.
+operatorConventions/kt44647.kt: unsupported: StringBuilder.setCharAt
 operatorConventions/plusAssignWithComplexRHS.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'emptyMap'.
 operatorConventions/plusExplicit.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 operatorConventions/suspendOperators.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EmptyCoroutineContext'.
@@ -3144,7 +3071,6 @@ primitiveTypes/kt16732.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolv
 primitiveTypes/kt2269.kt: unsupported: Int.equals
 primitiveTypes/kt2269NotOptimizable.kt: unsupported: Int.equals
 primitiveTypes/kt2275.kt: unsupported: overriding FUN …
-primitiveTypes/kt2768.kt: unsupported: Byte.toString
 primitiveTypes/kt3078.kt: unsupported: compareTo on floating-point numbers
 primitiveTypes/kt3517.kt: unsupported: Boolean.equals
 primitiveTypes/kt3576.kt: unsupported: Float.equals
@@ -3153,13 +3079,11 @@ primitiveTypes/kt4098.kt: link: Failed to link: UnresolvedImport { module: "kotl
 primitiveTypes/kt4210.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::get_ec7b181d2900b7e7" }
 primitiveTypes/kt518.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::get_ec7b181d2900b7e7" }
 primitiveTypes/kt684.kt: unsupported: the static field out outside the VM modules
-primitiveTypes/kt753.kt: unsupported: Long.toString
 primitiveTypes/kt756.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.toString_eb51da6900093cd3" }
-primitiveTypes/kt757.kt: unsupported: Long.toString
 primitiveTypes/kt79977.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 primitiveTypes/kt79977_withIncrementalCompilation.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 primitiveTypes/kt887.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::compareTo_81219ebc22bef5b2" }
-primitiveTypes/kt935.kt: unsupported: a call to CONSTRUCTOR …
+primitiveTypes/kt935.kt: unsupported: the static field out outside the VM modules
 primitiveTypes/numberEqualsHashCodeToString.kt: unsupported: overriding FUN …
 primitiveTypes/numberToChar/abstractMethodInSuperinterface.kt: unsupported: overriding FUN …
 primitiveTypes/numberToChar/fakeOverride.kt: unsupported: overriding FUN …
@@ -3192,10 +3116,6 @@ properties/eagerInitializationGlobal2.kt: IllegalStateException: UNRESOLVED_REFE
 properties/eagerInitializationGlobal3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
 properties/eagerInitializationGlobal4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
 properties/genericPropertyMultiModule.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-properties/initializerOfConstValWithConst.kt: unsupported: Int.toString
-properties/initializerOfConstValWithConstExpr.kt: unsupported: Int.toString
-properties/initializerOfValWithConstExpr.kt: unsupported: Int.toString
-properties/initializerOfValWithNonConstExpr.kt: unsupported: Int.toString
 properties/kt1159.kt: unsupported: a call to CONSTRUCTOR …
 properties/kt1398.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'uppercase' on receiver of type 'String'.
 properties/kt1714.kt: unsupported: a call to CONSTRUCTOR …
@@ -3203,7 +3123,7 @@ properties/kt3556.kt: link: Failed to link: UnresolvedImport { module: "kotlin-s
 properties/kt3930.kt: unsupported: the inner class Baz
 properties/kt4383.kt: unsupported: a Unit field
 properties/kt78962.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
-properties/lateinit/local/kt23260.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
+properties/lateinit/local/kt23260.kt: unsupported: the expression GET_CLASS …
 properties/lateinit/local/uninitializedCapturedMemberAccess.kt: unsupported: the expression GET_CLASS …
 properties/lateinit/local/uninitializedCapturedRead.kt: unsupported: the expression GET_CLASS …
 properties/lateinit/local/uninitializedMemberAccess.kt: unsupported: the expression GET_CLASS …
@@ -3213,7 +3133,7 @@ properties/lateinit/topLevel/uninitializedMemberAccess.kt: unsupported: the expr
 properties/lateinit/topLevel/uninitializedRead.kt: unsupported: the expression GET_CLASS …
 properties/primitiveOverrideDelegateAccessor.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 properties/twoAnnotatedExtensionPropertiesWithoutBackingFields.kt: unsupported: the annotation class Anno
-propertyCallableReference/dynamicReceiver.kt: unsupported: a call to append
+propertyCallableReference/dynamicReceiver.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 propertyCallableReference/multipleModules.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 propertyCallableReference/valClass.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 propertyCallableReference/valExtension.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -3224,13 +3144,9 @@ propertyCallableReference/varModule.kt: unsupported: the expression RICH_PROPERT
 publishedApi/inlineFromFriendModule.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'published'.
 ranges/capturedLoopVar.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 ranges/contains/evaluationOrderForCollection.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'emptyList'.
-ranges/contains/evaluationOrderForComparableRange.kt: unsupported: a call to append
 ranges/contains/evaluationOrderForDownTo.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
 ranges/contains/evaluationOrderForDownToReversed.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
-ranges/contains/evaluationOrderForNullableArgument.kt: unsupported: a call to append
-ranges/contains/evaluationOrderForRangeLiteral.kt: unsupported: a call to append
 ranges/contains/evaluationOrderForRangeLiteralReversed.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
-ranges/contains/evaluationOrderForUntil.kt: unsupported: a call to append
 ranges/contains/evaluationOrderForUntilReversed.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
 ranges/contains/generated/arrayIndices.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'indices' on receiver of type 'IntArray'.
 ranges/contains/generated/charDownTo.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
@@ -3266,39 +3182,28 @@ ranges/contains/uintInUIntRangeWithPossibleOverflow.kt: IllegalStateException: U
 ranges/contains/uintInUShortRangeWithPossibleOverflow.kt: IllegalStateException: UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH: Type of constant expression cannot be resolved. Make sure you have the required depen
 ranges/contains/ulongInULongRangeWithPossibleOverflow.kt: IllegalStateException: MISSING_STDLIB_CLASS: Missing stdlib class.
 ranges/contains/userDefinedContainsExtension.kt: IllegalStateException: OVERLOAD_RESOLUTION_AMBIGUITY: Overload resolution ambiguity between candidates:
-ranges/evaluationOrder/forInDownTo.kt: unsupported: a call to append
-ranges/evaluationOrder/forInDownToReversed.kt: unsupported: a call to append
-ranges/evaluationOrder/forInDownToReversedReversed.kt: unsupported: a call to append
-ranges/evaluationOrder/forInRangeLiteral.kt: unsupported: a call to append
-ranges/evaluationOrder/forInRangeLiteralReversed.kt: unsupported: a call to append
-ranges/evaluationOrder/forInRangeLiteralReversedReversed.kt: unsupported: a call to append
-ranges/evaluationOrder/forInUntil.kt: unsupported: a call to append
-ranges/evaluationOrder/forInUntilReversed.kt: unsupported: a call to append
-ranges/evaluationOrder/forInUntilReversedReversed.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInDownTo/forInDownToReversedStep.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInDownTo/forInDownToReversedStepReversed.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInDownTo/forInDownToReversedStepReversedStep.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInDownTo/forInDownToStep.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInDownTo/forInDownToStepReversed.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInDownTo/forInDownToStepReversedStep.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInDownTo/forInDownToStepReversedStepReversed.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInDownTo/forInDownToStepStep.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralReversedStep.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralReversedStepReversed.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralReversedStepReversedStep.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralStep.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralStepReversed.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralStepReversedStep.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralStepReversedStepReversed.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralStepStep.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInUntil/forInUntilReversedStep.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInUntil/forInUntilReversedStepReversed.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInUntil/forInUntilReversedStepReversedStep.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInUntil/forInUntilStep.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInUntil/forInUntilStepReversed.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInUntil/forInUntilStepReversedStep.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInUntil/forInUntilStepReversedStepReversed.kt: unsupported: a call to append
-ranges/evaluationOrder/stepped/forInUntil/forInUntilStepStep.kt: unsupported: a call to append
+ranges/evaluationOrder/stepped/forInDownTo/forInDownToReversedStep.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInDownTo/forInDownToReversedStepReversed.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInDownTo/forInDownToReversedStepReversedStep.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInDownTo/forInDownToStep.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInDownTo/forInDownToStepReversed.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInDownTo/forInDownToStepReversedStep.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInDownTo/forInDownToStepReversedStepReversed.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInDownTo/forInDownToStepStep.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralReversedStep.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralReversedStepReversed.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralReversedStepReversedStep.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralStep.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralStepReversed.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralStepReversedStep.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralStepReversedStepReversed.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralStepStep.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInUntil/forInUntilReversedStep.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInUntil/forInUntilReversedStepReversed.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInUntil/forInUntilReversedStepReversedStep.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInUntil/forInUntilStepReversedStep.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInUntil/forInUntilStepReversedStepReversed.kt: unsupported: a call to illegalArgumentException
+ranges/evaluationOrder/stepped/forInUntil/forInUntilStepStep.kt: unsupported: a call to illegalArgumentException
 ranges/expression/emptyDownto.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 ranges/expression/emptyRange.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 ranges/expression/inexactDownToMinValue.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
@@ -3959,13 +3864,12 @@ reflection/typeOf/nonReifiedTypeParameters/recursiveBoundWithoutInline.kt: Illeg
 regressions/Kt1149.kt: unsupported: a call to CONSTRUCTOR …
 regressions/Kt1619Test.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'arrayListOf'.
 regressions/Kt2495Test.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-regressions/arrayLengthNPE.kt: unsupported: Int.toString
 regressions/dataClassInInlineFunctionWithTypeParameters.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 regressions/dataClassInRegularFunctionWithTypeParameters.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 regressions/directInvokeDestructuring.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Char'.
 regressions/directInvokeNameBasedDestructuring.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Char'.
 regressions/generic.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
-regressions/hashCodeNPE.kt: unsupported: Int.toString
+regressions/hashCodeNPE.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 regressions/kt1172.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 regressions/kt15196.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 regressions/kt1779.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'AbstractIterator'.
@@ -3977,13 +3881,12 @@ regressions/kt24913.kt: link: Failed to link: UnresolvedImport { module: "kotlin
 regressions/kt33638.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'emptyList'.
 regressions/kt344.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'substring' on receiver of type 'String'.
 regressions/kt3442.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'hashMapOf'.
-regressions/kt344Runnable.kt: unsupported: Int.toString
+regressions/kt344Runnable.kt: unsupported: the supertype Runnable outside the VM modules
 regressions/kt35914.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 regressions/kt47279.kt: unsupported: a value of type kotlin.Nothing
 regressions/kt5056.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'sorted' on receiver of type 'Array<String>'.
 regressions/kt5395.kt: unsupported: the inner class E
 regressions/kt5953.kt: IllegalStateException: CANNOT_INFER_VALUE_PARAMETER_TYPE: Cannot infer type for value parameter 'it'. Specify it explicitly.
-regressions/kt6153.kt: unsupported: a call to append
 regressions/kt6434.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'minOrNull' on receiver of type 'Collection<Int>'.
 regressions/kt6434_2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'to' on receiver of type 'Int'.
 regressions/kt71119.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
@@ -4020,7 +3923,6 @@ reified/varargs.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved refe
 safeCall/genericNull.kt: unsupported: overriding FUN …
 safeCall/kt245.kt: unsupported: a call to CONSTRUCTOR …
 safeCall/kt247.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
-safeCall/kt52580.kt: unsupported: Int.toString
 safeCall/kt52743.kt: unsupported: a type test against T of .nullableFun
 safeCall/primitiveEqSafeCall.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 safeCall/primitiveNotEqSafeCall.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
@@ -4053,26 +3955,15 @@ sam/topLevelConversions.kt: unsupported: the type operator SAM_CONVERSION
 sameFileInSourceAndDependencies/differingNumberOfGenericTypeParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE_WRONG_RECEIVER: Candidate 'fun B<*>.foo(): Unit' is inapplicable because of a receiver type mismatch. Actual receive
 sameFileInSourceAndDependencies/nestedClassDeclaration.kt: IllegalStateException: IrClassSymbolImpl is already bound. Signature: /Host|null[0]. Owner: CLASS CLASS name:Host modality:FINAL visibility:public superTypes:[k
 sealed/multipleFiles_enabled.kt: unsupported: the inner class D
-secondaryConstructors/basicNoPrimaryOneSink.kt: unsupported: Int.toString
-secondaryConstructors/basicPrimary.kt: unsupported: Int.toString
-secondaryConstructors/clashingDefaultConstructors.kt: unsupported: Int.toString
-secondaryConstructors/dataClasses.kt: unsupported: Int.toString
-secondaryConstructors/enums.kt: unsupported: Int.toString
 secondaryConstructors/fieldInitializerOptimization.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 secondaryConstructors/innerClasses.kt: unsupported: the inner class A1
 secondaryConstructors/innerClassesInheritance.kt: unsupported: the inner class A1
-secondaryConstructors/localClasses.kt: unsupported: Int.toString
-secondaryConstructors/superCallPrimary.kt: unsupported: Int.toString
-secondaryConstructors/superCallSecondary.kt: unsupported: Int.toString
-serialization/deserializedMembers.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-serialization/serializedDoWhile.kt: unsupported: a call to CONSTRUCTOR …
+serialization/deserializedMembers.kt: unsupported: the inner class D2
 serialization/serializedVararg.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
 size/add.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsExport'.
-size/helloWorld.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'println'.
 size/helloWorldPromise.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Promise'.
 smartCasts/invokeRecieverSmartcastK2.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 smartCasts/kt44814.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'emptyList'.
-smartCasts/kt72391.kt: unsupported: Double.toString
 smartCasts/negativesmartCastAugmentedAssignment.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 smartCasts/smartcastFromGenericToString.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'getValue' on receiver of type 'Map<String, V (of class Some<V : Any>)>'.
 smartCasts/smartcastToStarType.kt: unsupported: a type test against T of .Derived
@@ -4097,8 +3988,6 @@ specialBuiltins/removeSetInt.kt: CompilationErrorException: There is still an un
 specialBuiltins/throwableComplex.kt: unsupported: calling FUN …
 specialBuiltins/throwableImpl.kt: unsupported: calling FUN …
 specialBuiltins/valuesInsideEnum.kt: unsupported: a call to values
-storeStackBeforeInline/differentTypes.kt: unsupported: Int.toString
-storeStackBeforeInline/primitiveMerge.kt: unsupported: Boolean.toString
 strictEquals/abstractBound.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
 strictEquals/crossModuleInheritance.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
 strictEquals/delegated.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
@@ -4119,17 +4008,15 @@ strings/charSequenceSubSequence.kt: unsupported: overriding FUN …
 strings/concatDynamicWithConstants.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 strings/concatDynamicWithSpecialSymbols.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 strings/concatGenericWithStringUpperBound.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
-strings/constInStringTemplate.kt: unsupported: Double.toString
 strings/forInString.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-strings/interpolation.kt: unsupported: Int.toString
 strings/kt13213.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trim' on receiver of type 'String'.
 strings/kt13213a.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
 strings/kt2592.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_init__b1a680d3b1e10e75" }
 strings/kt3571.kt: unsupported: overriding FUN …
 strings/kt47917.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
-strings/kt5389_stringBuilderGet.kt: unsupported: a call to CONSTRUCTOR …
+strings/kt5389_stringBuilderGet.kt: link: Failed to link: ImportSignatureMismatch { module: "vm.runtime", symbol: "StringBuilder::get" }
 strings/kt5956.kt: unsupported: overriding FUN …
-strings/kt86478_stringBuilderSetLength.kt: unsupported: a call to CONSTRUCTOR …
+strings/kt86478_stringBuilderSetLength.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 strings/kt894.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 strings/multilineStringsWithTemplates.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
 strings/nestedConcat.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_get_length__f7a23c98428bfb3a" }
@@ -4192,27 +4079,26 @@ toArray/returnToTypedArray.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unre
 topLevelInitializtion/failInInitializer1.kt: unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
 topLevelInitializtion/failInInitializer2.kt: unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
 traits/kt2399.kt: unsupported: a call to CONSTRUCTOR …
-traits/kt3500.kt: unsupported: Int.toString
 traits/multiple.kt: unsupported: a type test against {T of .ALE …
 traits/noPrivateDelegation.kt: unsupported: a call to getDeclaredMethods
-try/catch3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-try/catch4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-try/catch5.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-try/catch6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-try/catch8.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-try/finally1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-try/finally10.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+try/catch3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+try/catch4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+try/catch5.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+try/catch6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+try/catch8.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+try/finally1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+try/finally10.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 try/finally11.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/finally2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-try/finally3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-try/finally4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-try/finally5.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-try/finally6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-try/finally7.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-try/finally8.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-try/finally9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-try/returnsDifferentTypes.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
-try/try4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'appendLine' on receiver of type 'StringBuilder'.
+try/finally2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+try/finally3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+try/finally4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+try/finally5.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+try/finally6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+try/finally7.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+try/finally8.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+try/finally9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+try/returnsDifferentTypes.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+try/try4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 typeErasure/funWithReifiedTypeParameter.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 typeErasure/funWithReifiedTypeParameterAndContextParameter.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 typeErasure/funWithReifiedTypeParameterAndExtensionReceiver.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
@@ -4252,7 +4138,6 @@ typealias/nestedTypeAliasesAndStaticScope.kt: unsupported: the inner class Inner
 typealias/nestedTypeAliasesAndTypeArguments.kt: unsupported: the inner class Inner
 typealias/typeAliasAsBareType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 typealias/typeAliasOnTypeAlias.kt: unsupported: the annotation class Ann
-typealias/typeAliasSecondaryConstructor.kt: unsupported: Int.toString
 typealias/typeArgumentsMappingForTopLevelTAWithInnerRHS.kt: unsupported: the inner class Inner
 unaryOp/call.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
 unaryOp/callNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
@@ -4322,7 +4207,6 @@ vararg/inlineClassArraysAsNamedArgumentInVararg.kt: IllegalStateException: UNRES
 vararg/kt10926.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'listOf'.
 vararg/kt37715.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'toList'.
 vararg/kt581.kt: unsupported: a call to CONSTRUCTOR …
-vararg/kt6192.kt: unsupported: Int.toString
 vararg/referenceToContainsFromVarargParameter.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
 vararg/useSuspendFunResultAsVararg.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startCoroutine' on receiver of type 'suspend () -> Unit'.
 vararg/varargInFunParam.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
