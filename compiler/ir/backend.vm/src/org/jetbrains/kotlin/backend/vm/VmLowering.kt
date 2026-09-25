@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.backend.common.ir.KlibSharedVariablesManager
 import org.jetbrains.kotlin.backend.common.ir.PreSerializationKlibSymbols
 import org.jetbrains.kotlin.backend.common.ir.PreSerializationSymbols
 import org.jetbrains.kotlin.backend.common.ir.SharedVariablesManager
+import org.jetbrains.kotlin.backend.common.lower.ArrayConstructorLowering
 import org.jetbrains.kotlin.backend.common.lower.LocalDeclarationPopupLowering
 import org.jetbrains.kotlin.backend.common.lower.LocalDeclarationsLowering
 import org.jetbrains.kotlin.backend.common.lower.SharedVariablesLowering
@@ -76,16 +77,23 @@ private class SharedVariableSymbols(irBuiltIns: IrBuiltIns) : PreSerializationKl
  * Every inline function with a body to copy: the module's own, and those the klibs it depends on carry. One from a jar
  * has none, and its call is left for code generation to report.
  *
- * A jklib holds IR as the frontend produced it, so a function from one gets the [upgrade] the module's own code got
- * before its body is copied: the inliner only inlines a lambda upgraded to a rich function reference.
+ * A jklib holds IR as the frontend produced it, so before its body is copied, a function from one gets the lowerings
+ * the module's own code got ahead of inlining: the [upgrade], since the inliner only inlines a lambda upgraded to a rich
+ * function reference, and the [arrayConstructors].
  */
-private class VmInlineFunctionResolver(private val upgrade: UpgradeCallableReferences) : InlineFunctionResolver() {
-    private val upgraded = hashSetOf<IrFunction>()
+private class VmInlineFunctionResolver(
+    private val upgrade: UpgradeCallableReferences,
+    private val arrayConstructors: ArrayConstructorLowering,
+) : InlineFunctionResolver() {
+    private val lowered = hashSetOf<IrFunction>()
 
     override fun getFunctionDeclaration(symbol: IrFunctionSymbol): IrFunction? {
         if (!symbol.isBound) return null
         val function = symbol.owner.resolveFakeOverrideOrSelf().takeIf { it.isInline } ?: return null
-        if (upgraded.add(function)) upgrade.lower(function)
+        if (lowered.add(function)) {
+            upgrade.lower(function)
+            function.body?.let { arrayConstructors.lower(it, function) }
+        }
         return function
     }
 }
@@ -93,9 +101,13 @@ private class VmInlineFunctionResolver(private val upgrade: UpgradeCallableRefer
 /** The lowerings between the linked IR and [VmModuleGenerator], in the order they run. */
 fun lowerForVm(context: VmLoweringContext, module: IrModuleFragment) {
     val upgrade = UpgradeCallableReferences(context, upgradeSamConversions = false)
+    // `Array(size) { … }` and the like become a loop, ahead of inlining: the constructor is inline, but has no body.
+    val arrayConstructors = ArrayConstructorLowering(context)
+    val resolver = VmInlineFunctionResolver(upgrade, arrayConstructors)
     // Substituted, so a primitive type argument stays unboxed in the copy.
-    val inlining = object : FunctionInlining(context, VmInlineFunctionResolver(upgrade), substituteNonReifiedTypeParameters = true) {}
+    val inlining = object : FunctionInlining(context, resolver, substituteNonReifiedTypeParameters = true) {}
     module.files.forEach(upgrade::lower)
+    module.files.forEach { arrayConstructors.lower(it) }
     // Out of the lambdas inlining copies first: a copied class would still override the original's members.
     val localClassesInInlineLambdas = LocalClassesInInlineLambdasLowering(context)
     module.files.forEach { localClassesInInlineLambdas.lower(it) }

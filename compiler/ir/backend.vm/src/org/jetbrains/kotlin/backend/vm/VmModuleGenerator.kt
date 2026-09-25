@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
 
@@ -95,7 +96,8 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     private val classIndices = hashMapOf<IrClassSymbol, Int>()
     private val fieldLayouts = hashMapOf<IrClassSymbol, List<LayoutField>>()
     private val selectors = hashMapOf<IrSimpleFunctionSymbol, Int>()
-    private val defaultToStrings = hashMapOf<IrClassSymbol, VmFunctionSymbol>()
+    private val throwableToStrings = hashMapOf<IrClassSymbol, VmFunctionSymbol>()
+    private val arrayClasses = hashMapOf<VmType, Int>()
     private val globals = hashMapOf<IrFieldSymbol, Int>()
     private val objectInstances = hashMapOf<IrClassSymbol, Int>()
     private val enumEntries = hashMapOf<IrEnumEntrySymbol, Int>()
@@ -495,15 +497,63 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         (module.classes.size - 1).also { classIndices[declaration.symbol] = it }
     }
 
+    /** The VM's array of [element]s. */
+    internal fun arrayClass(element: VmType): Int = arrayClasses.getOrPut(element) {
+        module.classes += VmClass("", null, emptyList(), isOpen = false, isAbstract = false, VmClassKind.Array(element))
+        module.classes.size - 1
+    }
+
+    /**
+     * The VM array standing for [type] when it is an array type, or null for any other: a primitive array holds its
+     * element at the element's own width, and an `Array<E>` holds references to E's class, as the JVM's `E[]` does.
+     */
+    internal fun arrayClassOf(type: IrType): Int? {
+        val classifier = type.classOrNull ?: return null
+        irBuiltIns.primitiveArraysToPrimitiveTypes[classifier]?.let { return arrayClass(arrayElement(it)) }
+        if (classifier != irBuiltIns.arrayClass) return null
+        val element = ((type as? IrSimpleType)?.arguments?.singleOrNull() as? IrTypeProjection)?.type
+        return arrayClass(VmType.Ref(element?.let(::elementClass) ?: runtimeClass("Any")))
+    }
+
+    /** How a register holds an element of [type], an array type: a primitive as the primitive, anything else as `Any`. */
+    internal fun arrayElementSlot(type: IrType): VmType =
+        irBuiltIns.primitiveArraysToPrimitiveTypes[type.classOrNull]?.let(::primitiveVmType) ?: anyType
+
+    private fun arrayElement(kind: PrimitiveType): VmType = when (kind) {
+        PrimitiveType.BOOLEAN -> VmType.Bool
+        PrimitiveType.BYTE -> VmType.I8
+        PrimitiveType.SHORT -> VmType.I16
+        PrimitiveType.CHAR -> VmType.U16
+        PrimitiveType.INT -> VmType.I32
+        PrimitiveType.LONG -> VmType.I64
+        PrimitiveType.FLOAT -> VmType.F32
+        PrimitiveType.DOUBLE -> VmType.F64
+    }
+
+    /**
+     * The class an `Array<E>` of [type] E holds references to: E's own, or `Any` for a type parameter, which is erased, and
+     * for a class no VM module declares, which the VM cannot name.
+     */
+    private fun elementClass(type: IrType): Int {
+        if (type.classifierOrNull is IrTypeParameterSymbol) return runtimeClass("Any")
+        return testedClassOrNull(type.makeNotNull()) ?: runtimeClass("Any")
+    }
+
     /** The class a type test or cast against [type] names, or null for `Any`, which every object is. */
     internal fun testedClass(type: IrType): Int? {
         if (type.isAny() || type.isNullableAny()) return null
+        return testedClassOrNull(type) ?: unsupported("a type test against ${type.render()} outside the VM modules")
+    }
+
+    /** The class [type] names, `Any` included, or null for a class no VM module declares. */
+    private fun testedClassOrNull(type: IrType): Int? {
+        if (type.isAny() || type.isNullableAny()) return runtimeClass("Any")
+        arrayClassOf(type)?.let { return it }
         if (type.isString() || type.isNullableString()) return runtimeClass("vm.String")
         type.getPrimitiveType()?.let { return boxClass(it) }
         RUNTIME_TYPES[type.classFqName?.asString()]?.let { return runtimeClass(it) }
         val declaration = type.classOrNull?.owner ?: unsupported("a type test against ${type.render()}")
         return classIndex(declaration) ?: runtimeThrowable(declaration)
-            ?: unsupported("a type test against ${type.render()} outside the VM modules")
     }
 
     private fun IrClass.superClass(): IrClass? =
@@ -543,7 +593,10 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         return fieldLayout(owner).indexOfFirst { it.declared == field }
     }
 
-    /** The name the JVM gives the class, which its default `toString` shows. */
+    /**
+     * The name the JVM gives the class: its package, then its name after those of the classes nesting it, joined by `$`.
+     * What the runtime's `Any.toString` shows.
+     */
     private val IrClass.jvmName: String
         get() {
             val nesting = generateSequence(this) { it.parent as? IrClass }.toList().asReversed()
@@ -553,13 +606,13 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         }
 
     /**
-     * A class's name in the VM: its qualified name. A class other modules can name, by its public signature, keeps it
+     * A class's name in the VM: its [jvmName]. A class other modules can name, by its public signature, keeps it
      * exactly; a local or anonymous one, which lowering has moved out of its function, gets a counter when another
      * class of the module has the name already.
      */
     private val IrClass.vmName: String
         get() = classNames.getOrPut(symbol) {
-            val name = sanitized(fqNameWhenAvailable?.asString() ?: unsupported("the local class $name"))
+            val name = sanitized(jvmName)
             if (usedClassNames.add(name) || symbol.signature is IdSignature.CommonSignature) return@getOrPut name
             generateSequence(1) { it + 1 }.map { "${name}_$it" }.first(usedClassNames::add)
         }
@@ -622,7 +675,6 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
                         functionSymbol(implementation)
                     }
                 }
-                implementation.name.asString() == "toString" && !isAbstract -> defaultToString(declaration)
                 else -> continue // Answered by the runtime's `Any`.
             }
             for (root in function.roots()) {
@@ -664,7 +716,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     private val enumAdapters = hashMapOf<Pair<IrClassSymbol, String>, VmFunctionSymbol>()
 
     /** `Name: message`, for a throwable whose `toString` is still `Throwable`'s; see `@Throwable::describe`. */
-    private fun throwableToString(declaration: IrClass): VmFunctionSymbol = defaultToStrings.getOrPut(declaration.symbol) {
+    private fun throwableToString(declaration: IrClass): VmFunctionSymbol = throwableToStrings.getOrPut(declaration.symbol) {
         val symbol = VmFunctionSymbol("${declaration.vmName}::toString", listOf(anyType), stringType)
         val describe = runtimeFunction("Throwable::describe", listOf(anyType, stringType), stringType)
         val function = VmFunction(symbol, owner = null)
@@ -675,26 +727,6 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
         val block = function.newBlock()
         block.instructions += VmInstruction.StringConstant(name, declaration.jvmName)
         block.instructions += VmInstruction.Call(result, VmCallee.Static(describe), listOf(self, name))
-        block.terminator = VmTerminator.Return(result)
-        module.functions += function
-        symbol
-    }
-
-    /** `Name@hash`, for a class whose `toString` is still `Any`'s; see `@Any::defaultToString` in the runtime. */
-    private fun defaultToString(declaration: IrClass): VmFunctionSymbol = defaultToStrings.getOrPut(declaration.symbol) {
-        val symbol = VmFunctionSymbol("${declaration.vmName}::toString", listOf(anyType), stringType)
-        val helper = runtimeFunction("Any::defaultToString", listOf(stringType, VmType.I64), stringType)
-
-        val function = VmFunction(symbol, owner = null)
-        val self = function.newValue(anyType)
-        function.params += self
-        val hash = function.newValue(VmType.I64)
-        val name = function.newValue(stringType)
-        val result = function.newValue(stringType)
-        val block = function.newBlock()
-        block.instructions += VmInstruction.Call(hash, VmCallee.Virtual(runtimeSelector("hashCode")), listOf(self))
-        block.instructions += VmInstruction.StringConstant(name, declaration.jvmName)
-        block.instructions += VmInstruction.Call(result, VmCallee.Static(helper), listOf(name, hash))
         block.terminator = VmTerminator.Return(result)
         module.functions += function
         symbol
@@ -839,7 +871,7 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
                 continue
             }
             val c = name[i++]
-            append(if (c.isLetterOrDigit() || c == '_' || c == '.') c else '_')
+            append(if (c.isLetterOrDigit() || c == '_' || c == '.' || c == '$') c else '_')
         }
     }
 }

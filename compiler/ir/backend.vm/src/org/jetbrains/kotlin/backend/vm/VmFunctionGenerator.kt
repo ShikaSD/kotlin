@@ -449,6 +449,7 @@ internal class VmFunctionGenerator private constructor(
             null
         }
         is IrTypeOperatorCall -> typeOperator(expression)
+        is IrVararg -> vararg(expression)
         is IrGetObjectValue -> {
             if (expression.type.isUnit()) {
                 null
@@ -857,7 +858,7 @@ internal class VmFunctionGenerator private constructor(
         intrinsic(call, callee)?.let { return it.value }
         functionValueCall(call, callee)?.let { return it.value }
         sharedBoxAccess(call, callee)?.let { return it.value }
-        if (call.arguments.any { it == null }) {
+        if (leavesOutDefaults(call, callee)) {
             if (call.superQualifierSymbol != null) unsupported("a super call leaving out a default argument")
             val stub = gen.defaultStub(defaultsDeclaration(callee))
             val dst = stub.returnType?.let(::newValue)
@@ -982,6 +983,19 @@ internal class VmFunctionGenerator private constructor(
         return find(callee) ?: error("No declaration of ${callee.render()} declares its defaults")
     }
 
+    /** Whether [call] leaves out an argument its callee has a default for, rather than only an empty vararg. */
+    private fun leavesOutDefaults(call: IrFunctionAccessExpression, callee: IrFunction): Boolean =
+        call.arguments.indices.any { call.arguments[it] == null && !callee.parameters[it].isEmptyVararg() }
+
+    /** A vararg with no default, which a call leaving it out passes an empty array. */
+    private fun IrValueParameter.isEmptyVararg(): Boolean = varargElementType != null && defaultValue == null
+
+    /** The argument [parameter] takes when a call leaves it out and it has no default: an empty array. */
+    private fun emptyVararg(parameter: IrValueParameter): VmValue {
+        if (!parameter.isEmptyVararg()) unsupported("a default argument")
+        return newArray(parameter.type, constant(VmType.I64, 0))
+    }
+
     /**
      * What a call leaving arguments out passes the [stub] of [declaration]'s defaults, after the [leading] values a
      * constructor's takes: the arguments given as its parameters take them, zero for each left out, and the mask
@@ -990,14 +1004,15 @@ internal class VmFunctionGenerator private constructor(
     private fun defaultArguments(call: IrFunctionAccessExpression, declaration: IrFunction, stub: VmFunctionSymbol, leading: Int): List<VmValue> {
         var mask = 0L
         val args = call.arguments.mapIndexed { index, argument ->
+            val parameter = declaration.parameters[index]
             val slot = stub.paramTypes[leading + index]
-            if (argument == null) {
-                // A vararg left out has no default, but an empty array.
-                if (declaration.parameters[index].defaultValue == null) unsupported("an empty vararg")
-                mask = mask or (1L shl index)
-                constant(slot, 0)
-            } else {
-                operandAs(argument, declaration.parameters[index].type, slot)
+            when {
+                argument != null -> operandAs(argument, parameter.type, slot)
+                parameter.isEmptyVararg() -> emptyVararg(parameter)
+                else -> {
+                    mask = mask or (1L shl index)
+                    constant(slot, 0)
+                }
             }
         }
         return args + constant(VmType.I64, mask)
@@ -1008,7 +1023,7 @@ internal class VmFunctionGenerator private constructor(
      * ahead of the object: the constructor, or its defaults' stub when the call leaves arguments out.
      */
     private fun constructorInvocation(call: IrFunctionAccessExpression, constructor: IrConstructor): Pair<VmFunctionSymbol, List<VmValue>> {
-        if (call.arguments.any { it == null }) {
+        if (leavesOutDefaults(call, constructor)) {
             val stub = gen.defaultStub(constructor)
             return stub to defaultArguments(call, constructor, stub, leading = 1)
         }
@@ -1018,12 +1033,18 @@ internal class VmFunctionGenerator private constructor(
     /** A call's arguments as its callee's signature takes them, boxed or unboxed where the two differ. */
     private fun arguments(call: IrFunctionAccessExpression, callee: IrFunction, slots: List<VmType>): List<VmValue> =
         call.arguments.mapIndexed { index, argument ->
-            operandAs(argument ?: unsupported("a default argument"), callee.parameters[index].type, slots[index])
+            val parameter = callee.parameters[index]
+            if (argument == null) emptyVararg(parameter) else operandAs(argument, parameter.type, slots[index])
         }
 
     /** Allocates the object, then runs the constructor on it with the arguments already evaluated. */
     private fun constructorCall(call: IrConstructorCall): VmValue {
         val constructor = call.symbol.owner
+        // `IntArray(size)` and the like; `Array(size) { … }` and the like are loops by now, see `ArrayConstructorLowering`.
+        if (constructor.constructedClass.symbol in gen.irBuiltIns.primitiveArraysToPrimitiveTypes) {
+            if (constructor.parameters.size != 1) unsupported("the constructor ${constructor.render()}")
+            return newArray(call.type, operand(call.arguments[0]!!))
+        }
         if (gen.isSharedVariableBox(constructor.constructedClass)) {
             val boxClass = gen.sharedVariableBoxClass
             val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.NewObject(it, boxClass)) }
@@ -1060,7 +1081,8 @@ internal class VmFunctionGenerator private constructor(
     /** A constructor's arguments as its parameters hold them; a throwable's runtime constructor takes references. */
     private fun constructorArguments(call: IrFunctionAccessExpression, constructor: IrConstructor): List<VmValue> =
         call.arguments.mapIndexed { index, argument ->
-            operandAs(argument ?: unsupported("a default argument"), constructor.parameters[index].type)
+            val parameter = constructor.parameters[index]
+            if (argument == null) emptyVararg(parameter) else operandAs(argument, parameter.type)
         }
 
     /** Property initializers and `init` blocks, in the order the class declares them. */
@@ -1108,8 +1130,12 @@ internal class VmFunctionGenerator private constructor(
             in builtIns.lessOrEqualFunByOperandType.values -> compare(Comparison.LE, callee, args)
             in builtIns.greaterFunByOperandType.values -> compare(Comparison.GT, callee, args)
             in builtIns.greaterOrEqualFunByOperandType.values -> compare(Comparison.GE, callee, args)
+            builtIns.arrayOfNulls -> newArray(call.type, operand(args[0]))
             else -> {
+                arrayMember(callee, args)?.let { return it }
                 enumMember(callee, args)?.let { return Intrinsic(it) }
+                // `arrayOf` and `intArrayOf` and the like, whose vararg is the array they return.
+                if (callee.isArrayOf()) return Intrinsic(operand(args[0]))
                 when (callee.fqNameWhenAvailable?.asString()) {
                     // What the frontend calls when an exhaustive `when` matches nothing; the message is the JVM's.
                     "kotlin.internal.throwNoWhenBranchMatchedException" -> {
@@ -1126,6 +1152,97 @@ internal class VmFunctionGenerator private constructor(
             }
         }
         return Intrinsic(value)
+    }
+
+    /** Whether [this] is `arrayOf` or one of the functions making a primitive array of their vararg, `intArrayOf` and the like. */
+    private fun IrSimpleFunction.isArrayOf(): Boolean {
+        if (symbol == gen.irBuiltIns.arrayOf) return true
+        val parameter = parameters.singleOrNull() ?: return false
+        return parameter.varargElementType != null && body == null && parent is IrPackageFragment &&
+                returnType.classOrNull in gen.irBuiltIns.primitiveArraysToPrimitiveTypes && name.asString().endsWith("ArrayOf")
+    }
+
+    /**
+     * A member of an array class — `get`, `set` and `size` — on the array instructions, or null for any other callee: an
+     * array answers `Any`'s members as any object does.
+     */
+    private fun arrayMember(callee: IrSimpleFunction, args: List<IrExpression>): Intrinsic? {
+        val owner = callee.parentClassOrNull?.symbol ?: return null
+        if (owner != gen.irBuiltIns.arrayClass && owner !in gen.irBuiltIns.primitiveArraysToPrimitiveTypes) return null
+        return when (callee.name.asString()) {
+            "get" -> {
+                val array = operand(args[0])
+                Intrinsic(newValue(vmType(callee.returnType)).also { emit(VmInstruction.ArrayGet(it, array, operand(args[1]))) })
+            }
+            "set" -> {
+                val array = operand(args[0])
+                emit(VmInstruction.ArraySet(array, operand(args[1]), operandAs(args[2], callee.parameters[2].type)))
+                Intrinsic(null)
+            }
+            "<get-size>" -> Intrinsic(newValue(VmType.I64).also { emit(VmInstruction.ArrayLength(it, operand(args[0]))) })
+            else -> null
+        }
+    }
+
+    /** A new array of [type], an array type, holding [length] elements, each zero, false or null. */
+    private fun newArray(type: IrType, length: VmValue): VmValue {
+        val arrayClass = gen.arrayClassOf(type) ?: error("${type.render()} is no array type")
+        return newValue(VmType.Ref(arrayClass)).also { emit(VmInstruction.NewArray(it, arrayClass, length)) }
+    }
+
+    /**
+     * A vararg's elements as a new array of its type, a spread element's copied one by one: every element is evaluated,
+     * in order, before the array is made, since its length needs the spread arrays' lengths.
+     */
+    private fun vararg(expression: IrVararg): VmValue {
+        val slot = gen.arrayElementSlot(expression.type)
+        val elements = expression.elements.map { element ->
+            when (element) {
+                is IrSpreadElement -> VarargElement(operand(element.expression), isSpread = true)
+                is IrExpression -> VarargElement(operandAs(element, expression.varargElementType, slot), isSpread = false)
+                else -> unsupported("the vararg element ${element.render()}")
+            }
+        }
+        var length = constant(VmType.I64, elements.count { !it.isSpread }.toLong())
+        for (element in elements.filter { it.isSpread }) {
+            val spreadLength = newValue(VmType.I64).also { emit(VmInstruction.ArrayLength(it, element.value)) }
+            length = binary(VmBinaryOp.ADD, length, spreadLength)
+        }
+        val array = newArray(expression.type, length)
+        val index = constant(VmType.I64, 0)
+        val one = constant(VmType.I64, 1)
+        for (element in elements) {
+            if (element.isSpread) {
+                copyInto(array, index, element.value, slot)
+            } else {
+                emit(VmInstruction.ArraySet(array, index, element.value))
+                emit(VmInstruction.Copy(index, binary(VmBinaryOp.ADD, index, one)))
+            }
+        }
+        return array
+    }
+
+    /** A vararg element's value: the element, or the array a spread element copies from. */
+    private class VarargElement(val value: VmValue, val isSpread: Boolean)
+
+    /** Copies every element of [source] into [target] from [index] on, advancing [index] past them. */
+    private fun copyInto(target: VmValue, index: VmValue, source: VmValue, slot: VmType) {
+        val length = newValue(VmType.I64).also { emit(VmInstruction.ArrayLength(it, source)) }
+        val from = constant(VmType.I64, 0)
+        val one = constant(VmType.I64, 1)
+        val header = newBlock()
+        val body = newBlock()
+        val exit = newBlock()
+        jumpTo(header)
+        current = header
+        terminate(VmTerminator.Branch(binary(VmBinaryOp.LT_S, from, length), body.index, exit.index))
+        current = body
+        val element = newValue(slot).also { emit(VmInstruction.ArrayGet(it, source, from)) }
+        emit(VmInstruction.ArraySet(target, index, element))
+        emit(VmInstruction.Copy(index, binary(VmBinaryOp.ADD, index, one)))
+        emit(VmInstruction.Copy(from, binary(VmBinaryOp.ADD, from, one)))
+        jumpTo(header)
+        current = exit
     }
 
     /** `Enum`'s final members, which read the fields every entry has, or null for any other callee. */

@@ -103,14 +103,6 @@ class JKlibVmBackendTest {
         assertTrue(output.contains("the VM backend does not support the annotation class Marker")) { output }
     }
 
-    /** A vararg left out is an empty array rather than a default, which the backend cannot make yet. */
-    @Test
-    fun testLeftOutVarargIsReported(@TempDir tempDir: File) {
-        val (output, exitCode) = compile(tempDir, "class Items(vararg val items: Int)\nfun make() = Items()")
-
-        assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
-        assertTrue(output.contains("the VM backend does not support an empty vararg")) { output }
-    }
 
     @Test
     fun testBoxReturningOk(@TempDir tempDir: File) {
@@ -347,6 +339,21 @@ class JKlibVmBackendTest {
             }
 
             fun box(): String = if (Point().toString() == "Point@ff") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** As the JVM names a nested class: after the classes nesting it, joined by `$`. */
+    @Test
+    fun testDefaultToStringNamesANestedClassAsTheJvm(@TempDir tempDir: File) {
+        val source = """
+            class Outer {
+                class Inner {
+                    override fun hashCode(): Int = 255
+                }
+            }
+
+            fun box(): String = if (Outer.Inner().toString() == "Outer\${'$'}Inner@ff") "OK" else "fail"
         """
         assertTrue(runBox(tempDir, source))
     }
@@ -1984,6 +1991,193 @@ class JKlibVmBackendTest {
                 val nan: Any = 0f / 0f
                 val otherNan: Any = 0f / 0f
                 return if (zero != negative && nan == otherNan) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testIntArrayHoldsWhatIsStored(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val numbers = IntArray(3)
+                numbers[1] = -7
+                return if (numbers[1] == -7 && numbers[0] == 0) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testArraySizeIsItsLength(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if (LongArray(5).size == 5) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** Four bytes an element, which a read gives back as the float's bits. */
+    @Test
+    fun testFloatArrayHoldsWhatIsStored(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val numbers = FloatArray(2)
+                numbers[0] = -1.5f
+                return if (numbers[0] == -1.5f) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testArrayOfHoldsItsElements(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val words = arrayOf("O", "K")
+                return words[0] + words[1]
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** An `Array<Int>` holds boxes, which a read unboxes. */
+    @Test
+    fun testArrayOfPrimitivesHoldsBoxes(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val numbers: Array<Int> = arrayOf(1, 2)
+                numbers[1] = numbers[0] + 40
+                return if (numbers[1] == 41) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testPrimitiveArrayOfHoldsItsElements(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val chars = charArrayOf('O', 'K')
+                return "" + chars[0] + chars[1]
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testArrayOfNullsHoldsNulls(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val words = arrayOfNulls<String>(2)
+                return if (words.size == 2 && words[1] == null) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `Array(size) { … }` runs its lambda for each index in turn; see `ArrayConstructorLowering`. */
+    @Test
+    fun testArrayConstructorFillsEachIndex(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val squares = IntArray(4) { it * it }
+                return if (squares[3] == 9 && squares[1] == 1) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testVarargArrivesAsAnArray(@TempDir tempDir: File) {
+        val source = """
+            fun sum(vararg numbers: Int): Int {
+                var total = 0
+                var i = 0
+                while (i < numbers.size) {
+                    total += numbers[i]
+                    i++
+                }
+                return total
+            }
+
+            fun box(): String = if (sum(1, 2, 3) == 6) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A spread array's elements take their place among the others, in order. */
+    @Test
+    fun testSpreadCopiesItsElements(@TempDir tempDir: File) {
+        val source = """
+            fun join(vararg words: String): String {
+                var result = ""
+                var i = 0
+                while (i < words.size) {
+                    result += words[i]
+                    i++
+                }
+                return result
+            }
+
+            fun box(): String {
+                val middle = arrayOf("b", "c")
+                return if (join("a", *middle, "d") == "abcd") "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testLeftOutVarargIsEmpty(@TempDir tempDir: File) {
+        val source = """
+            class Items(vararg val items: Int)
+
+            fun box(): String = if (Items().items.size == 0) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testTypeTestTellsArraysApart(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val flags: Any = BooleanArray(1)
+                return if (flags is BooleanArray && flags !is ByteArray) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** An `Array<String>` is an `Array<Any>`, as the JVM's arrays are covariant. */
+    @Test
+    fun testArrayOfSubclassIsArrayOfSuperclass(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val words: Any = arrayOf("a")
+                return if (words is Array<*> && (words as Array<Any>).size == 1) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** As the JVM names an `int[]`. */
+    @Test
+    fun testArrayToStringIsItsJvmNameAndHash(@TempDir tempDir: File) {
+        val source = """
+            fun hex(value: Int): String {
+                val digits = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')
+                var rest = value.toLong() and 0xFFFFFFFFL
+                var text = ""
+                do {
+                    text = "" + digits[(rest and 15L).toInt()] + text
+                    rest = rest shr 4
+                } while (rest != 0L)
+                return text
+            }
+
+            fun box(): String {
+                val numbers = IntArray(1)
+                return if (numbers.toString() == "[I@" + hex(numbers.hashCode())) "OK" else "fail"
             }
         """
         assertTrue(runBox(tempDir, source))

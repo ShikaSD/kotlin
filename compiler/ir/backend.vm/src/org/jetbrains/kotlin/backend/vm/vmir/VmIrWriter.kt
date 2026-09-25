@@ -41,6 +41,7 @@ private object Tag {
     const val TYPE_U16 = 6L
     const val TYPE_REF = 7L
     const val TYPE_F32 = 8L
+    const val TYPE_BOOL = 9L
 
     const val OWNER_NONE = 0L
     const val OWNER_FILE = 1L
@@ -166,6 +167,7 @@ private class ModuleEncoder(private val module: VmModule) {
             VmType.I16 -> varint(Tag.TYPE_I16)
             VmType.I32 -> varint(Tag.TYPE_I32)
             VmType.U16 -> varint(Tag.TYPE_U16)
+            VmType.Bool -> varint(Tag.TYPE_BOOL)
             is VmType.Ref -> {
                 varint(Tag.TYPE_REF)
                 varint(type.classIndex)

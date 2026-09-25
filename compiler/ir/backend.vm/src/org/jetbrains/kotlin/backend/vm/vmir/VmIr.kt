@@ -21,6 +21,9 @@ sealed interface VmType {
     data object I16 : VmType
     data object I32 : VmType
     data object U16 : VmType
+
+    /** A `Boolean` in an array: one byte, and an array of it is not an array of [I8]. */
+    data object Bool : VmType
     data class Ref(val classIndex: Int) : VmType
 }
 
@@ -47,6 +50,11 @@ class VmClass(
 
 sealed interface VmClassKind {
     class Class(val fields: List<VmField>, val methods: List<VmMethod>) : VmClassKind
+
+    /**
+     * An array, which is its element and nothing more: its class has no name, supertype or interfaces, and every module's
+     * array of one element is one type.
+     */
     class Array(val element: VmType) : VmClassKind
     data object Interface : VmClassKind
     class Imported(val module: String) : VmClassKind
