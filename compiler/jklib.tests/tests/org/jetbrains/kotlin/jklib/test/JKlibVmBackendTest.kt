@@ -1406,4 +1406,192 @@ class JKlibVmBackendTest {
         """
         assertTrue(runBox(tempDir, source))
     }
+
+    @Test
+    fun testLambdaCalledThroughAValue(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val next = { x: Int -> x + 1 }
+                return if (next(41) == 42) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testLambdaCapturesAValue(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val base = 40
+                val add = { x: Int -> x + base }
+                return if (add(2) == 42) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** The lambda and its enclosing function share a captured `var`, through its box. */
+    @Test
+    fun testLambdaWritesACapturedVar(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                var count = 0
+                val increment = { count++ }
+                increment()
+                increment()
+                return if (count == 2) "OK" else "fail: ${'$'}count"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testLambdaSeesACapturedVarWrittenAfterCreation(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                var result = "fail"
+                val read = { result }
+                result = "OK"
+                return read()
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testNestedLambdaCapturesAnEnclosingLambdasVariable(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val outer = { prefix: String ->
+                    val suffix = "K"
+                    val inner = { prefix + suffix }
+                    inner()
+                }
+                return outer("O")
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testLambdaCapturesThis(@TempDir tempDir: File) {
+        val source = """
+            class Greeter(val name: String) {
+                fun greeting(): () -> String = { name }
+            }
+
+            fun box(): String = Greeter("OK").greeting()()
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testReferenceToATopLevelFunction(@TempDir tempDir: File) {
+        val source = """
+            fun twice(x: Int) = x * 2
+
+            fun box(): String {
+                val f = ::twice
+                return if (f(21) == 42) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** The receiver is bound when the reference is made, and the value holds it. */
+    @Test
+    fun testBoundReference(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val prefix = "O"
+                val append = prefix::plus
+                return append("K")
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** Through a generic caller the argument and result are boxed, as a caller knowing the types passes them. */
+    @Test
+    fun testGenericCallerPassesAPrimitiveThroughALambda(@TempDir tempDir: File) {
+        val source = """
+            fun <T> applyTo(f: (T) -> T, x: T): T = f(x)
+
+            fun box(): String = if (applyTo({ x: Int -> x * 2 }, 21) == 42) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A lambda returning Unit still answers the call through the value, from a `return` as from its end. */
+    @Test
+    fun testLambdaReturningUnit(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                var log = "fail"
+                val record: (String) -> Unit = record@{
+                    if (it == "no") return@record
+                    log = it
+                }
+                record("no")
+                record("OK")
+                return log
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** As on the JVM, a field initialized to its default is left alone, so an `init` block running earlier keeps its write. */
+    @Test
+    fun testFieldInitializerOfTheDefaultValueIsSkipped(@TempDir tempDir: File) {
+        val source = """
+            class Counter(start: Int) {
+                init { set(start) }
+                fun set(value: Int) { count = value }
+                var count: Int = 0
+            }
+
+            fun box(): String = if (Counter(1).count == 1) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A `val` a lambda called in place initializes lives in a box, as a captured `var` does. */
+    @Test
+    fun testLambdaInitializesACapturedVal(@TempDir tempDir: File) {
+        val source = """
+            import kotlin.contracts.*
+
+            @OptIn(ExperimentalContracts::class)
+            fun runOnce(action: () -> Unit) {
+                contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
+                action()
+            }
+
+            fun box(): String {
+                val result: String
+                runOnce { result = "OK" }
+                return result
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testLambdaInAnInitBlockWritesACapturedVar(@TempDir tempDir: File) {
+        val source = """
+            fun call(block: () -> Unit) = block()
+
+            class Holder {
+                val value: Int
+                init {
+                    var local = 1
+                    call { local = 42 }
+                    value = local
+                }
+            }
+
+            fun box(): String = if (Holder().value == 42) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
 }

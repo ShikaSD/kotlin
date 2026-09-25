@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.backend.vm
 import org.jetbrains.kotlin.backend.vm.vmir.*
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
@@ -16,11 +17,16 @@ import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.constructedClass
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.isFunctionOrKFunction
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.ir.util.resolveFakeOverride
+import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
+import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
+import org.jetbrains.kotlin.ir.visitors.acceptVoid
+import org.jetbrains.kotlin.util.OperatorNameConventions
 
 /**
  * Generates one function's body. A Kotlin variable is one VM value assigned as often as the variable is, since VM values
@@ -74,8 +80,12 @@ internal class VmFunctionGenerator private constructor(
         }
     }
 
+    /** The variables a lambda captures and something assigns, which live in a box; see [sharedVariables]. */
+    private val shared = hashSetOf<IrValueSymbol>()
+
     fun generate(): VmFunction {
         val irFunction = irFunction!!
+        shared += sharedVariables(irFunction)
         // A parameter arrives as the signature says, which is the overridden declaration's: an override taking a
         // primitive where that takes a reference gets a box. Reading it would unbox it anyway; unboxing it here does
         // so once rather than at every read.
@@ -85,6 +95,30 @@ internal class VmFunctionGenerator private constructor(
             function.params += incoming
             values[parameter.symbol] = normalize(incoming, parameter.type)
         }
+        return generateBody(irFunction)
+    }
+
+    /**
+     * A lambda's body as a function of its own, taking what it [captured] first, as held where it was created, then
+     * its `invoke`'s parameters: as they are for the ones bound at creation, and as references for the rest, which
+     * [functionValueCall] passes boxed. The [shared] variables stay boxed.
+     */
+    private fun generateLambda(captured: List<IrValueSymbol>, shared: Set<IrValueSymbol>): VmFunction {
+        val irFunction = irFunction!!
+        this.shared += shared
+        val paramTypes = function.symbol.paramTypes
+        captured.forEachIndexed { index, symbol ->
+            values[symbol] = function.newValue(paramTypes[index]).also { function.params += it }
+        }
+        irFunction.parameters.forEachIndexed { index, parameter ->
+            val incoming = function.newValue(paramTypes[captured.size + index])
+            function.params += incoming
+            values[parameter.symbol] = normalize(incoming, parameter.type)
+        }
+        return generateBody(irFunction)
+    }
+
+    private fun generateBody(irFunction: IrFunction): VmFunction {
         when (val body = irFunction.body) {
             is IrBlockBody -> body.statements.forEach(::statement)
             else -> unsupported("the body of ${irFunction.render()}")
@@ -156,6 +190,7 @@ internal class VmFunctionGenerator private constructor(
     /** The body of a file's initializer: each field's initializer stored to its global, in declaration order. */
     private fun generateFileInitializer(fields: List<IrField>): VmFunction {
         for (field in fields) {
+            shared += sharedVariables(field)
             emit(VmInstruction.StoreGlobal(gen.globalOf(field), operandAs(field.initializer!!.expression, field.type)))
         }
         terminate(VmTerminator.Return(null))
@@ -170,6 +205,7 @@ internal class VmFunctionGenerator private constructor(
         for (declaration in parts) {
             if (declaration.kind == ClassKind.ENUM_CLASS) {
                 declaration.declarations.filterIsInstance<IrEnumEntry>().forEachIndexed { ordinal, entry ->
+                    shared += sharedVariables(entry)
                     createEnumEntry(entry, ordinal)
                 }
             } else {
@@ -201,6 +237,9 @@ internal class VmFunctionGenerator private constructor(
     companion object {
         /** Where the runtime's boxes hold their value, their only field. */
         private const val BOX_VALUE_FIELD = 0
+
+        /** Where a captured `var`'s box holds it, its only field. */
+        private const val REF_VALUE_FIELD = 0
 
         /** Where the runtime's `Enum` lays out an entry's name and ordinal, ahead of every field an enum declares. */
         internal const val ENUM_NAME_FIELD = 0
@@ -245,9 +284,18 @@ internal class VmFunctionGenerator private constructor(
     private fun statement(statement: IrStatement) {
         when (statement) {
             is IrVariable -> {
-                val value = newValue(vmType(statement.type))
-                values[statement.symbol] = value
-                statement.initializer?.let { initializer -> emit(VmInstruction.Copy(value, operandAs(initializer, statement.type))) }
+                if (statement.symbol in shared) {
+                    val boxClass = gen.refBoxClass(vmType(statement.type))
+                    val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.NewObject(it, boxClass)) }
+                    values[statement.symbol] = box
+                    statement.initializer?.let { initializer ->
+                        emit(VmInstruction.StoreField(box, REF_VALUE_FIELD, operandAs(initializer, statement.type)))
+                    }
+                } else {
+                    val value = newValue(vmType(statement.type))
+                    values[statement.symbol] = value
+                    statement.initializer?.let { initializer -> emit(VmInstruction.Copy(value, operandAs(initializer, statement.type))) }
+                }
             }
             is IrExpression -> expression(statement)
             else -> unsupported("the statement ${statement.render()}")
@@ -307,9 +355,15 @@ internal class VmFunctionGenerator private constructor(
         is IrGetValue -> getValue(expression)
         is IrSetValue -> {
             val variable = values[expression.symbol] ?: unsupported("a captured variable")
-            emit(VmInstruction.Copy(variable, operandAs(expression.value, expression.symbol.owner.type)))
+            val value = operandAs(expression.value, expression.symbol.owner.type)
+            if (expression.symbol in shared) {
+                emit(VmInstruction.StoreField(variable, REF_VALUE_FIELD, value))
+            } else {
+                emit(VmInstruction.Copy(variable, value))
+            }
             null
         }
+        is IrRichFunctionReference -> functionValue(expression)
         is IrReturn -> {
             ret(expression)
             null
@@ -391,11 +445,17 @@ internal class VmFunctionGenerator private constructor(
         val target = expression.returnTargetSymbol
         if (target == irFunction?.symbol) {
             val returnType = function.symbol.returnType
-            val value = if (returnType == null) {
-                expression(expression.value)
-                null
-            } else {
-                operandAs(expression.value, irFunction.returnType, returnType)
+            val value = when {
+                returnType == null -> {
+                    expression(expression.value)
+                    null
+                }
+                // A lambda returning Unit still answers a value, null; see [functionValue].
+                gen.vmType(irFunction.returnType) == null -> {
+                    expression(expression.value)
+                    constant(returnType, 0)
+                }
+                else -> operandAs(expression.value, irFunction.returnType, returnType)
             }
             runFinallyBlocksDownTo(0)
             terminate(VmTerminator.Return(value))
@@ -539,6 +599,9 @@ internal class VmFunctionGenerator private constructor(
     /** A `var`'s current value is copied out, so a later assignment cannot reach an operand already read. */
     private fun getValue(expression: IrGetValue): VmValue {
         val value = values[expression.symbol] ?: unsupported("a captured value")
+        if (expression.symbol in shared) {
+            return newValue(vmType(expression.symbol.owner.type)).also { emit(VmInstruction.LoadField(it, value, REF_VALUE_FIELD)) }
+        }
         if ((expression.symbol.owner as? IrVariable)?.isVar != true) return value
         return newValue(function.valueTypes[value.index]).also { emit(VmInstruction.Copy(it, value)) }
     }
@@ -776,10 +839,109 @@ internal class VmFunctionGenerator private constructor(
     private fun call(call: IrCall): VmValue? {
         val callee = call.symbol.owner
         intrinsic(call, callee)?.let { return it.value }
+        functionValueCall(call, callee)?.let { return it.value }
         val target = gen.callTarget(callee, isSuperCall = call.superQualifierSymbol != null)
         val dst = target.symbol.returnType?.let(::newValue)
         emit(VmInstruction.Call(dst, target.callee, arguments(call, callee, target.symbol.paramTypes)))
         return dst
+    }
+
+    /**
+     * A lambda or a function reference as a function value: its `invoke` becomes a function of its own, taking the
+     * variables it captures, then the values bound at creation, which the value holds, then the arguments, which a
+     * call passes. As on the JVM, whose `invoke` is erased, the arguments and the result are references, so a generic
+     * caller and one knowing the types pass the same; a lambda returning Unit answers null.
+     */
+    private fun functionValue(reference: IrRichFunctionReference): VmValue {
+        val invoke = reference.invokeFunction
+        if (invoke.isSuspend) unsupported("a suspend lambda")
+        val captured = freeVariables(invoke)
+        val captures = captured.map { values[it] ?: unsupported("capturing ${it.owner.render()}") }
+        val boundCount = reference.boundValues.size
+        val bound = reference.boundValues.mapIndexed { index, value -> operandAs(value, invoke.parameters[index].type) }
+        val paramTypes = captures.map { it.vmType() } + invoke.parameters.mapIndexed { index, parameter ->
+            if (index < boundCount) vmType(parameter.type) else gen.anyType
+        }
+        val symbol = VmFunctionSymbol(gen.uniqueFunctionName("${function.symbol.name}\$lambda"), paramTypes, gen.anyType)
+        gen.addFunction(VmFunctionGenerator(gen, invoke, symbol, owner = null).generateLambda(captured, shared))
+        return newValue(gen.anyType).also { emit(VmInstruction.RefFunc(it, symbol, captures + bound)) }
+    }
+
+    /** `invoke` on a function type, which calls through the value; see [functionValue] for what crosses the call. */
+    private fun functionValueCall(call: IrCall, callee: IrSimpleFunction): Intrinsic? {
+        val receiver = call.dispatchReceiver ?: return null
+        if (callee.name != OperatorNameConventions.INVOKE || !receiver.type.isFunctionOrKFunction()) return null
+        val args = call.arguments.map { reference(it ?: unsupported("a default argument")) }
+        val result = newValue(gen.anyType)
+        emit(VmInstruction.Call(result, VmCallee.Value, args))
+        return Intrinsic(result.takeIf { gen.vmType(call.type) != null })
+    }
+
+    /** The values [function] uses that something enclosing it declares: what a lambda of it captures. */
+    private fun freeVariables(function: IrFunction): List<IrValueSymbol> {
+        val declared = hashSetOf<IrValueSymbol>()
+        val used = LinkedHashSet<IrValueSymbol>()
+        function.acceptVoid(object : IrVisitorVoid() {
+            override fun visitElement(element: IrElement) {
+                element.acceptChildrenVoid(this)
+            }
+
+            override fun visitValueParameter(declaration: IrValueParameter) {
+                declared += declaration.symbol
+                declaration.acceptChildrenVoid(this)
+            }
+
+            override fun visitVariable(declaration: IrVariable) {
+                declared += declaration.symbol
+                declaration.acceptChildrenVoid(this)
+            }
+
+            override fun visitGetValue(expression: IrGetValue) {
+                used += expression.symbol
+            }
+
+            override fun visitSetValue(expression: IrSetValue) {
+                used += expression.symbol
+                expression.acceptChildrenVoid(this)
+            }
+        })
+        return used.filter { it !in declared }
+    }
+
+    /** Whether a field's constant initializer is what the field holds before it runs: zero, false or null. */
+    private fun IrConst.isDefaultValue(): Boolean = when (kind) {
+        IrConstKind.Null -> true
+        IrConstKind.Boolean -> value == false
+        IrConstKind.Char -> value == 0.toChar()
+        IrConstKind.Byte, IrConstKind.Short, IrConstKind.Int, IrConstKind.Long -> (value as Number).toLong() == 0L
+        IrConstKind.Double -> (value as Double).toRawBits() == 0L
+        IrConstKind.Float, IrConstKind.String -> false
+    }
+
+    /**
+     * The variables in [element] a lambda captures and something assigns, nested lambdas included: a `var`, or a `val`
+     * initialized after its declaration, which a lambda called in place may do. Each lives in a box, since a function
+     * value copies what it captures and a write on either side must reach the other.
+     */
+    private fun sharedVariables(element: IrElement): Set<IrValueSymbol> {
+        val captured = hashSetOf<IrValueSymbol>()
+        val assigned = hashSetOf<IrValueSymbol>()
+        element.acceptVoid(object : IrVisitorVoid() {
+            override fun visitElement(element: IrElement) {
+                element.acceptChildrenVoid(this)
+            }
+
+            override fun visitRichFunctionReference(expression: IrRichFunctionReference) {
+                captured += freeVariables(expression.invokeFunction)
+                expression.acceptChildrenVoid(this)
+            }
+
+            override fun visitSetValue(expression: IrSetValue) {
+                assigned += expression.symbol
+                expression.acceptChildrenVoid(this)
+            }
+        })
+        return captured.filterTo(hashSetOf()) { it.owner is IrVariable && ((it.owner as IrVariable).isVar || it in assigned) }
     }
 
     /** A call's arguments as its callee's signature takes them, boxed or unboxed where the two differ. */
@@ -827,6 +989,7 @@ internal class VmFunctionGenerator private constructor(
     private fun instanceInitializers(declaration: IrClass) {
         val self = constructed!!
         for (member in declaration.declarations) {
+            shared += sharedVariables(member)
             when (member) {
                 is IrProperty -> member.backingField?.let { initializeField(self, it) }
                 is IrField -> initializeField(self, member)
@@ -838,6 +1001,8 @@ internal class VmFunctionGenerator private constructor(
 
     private fun initializeField(self: VmValue, field: IrField) {
         val initializer = field.initializer ?: return
+        // As on the JVM, which leaves such a field to its default: an initializer running earlier may have set it.
+        if ((initializer.expression as? IrConst)?.isDefaultValue() == true) return
         emit(VmInstruction.StoreField(self, gen.fieldIndex(field), operandAs(initializer.expression, field.type)))
     }
 

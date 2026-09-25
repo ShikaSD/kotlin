@@ -280,6 +280,27 @@ class VmModuleGenerator(internal val irBuiltIns: IrBuiltIns, moduleName: String)
     /** The owner whose initializer a static call to [function] runs first, if any. */
     internal fun ownerOf(function: IrFunction): VmOwner? = functionOwners[function.symbol]
 
+    /** Adds a function only code generation creates, such as a lambda's body. */
+    internal fun addFunction(function: VmFunction) {
+        module.functions += function
+    }
+
+    /** A name for a function only code generation creates, distinct from every other function's in the module. */
+    internal fun uniqueFunctionName(base: String): String {
+        val name = sanitized(base)
+        if (usedFunctionNames.add(name)) return name
+        return generateSequence(1) { it + 1 }.map { "${name}_$it" }.first(usedFunctionNames::add)
+    }
+
+    /** The runtime class a captured `var` held in a slot of [type] lives in; see `kotlin.jvm.internal.Ref` there. */
+    internal fun refBoxClass(type: VmType): Int = runtimeClass(
+        when (type) {
+            VmType.F64 -> "kotlin.jvm.internal.Ref.DoubleRef"
+            is VmType.Ref -> "kotlin.jvm.internal.Ref.ObjectRef"
+            else -> "kotlin.jvm.internal.Ref.LongRef"
+        }
+    )
+
     private fun collectClass(declaration: IrClass, classes: MutableList<IrClass>, functions: MutableList<IrFunction>) {
         when {
             declaration.kind == ClassKind.ANNOTATION_CLASS ->
