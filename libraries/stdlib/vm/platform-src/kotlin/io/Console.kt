@@ -25,5 +25,5 @@ public actual fun readln(): String = throw ReadAfterEOFException("EOF has alread
 @SinceKotlin("1.6")
 public actual fun readlnOrNull(): String? = null
 
-/** Writes [message] to the VM's output, which the VM backend compiles to the runtime's `vm.io.print`. */
+/** Writes [message] to the VM's output, which the VM backend compiles to the runtime's `vm.builtin.io.print`. */
 private external fun printString(message: String)

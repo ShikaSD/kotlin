@@ -10,5 +10,5 @@ internal actual fun defaultPlatformRandom(): Random = Random(randomSeed())
 internal actual fun doubleFromParts(hi26: Int, low27: Int): Double =
     (hi26.toLong().shl(27) + low27) / (1L shl 53).toDouble()
 
-/** 64 bits the VM draws afresh, which the VM backend compiles to the runtime's `vm.random.seed`. */
+/** 64 bits the VM draws afresh, which the VM backend compiles to the runtime's `vm.builtin.random.seed`. */
 private external fun randomSeed(): Long

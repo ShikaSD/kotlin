@@ -2246,7 +2246,7 @@ class JKlibVmBackendTest {
         assertTrue(runBox(tempDir, source))
     }
 
-    /** The default random is seeded by the VM's `vm.random.seed`. */
+    /** The default random is seeded by the VM's `vm.builtin.random.seed`. */
     @Test
     fun testDefaultRandomStaysInItsBound(@TempDir tempDir: File) {
         val source = """
@@ -2304,7 +2304,7 @@ class JKlibVmBackendTest {
         assertTrue(runBox(tempDir, source))
     }
 
-    /** A lambda is a `vm.Function`, so an array of function types holds them. */
+    /** A lambda is a `vm.builtin.Function`, so an array of function types holds them. */
     @Test
     fun testArrayOfLambdasHoldsThem(@TempDir tempDir: File) {
         val source = """
@@ -2345,7 +2345,7 @@ class JKlibVmBackendTest {
         assertTrue(runBox(tempDir, source))
     }
 
-    /** `println` writes to the VM's output, through the runtime's `vm.io.print`. */
+    /** `println` writes to the VM's output, through the runtime's `vm.builtin.io.print`. */
     @Test
     fun testPrintlnWritesALine(@TempDir tempDir: File) {
         val source = """

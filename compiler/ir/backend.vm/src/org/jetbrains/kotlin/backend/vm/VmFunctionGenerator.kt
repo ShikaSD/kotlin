@@ -293,7 +293,7 @@ internal class VmFunctionGenerator private constructor(
     private fun generateUnsupportedStub(name: String): VmFunction {
         function.symbol.paramTypes.mapTo(function.params, ::newValue)
         val message = newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, "the VM backend does not support $name yet")) }
-        throwNew("java.lang.UnsupportedOperationException", message)
+        throwNew("vm.runtime.UnsupportedOperationException", message)
         return finish()
     }
 

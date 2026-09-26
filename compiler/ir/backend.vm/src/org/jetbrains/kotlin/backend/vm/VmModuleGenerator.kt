@@ -39,29 +39,30 @@ const val VM_RUNTIME_MODULE = "vm.runtime"
 
 /**
  * The standard library's types the runtime declares, by the runtime class standing for each: the JVM class the Kotlin
- * type is compiled to, whose name the runtime gives its class.
+ * type is compiled to, whose simple name the runtime gives its class in its own namespace, `vm.runtime`, so no Java name
+ * reaches the VM.
  */
 private val RUNTIME_TYPES = mapOf(
-    "kotlin.Number" to "java.lang.Number",
-    "kotlin.Comparable" to "java.lang.Comparable",
-    "kotlin.CharSequence" to "java.lang.CharSequence",
-    "java.lang.StringBuilder" to "java.lang.StringBuilder",
+    "kotlin.Number" to "vm.runtime.Number",
+    "kotlin.Comparable" to "vm.runtime.Comparable",
+    "kotlin.CharSequence" to "vm.runtime.CharSequence",
+    "java.lang.StringBuilder" to "vm.runtime.StringBuilder",
 )
 
 /**
  * The JVM's throwables the runtime implements, by the runtime class standing for each. The Kotlin names are the
- * standard library's own classes; its other exceptions are aliases of the Java ones. The VM raises the `vm.` classes
+ * standard library's own classes; its other exceptions are aliases of the Java ones. The VM raises the `vm.builtin.` classes
  * itself, which is what makes a `catch` of the JVM class catch the VM's failure.
  */
 private val RUNTIME_THROWABLES = mapOf(
-    "kotlin.Throwable" to "java.lang.Throwable",
+    "kotlin.Throwable" to "vm.runtime.Throwable",
     "kotlin.NoWhenBranchMatchedException" to "kotlin.NoWhenBranchMatchedException",
     "kotlin.UninitializedPropertyAccessException" to "kotlin.UninitializedPropertyAccessException",
-    "java.lang.NullPointerException" to "vm.NullReference",
-    "java.lang.ArithmeticException" to "vm.DivisionByZero",
-    "java.lang.ClassCastException" to "vm.ClassCast",
-    "java.lang.ArrayIndexOutOfBoundsException" to "vm.ArrayIndexOutOfBounds",
-    "java.lang.StringIndexOutOfBoundsException" to "vm.StringIndexOutOfBounds",
+    "java.lang.NullPointerException" to "vm.builtin.NullReference",
+    "java.lang.ArithmeticException" to "vm.builtin.DivisionByZero",
+    "java.lang.ClassCastException" to "vm.builtin.ClassCast",
+    "java.lang.ArrayIndexOutOfBoundsException" to "vm.builtin.ArrayIndexOutOfBounds",
+    "java.lang.StringIndexOutOfBoundsException" to "vm.builtin.StringIndexOutOfBounds",
 ) + listOf(
     "java.lang.Throwable",
     "java.lang.Exception",
@@ -74,7 +75,7 @@ private val RUNTIME_THROWABLES = mapOf(
     "java.lang.UnsupportedOperationException",
     "java.lang.IndexOutOfBoundsException",
     "java.util.NoSuchElementException",
-).associateWith { it }
+).associateWith { "vm.runtime.${it.substringAfterLast('.')}" }
 
 /**
  * Generates one VM module from a linked, unlowered IR module fragment.
@@ -454,12 +455,12 @@ class VmModuleGenerator(
     }
 
     internal val anyType: VmType get() = VmType.Ref(runtimeClass("Any"))
-    internal val stringType: VmType get() = VmType.Ref(runtimeClass("vm.String"))
+    internal val stringType: VmType get() = VmType.Ref(runtimeClass("vm.builtin.String"))
 
     /** The class the VM raises for a null dereference, which Kotlin throws for a failed null check too. */
-    internal val nullPointerClass: Int get() = runtimeClass("vm.NullReference")
+    internal val nullPointerClass: Int get() = runtimeClass("vm.builtin.NullReference")
 
-    internal val throwableClass: Int get() = runtimeClass("java.lang.Throwable")
+    internal val throwableClass: Int get() = runtimeClass("vm.runtime.Throwable")
 
     /** A runtime class by the name the runtime declares it under. */
     internal fun runtimeClassNamed(name: String): Int = runtimeClass(name)
@@ -473,11 +474,11 @@ class VmModuleGenerator(
             "equals" -> VmSelector(name, VM_RUNTIME_MODULE, any, listOf(anyType), VmType.I64)
             "hashCode" -> VmSelector(name, VM_RUNTIME_MODULE, any, emptyList(), VmType.I64)
             "toString" -> VmSelector(name, VM_RUNTIME_MODULE, any, emptyList(), stringType)
-            "message" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("java.lang.Throwable"), emptyList(), stringType)
-            "cause" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("java.lang.Throwable"), emptyList(), anyType)
-            "compareTo" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("java.lang.Comparable"), listOf(anyType), VmType.I64)
-            "length" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("java.lang.CharSequence"), emptyList(), VmType.I64)
-            "get" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("java.lang.CharSequence"), listOf(VmType.I64), VmType.I64)
+            "message" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.Throwable"), emptyList(), stringType)
+            "cause" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.Throwable"), emptyList(), anyType)
+            "compareTo" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.Comparable"), listOf(anyType), VmType.I64)
+            "length" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.CharSequence"), emptyList(), VmType.I64)
+            "get" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.CharSequence"), listOf(VmType.I64), VmType.I64)
             else -> error("The runtime declares no selector $name on Any")
         }
         module.selectors.size - 1
@@ -487,17 +488,17 @@ class VmModuleGenerator(
 
     internal val hashCodeSelector: Int get() = runtimeSelector("hashCode")
 
-    /** The runtime's `vm.random.seed`, which the VM stdlib's `kotlin.random.randomSeed` is. */
-    internal val randomSeed: VmFunctionSymbol by lazy { runtimeFunction("vm.random.seed", emptyList(), VmType.I64) }
+    /** The runtime's `vm.builtin.random.seed`, which the VM stdlib's `kotlin.random.randomSeed` is. */
+    internal val randomSeed: VmFunctionSymbol by lazy { runtimeFunction("vm.builtin.random.seed", emptyList(), VmType.I64) }
 
-    /** The runtime's `vm.io.print`, which the VM stdlib's `kotlin.io.printString` is. */
-    internal val print: VmFunctionSymbol by lazy { runtimeFunction("vm.io.print", listOf(stringType), null) }
+    /** The runtime's `vm.builtin.io.print`, which the VM stdlib's `kotlin.io.printString` is. */
+    internal val print: VmFunctionSymbol by lazy { runtimeFunction("vm.builtin.io.print", listOf(stringType), null) }
 
     /** A function of the runtime's `java.lang.StringBuilder`, which Kotlin's `StringBuilder` is an alias of. */
     internal fun stringBuilderFunction(name: String, params: List<VmType>, returnType: VmType?): VmFunctionSymbol =
         runtimeFunction("StringBuilder::$name", listOf(anyType) + params, returnType)
 
-    internal val stringBuilderClass: Int get() = runtimeClass("java.lang.StringBuilder")
+    internal val stringBuilderClass: Int get() = runtimeClass("vm.runtime.StringBuilder")
 
     /** The runtime class implementing [declaration], one of [RUNTIME_THROWABLES], or null for any other class. */
     internal fun runtimeThrowable(declaration: IrClass): Int? =
@@ -509,7 +510,7 @@ class VmModuleGenerator(
     }
 
     /** The runtime's box for a primitive: its JVM class, holding the value in its only field. */
-    internal fun boxClass(kind: PrimitiveType): Int = runtimeClass("java.lang.${boxName(kind)}")
+    internal fun boxClass(kind: PrimitiveType): Int = runtimeClass("vm.runtime.${boxName(kind)}")
 
     /** The runtime's `valueOf` for a primitive's box, which boxing calls. */
     internal fun valueOf(kind: PrimitiveType): VmFunctionSymbol {
@@ -571,12 +572,12 @@ class VmModuleGenerator(
         val fqName = declaration.fqNameWhenAvailable?.asString()
         return when {
             declaration.isAny() -> runtimeClass("Any")
-            declaration.symbol == irBuiltIns.stringClass -> runtimeClass("vm.String")
-            declaration.isEnumBase() -> runtimeClass("java.lang.Enum")
+            declaration.symbol == irBuiltIns.stringClass -> runtimeClass("vm.builtin.String")
+            declaration.isEnumBase() -> runtimeClass("vm.runtime.Enum")
             isSharedVariableBox(declaration) -> sharedVariableBoxClass
             declaration.defaultType.isPrimitiveType() -> boxClass(declaration.defaultType.getPrimitiveType()!!)
-            // Every function value is an instance of `vm.Function`, whatever its arity; see wip/FUNCTION_VALUES_DESIGN.md.
-            fqName == "kotlin.Function" || declaration.defaultType.isFunctionOrKFunction() -> runtimeClass("vm.Function")
+            // Every function value is an instance of `vm.builtin.Function`, whatever its arity; see wip/FUNCTION_VALUES_DESIGN.md.
+            fqName == "kotlin.Function" || declaration.defaultType.isFunctionOrKFunction() -> runtimeClass("vm.builtin.Function")
             else -> RUNTIME_TYPES[fqName]?.let(::runtimeClass) ?: runtimeThrowable(declaration)
         }
     }
@@ -647,7 +648,7 @@ class VmModuleGenerator(
     private fun testedClassOrNull(type: IrType): Int? {
         if (type.isAny() || type.isNullableAny()) return runtimeClass("Any")
         arrayClassOf(type)?.let { return it }
-        if (type.isString() || type.isNullableString()) return runtimeClass("vm.String")
+        if (type.isString() || type.isNullableString()) return runtimeClass("vm.builtin.String")
         type.getPrimitiveType()?.let { return boxClass(it) }
         RUNTIME_TYPES[type.classFqName?.asString()]?.let { return runtimeClass(it) }
         val declaration = type.classOrNull?.owner ?: unsupported("a type test against ${type.render()}")
@@ -731,7 +732,7 @@ class VmModuleGenerator(
         val interfaces = declaration.superTypes.mapNotNull { it.classOrNull?.owner }.filter { it.isInterface }.mapNotNull {
             // A marker interface the VM cannot name, such as `java.io.Serializable`, only a type test could ask about.
             if (it.isMarkerOutsideVm()) return@mapNotNull null
-            // A function type stands for `vm.Function`, the class every function value has, which an interface cannot
+            // A function type stands for `vm.builtin.Function`, the class every function value has, which an interface cannot
             // extend and a class gains nothing by naming: a value is a function value only when the VM made it one.
             // A class calling itself one is what the VM cannot express.
             val isFunctionType = it.fqNameWhenAvailable?.asString() == "kotlin.Function" || it.defaultType.isFunctionOrKFunction()
@@ -745,7 +746,7 @@ class VmModuleGenerator(
         val superClass = declaration.superClass()
         val superIndex = when {
             superClass == null || superClass.isAny() -> runtimeClass("Any")
-            superClass.isEnumBase() -> runtimeClass("java.lang.Enum")
+            superClass.isEnumBase() -> runtimeClass("vm.runtime.Enum")
             runtimeThrowable(superClass) != null -> runtimeThrowable(superClass)!!
             else -> classIndex(superClass) ?: unsupported("the superclass ${superClass.name} outside the VM modules")
         }
