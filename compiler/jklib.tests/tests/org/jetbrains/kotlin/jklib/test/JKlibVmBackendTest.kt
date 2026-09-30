@@ -2418,4 +2418,165 @@ class JKlibVmBackendTest {
         """
         assertTrue(runBox(tempDir, source))
     }
+
+    /** `compareTo` orders the two zeros, which `<` does not tell apart. */
+    @Test
+    fun testDoubleCompareToOrdersNegativeZeroFirst(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if ((-0.0).compareTo(0.0) < 0) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `compareTo` ranks NaN above every other value, even though no IEEE comparison ranks it. */
+    @Test
+    fun testDoubleCompareToRanksNaNAboveInfinity(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if (Double.NaN.compareTo(Double.POSITIVE_INFINITY) > 0) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A float's bits are sign-extended before they are compared, so a negative float's bits order as negative. */
+    @Test
+    fun testFloatCompareToOrdersNegativeZeroFirst(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if ((-0.0f).compareTo(0.0f) < 0) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testFloatToRawBitsOfANegativeFloatIsNegative(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if ((-1.0f).toRawBits() == -1082130432) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `copyInto` copies through the VM's `vm.builtin.array.copy`. */
+    @Test
+    fun testCopyIntoCopiesARangeToAnOffset(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val to = intArrayOf(1, 2, 3, 4).copyInto(IntArray(4), destinationOffset = 1, startIndex = 1, endIndex = 3)
+                return if (to.contentEquals(intArrayOf(0, 2, 3, 0))) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testMutableListGrowsAsItIsAddedTo(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val list = mutableListOf<Int>()
+                for (i in 0 until 100) list.add(i)
+                return if (list.size == 100 && list[99] == 99) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testForLoopIteratesAList(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                var text = ""
+                for (s in listOf("O", "K")) text += s
+                return text
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testHashMapFindsWhatWasPut(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val map = hashMapOf("a" to 1, "b" to 2)
+                map["c"] = 3
+                return if (map["b"] == 2 && map["c"] == 3 && map["d"] == null) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A `Comparator` is the runtime's `vm.runtime.Comparator`, which `sortedWith` calls through its `compare`. */
+    @Test
+    fun testSortedWithOrdersByTheComparator(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val sorted = listOf(3, 1, 2).sortedWith(Comparator { a, b -> b - a })
+                return if (sorted == listOf(3, 2, 1)) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** Changing a list while iterating it raises the runtime's `java.util.ConcurrentModificationException`. */
+    @Test
+    fun testModifyingAListWhileIteratingItThrows(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val list = mutableListOf(1, 2)
+                try {
+                    for (i in list) list.add(i)
+                } catch (e: ConcurrentModificationException) {
+                    return "OK"
+                }
+                return "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `Unit` passed where a value is expected still defines the argument's register, which the allocator requires. */
+    @Test
+    fun testUnitPassesAsAGenericArgument(@TempDir tempDir: File) {
+        val source = """
+            fun <T> one(value: T): Int = 1
+
+            fun box(): String = if (one(Unit) == 1) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** An array's `iterator()` is the VM standard library's `arrayIterator`, the builtin class having no body. */
+    @Test
+    fun testArrayIteratorWalksTheArray(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val iterator = arrayOf("O", "K").iterator()
+                var text = ""
+                while (iterator.hasNext()) text += iterator.next()
+                return text
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testIntArrayIteratorWalksTheArray(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val iterator = intArrayOf(2, 3).iterator()
+                var product = 1
+                while (iterator.hasNext()) product *= iterator.nextInt()
+                return if (product == 6) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testMutableListOfHoldsItsElements(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val list = mutableListOf("O", "K")
+                return list[0] + list[1]
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
 }

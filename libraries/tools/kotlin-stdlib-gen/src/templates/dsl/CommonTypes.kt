@@ -114,6 +114,7 @@ enum class Backend {
     Any,
     IR,
     Wasm,
+    Vm,
 }
 
 enum class KotlinTarget(val platform: Platform, val backend: Backend) {
@@ -121,6 +122,7 @@ enum class KotlinTarget(val platform: Platform, val backend: Backend) {
     JVM(Platform.JVM, Backend.Any),
     JS(Platform.JS, Backend.IR),
     WASM(Platform.Native, Backend.Wasm),
+    VM(Platform.Native, Backend.Vm),
     Native(Platform.Native, Backend.IR);
 
     val fullName get() = "Kotlin/$name"

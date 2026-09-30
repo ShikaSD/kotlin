@@ -191,10 +191,16 @@ fun lowerForVm(context: VmLoweringContext, module: IrModuleFragment) {
 }
 
 /**
- * Lowers [module] and generates it as one VM module named [moduleName]. Compiling the standard library, [reportStub] is
- * told of each function generated as a stub; see [VmModuleGenerator].
+ * Lowers [module] and generates it as one VM module named [moduleName]. Compiling the standard library, [isStdlib],
+ * [reportStub] is told of each function generated as a stub; see [VmModuleGenerator].
  */
-fun compileToVm(module: IrModuleFragment, moduleName: String, context: VmLoweringContext, reportStub: (String) -> Unit = {}): VmModule {
+fun compileToVm(
+    module: IrModuleFragment,
+    moduleName: String,
+    context: VmLoweringContext,
+    isStdlib: Boolean = false,
+    reportStub: (String) -> Unit = {},
+): VmModule {
     lowerForVm(context, module)
-    return VmModuleGenerator(context.irBuiltIns, moduleName, reportStub).generate(module)
+    return VmModuleGenerator(context.irBuiltIns, moduleName, isStdlib, reportStub).generate(module)
 }

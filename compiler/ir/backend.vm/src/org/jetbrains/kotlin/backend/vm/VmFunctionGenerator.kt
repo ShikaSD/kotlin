@@ -338,16 +338,16 @@ internal class VmFunctionGenerator private constructor(
 
     private fun vmType(type: IrType): VmType = gen.vmType(type) ?: unsupported("a value of type ${type.render()}")
 
-    /** The value of [expression], which must have one: a placeholder when the expression never completes. */
-    private fun operand(expression: IrExpression): VmValue = expression(expression) ?: newValue(vmType(expression.type))
+    /** The value of [expression], which must have one: a zero placeholder when the expression never completes. */
+    private fun operand(expression: IrExpression): VmValue = expression(expression) ?: constant(vmType(expression.type), 0)
 
     /**
-     * The value of [expression] as a slot of [type] holds it, boxed or unboxed as the two differ; a placeholder of the
-     * slot's type when the expression has no value, being `Unit` or never completing.
+     * The value of [expression] as a slot of [type] holds it, boxed or unboxed as the two differ; a zero of the slot's
+     * type when the expression has no value, being `Unit` or never completing.
      */
     private fun operandAs(expression: IrExpression, type: IrType, slot: VmType? = gen.vmType(type)): VmValue {
         val held = slot ?: vmType(type)
-        val value = expression(expression) ?: return newValue(held)
+        val value = expression(expression) ?: return constant(held, 0)
         return coerce(value, expression.type, held, type)
     }
 
@@ -1187,11 +1187,24 @@ internal class VmFunctionGenerator private constructor(
                     }
                     "kotlin.String.plus" -> return Intrinsic(plus(operand(args[0]), args[1]))
                     // Externals of the VM's standard library, which the VM implements; see its `platform-src`.
-                    "kotlin.toRawBits" -> return Intrinsic(newValue(VmType.I64).also { emit(VmInstruction.Copy(it, operand(args[0]))) })
-                    "kotlin.fromBits" -> return Intrinsic(newValue(VmType.F64).also { emit(VmInstruction.Copy(it, operand(args[1]))) })
+                    "kotlin.toRawBits" -> {
+                        val bits = newValue(VmType.I64).also { emit(VmInstruction.Copy(it, operand(args[0]))) }
+                        if (!args[0].type.isFloat()) return Intrinsic(bits)
+                        // A float's bits are the register's low half; an `Int` is held sign-extended.
+                        val shift = constant(VmType.I64, 32)
+                        return Intrinsic(binary(VmBinaryOp.SHR_S, binary(VmBinaryOp.SHL, bits, shift), shift))
+                    }
+                    "kotlin.fromBits" -> {
+                        val type = if (call.type.isFloat()) VmType.F32 else VmType.F64
+                        return Intrinsic(newValue(type).also { emit(VmInstruction.Copy(it, operand(args[1]))) })
+                    }
                     "kotlin.random.randomSeed" -> return Intrinsic(newValue(VmType.I64).also {
                         emit(VmInstruction.Call(it, VmCallee.Static(gen.randomSeed), emptyList()))
                     })
+                    "kotlin.collections.copyArray" -> {
+                        emit(VmInstruction.Call(null, VmCallee.Static(gen.arrayCopy), args.map(::operand)))
+                        return Intrinsic(null)
+                    }
                     "kotlin.io.printString" -> {
                         emit(VmInstruction.Call(null, VmCallee.Static(gen.print), listOf(operand(args[0]))))
                         return Intrinsic(null)
@@ -1231,6 +1244,10 @@ internal class VmFunctionGenerator private constructor(
                 Intrinsic(null)
             }
             "<get-size>" -> Intrinsic(newValue(VmType.I64).also { emit(VmInstruction.ArrayLength(it, operand(args[0]))) })
+            "iterator" -> {
+                val target = gen.staticTarget(gen.arrayIterator(owner))
+                Intrinsic(newValue(gen.anyType).also { emit(VmInstruction.Call(it, target.callee, listOf(operand(args[0])))) })
+            }
             else -> null
         }
     }
@@ -1480,9 +1497,14 @@ internal class VmFunctionGenerator private constructor(
             "inc" -> narrow(binary(VmBinaryOp.ADD, receiver, one(receiverType), receiver.vmType()), receiverType)
             "dec" -> narrow(binary(VmBinaryOp.SUB, receiver, one(receiverType), receiver.vmType()), receiverType)
             "compareTo" -> {
-                if (receiverType.isFloating() || primitive(callee.parameters[1].type).isFloating()) unsupported("compareTo on floating-point numbers")
-                val other = argument()
-                binary(VmBinaryOp.SUB, binary(VmBinaryOp.GT_S, receiver, other), binary(VmBinaryOp.LT_S, receiver, other))
+                val otherType = primitive(callee.parameters[1].type)
+                if (receiverType.isFloating() || otherType.isFloating()) {
+                    val type = if (PrimitiveType.DOUBLE in listOf(receiverType, otherType)) PrimitiveType.DOUBLE else PrimitiveType.FLOAT
+                    floatingCompareTo(widen(receiver, receiverType, type), widen(argument(), otherType, type), type)
+                } else {
+                    val other = argument()
+                    binary(VmBinaryOp.SUB, binary(VmBinaryOp.GT_S, receiver, other), binary(VmBinaryOp.LT_S, receiver, other))
+                }
             }
             "and" -> binary(VmBinaryOp.AND, receiver, argument())
             "or" -> binary(VmBinaryOp.OR, receiver, argument())
@@ -1530,6 +1552,34 @@ internal class VmFunctionGenerator private constructor(
      * A value of kind [from] as one of [to], which it widens to: an integral value as a floating one, and a `Float` as
      * a `Double`. The integral kinds share one representation.
      */
+    /**
+     * `compareTo` of two floating-point values of [type], which orders them totally as the JVM's `Double.compare` does:
+     * `-0.0` below `0.0`, and NaN above everything and equal to itself. Values the IEEE order ranks are ranked by it; the
+     * rest, equal or unordered, by their bits, which order the two zeros once every NaN has the canonical bits.
+     */
+    private fun floatingCompareTo(lhs: VmValue, rhs: VmValue, type: PrimitiveType): VmValue {
+        val greater = binary(VmBinaryOp.GT_S, lhs, rhs)
+        val less = binary(VmBinaryOp.LT_S, lhs, rhs)
+        val ranked = binary(VmBinaryOp.SUB, greater, less)
+        val unranked = not(binary(VmBinaryOp.OR, greater, less))
+        val lhsBits = canonicalBits(lhs, type)
+        val rhsBits = canonicalBits(rhs, type)
+        val byBits = binary(VmBinaryOp.SUB, binary(VmBinaryOp.GT_S, lhsBits, rhsBits), binary(VmBinaryOp.LT_S, lhsBits, rhsBits))
+        return binary(VmBinaryOp.ADD, ranked, binary(VmBinaryOp.MUL, unranked, byBits))
+    }
+
+    /** [value]'s bits as a signed integer, a float's sign-extended from its register's low half, and NaN's canonical. */
+    private fun canonicalBits(value: VmValue, type: PrimitiveType): VmValue {
+        var bits = newValue(VmType.I64).also { emit(VmInstruction.Copy(it, value)) }
+        val nan = if (type == PrimitiveType.DOUBLE) 0x7ff8_0000_0000_0000L else 0x7fc0_0000L
+        if (type == PrimitiveType.FLOAT) {
+            val shift = constant(VmType.I64, 32)
+            bits = binary(VmBinaryOp.SHR_S, binary(VmBinaryOp.SHL, bits, shift), shift)
+        }
+        val isNaN = not(binary(VmBinaryOp.EQ, value, value))
+        return binary(VmBinaryOp.ADD, bits, binary(VmBinaryOp.MUL, isNaN, binary(VmBinaryOp.SUB, constant(VmType.I64, nan), bits)))
+    }
+
     private fun widen(value: VmValue, from: PrimitiveType, to: PrimitiveType): VmValue {
         if (!to.isFloating() || from == to) return value
         return newValue(gen.primitiveVmType(to)).also { emit(VmInstruction.Convert(it, value)) }

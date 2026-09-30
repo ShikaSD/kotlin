@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.cli.jklib.config.jklibVmOutput
 import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors
 import org.jetbrains.kotlin.cli.pipeline.PipelinePhase
 import org.jetbrains.kotlin.cli.report
+import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.config.moduleName
 import org.jetbrains.kotlin.ir.KtDiagnosticReporterWithImplicitIrBasedContext
@@ -39,7 +40,8 @@ object JKlibVmCodegenPhase : PipelinePhase<JKlibIrCompilationArtifact, JKlibIrCo
                 configuration.diagnosticsCollector, configuration.languageVersionSettings,
             )
             val context = VmLoweringContext(configuration, input.pluginContext.irBuiltIns, diagnosticReporter)
-            compileToVm(input.moduleFragment, moduleName, context) { stub ->
+            val isStdlib = configuration.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)
+            compileToVm(input.moduleFragment, moduleName, context, isStdlib) { stub ->
                 configuration.report(VM_COMPILATION_WARNING, "the VM backend generated a stub for $stub")
             }
         } catch (e: VmCodegenException) {

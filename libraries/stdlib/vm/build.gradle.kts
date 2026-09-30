@@ -56,7 +56,7 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
         include("kotlin/**")
         // The real ranges and `error` instead, below: the loops lowering reads the range classes, and `Preconditions.kt`
         // declares `error` beside `require`.
-        exclude("kotlin/ranges/**", "kotlin/stubs.kt")
+        exclude("kotlin/ranges/**", "kotlin/stubs.kt", "kotlin/collections/stubs.kt")
         into("src/common")
     }
 
@@ -64,7 +64,6 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
         include(
             "EnumEntries.kt",
             "Serializable.kt",
-            "minimalCollections.kt"
         )
         into("src/common")
     }
@@ -74,6 +73,18 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
             "kotlin/Annotation.kt",
             "kotlin/Annotations.kt",
             "kotlin/collections/PrimitiveIterators.kt",
+            "kotlin/collections/AbstractCollection.kt",
+            "kotlin/collections/AbstractIterator.kt",
+            "kotlin/collections/AbstractList.kt",
+            "kotlin/collections/AbstractMap.kt",
+            "kotlin/collections/AbstractSet.kt",
+            "kotlin/collections/Collections.kt",
+            "kotlin/collections/IndexedValue.kt",
+            "kotlin/collections/Iterables.kt",
+            "kotlin/collections/Iterators.kt",
+            "kotlin/collections/Maps.kt",
+            "kotlin/collections/MutableCollections.kt",
+            "kotlin/collections/Sets.kt",
             "kotlin/Any.kt",
             "kotlin/Array.kt",
             "kotlin/ArrayIntrinsics.kt",
@@ -108,6 +119,26 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
             "kotlin/ranges/Ranges.kt",
             "kotlin/random/Random.kt",
             "kotlin/random/XorWowRandom.kt",
+            "kotlin/collections/Grouping.kt",
+            "kotlin/collections/Sequence.kt",
+            "kotlin/collections/Sequences.kt",
+            "kotlin/annotations/Inference.kt",
+            "kotlin/comparisons/Comparisons.kt",
+            "kotlin/experimental/inferenceMarker.kt",
+            "kotlin/util/Tuples.kt",
+            "kotlin/concurrent/Volatile.kt",
+            "kotlin/collections/UArraySorting.kt",
+            "kotlin/collections/Arrays.kt",
+            "kotlin/collections/MapWithDefault.kt",
+            "kotlin/collections/SlidingWindow.kt",
+            "kotlin/collections/SequenceBuilder.kt",
+            "kotlin/experimental/bitwiseOperations.kt",
+            "kotlin/random/URandom.kt",
+            "kotlin/util/HashCode.kt",
+            "kotlin/util/Lazy.kt",
+            "kotlin/util/Result.kt",
+            "kotlin/coroutines/**",
+            "kotlin/util/Numbers.kt",
             "kotlin/internal/serializationUtil.kt",
             "kotlin/util/Preconditions.kt",
             "kotlin/text/StringBuilder.kt",
@@ -127,9 +158,40 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
         into("src/common")
     }
 
+    from(stdlibProjectDir.resolve("unsigned/src")) {
+        include("**/*.kt")
+        exclude("kotlin/UStrings.kt")
+        into("src/common/unsigned")
+    }
+
     from(stdlibProjectDir.resolve("common/src")) {
         include(
             "generated/_Ranges.kt",
+            "generated/_Arrays.kt",
+            "generated/_Collections.kt",
+            "generated/_Comparisons.kt",
+            "generated/_Maps.kt",
+            "generated/_Sets.kt",
+            "generated/_Sequences.kt",
+            "generated/_UArrays.kt",
+            "generated/_UCollections.kt",
+            "generated/_UComparisons.kt",
+            "generated/_URanges.kt",
+            "kotlin/collections/UByteValueSet.kt",
+            "kotlin/Comparator.kt",
+            "kotlin/KotlinH.kt",
+            "kotlin/SequencesH.kt",
+            "kotlin/JsAnnotationsH.kt",
+            "kotlin/collections/AbstractMutableCollection.kt",
+            "kotlin/collections/AbstractMutableList.kt",
+            "kotlin/collections/AbstractMutableMap.kt",
+            "kotlin/collections/AbstractMutableSet.kt",
+            "kotlin/collections/ArrayList.kt",
+            "kotlin/collections/CollectionsH.kt",
+            "kotlin/collections/HashMap.kt",
+            "kotlin/collections/HashSet.kt",
+            "kotlin/collections/LinkedHashMap.kt",
+            "kotlin/collections/LinkedHashSet.kt",
             "kotlin/ioH.kt",
             "kotlin/ExceptionsH.kt",
             "kotlin/JvmAnnotationsH.kt"
@@ -150,7 +212,6 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
             "runtime/kotlin/text/TypeAliases.kt",
             "src/kotlin/ArrayIntrinsics.kt",
             "src/kotlin/Unit.kt",
-            "src/kotlin/collections/TypeAliases.kt",
             "src/kotlin/enums/EnumEntriesJVM.kt",
             "src/kotlin/io/Serializable.kt",
             "builtins/*.kt",
@@ -168,7 +229,6 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
     from(stdlibProjectDir.resolve("jvm-minimal-for-test/jvm-src")) {
         include(
             "minimalAtomics.kt",
-            "minimalCollections.kt",
             "minimalThrowables.kt",
         )
         into("src/jvm")
@@ -180,19 +240,50 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
         include("**/*.kt")
         into("src/common/vm")
     }
+    from(stdlibProjectDir.resolve("../../kotlin-native/runtime/src/main/kotlin")) {
+        include("kotlin/Unsigned.kt")
+        into("src/jvm/native")
+    }
+    from(stdlibProjectDir.resolve("wasm/src")) {
+        include("kotlin/Lazy.kt", "kotlin/Sequences.kt", "kotlin/coroutines/Coroutines.kt")
+        into("src/jvm/wasm")
+    }
     from(file("platform-src")) {
         include("**/*.kt")
+        // Generated beside the rest, for the common sources they are the VM's half of, which the VM does not build yet.
+        exclude("generated/_StringsVm.kt")
         into("src/jvm/vm")
     }
 
     // The common flavor's parts the compiler uses, from the sources Wasm, Native and JS build with.
     from(stdlibProjectDir.resolve("common-non-jvm/src")) {
-        include("kotlin/internal/SharedVariableBox.kt")
+        include("kotlin/internal/SharedVariableBox.kt", "kotlin/coroutines/cancellation/CancellationException.kt")
         into("src/jvm/common-non-jvm")
     }
     from(stdlibProjectDir.resolve("native-wasm/src")) {
         include("kotlin/internal/serializationUtil.kt")
         into("src/jvm/common-non-jvm")
+    }
+    // The part Wasm and Native share, as a fragment of its own between the common sources and the VM's: it declares
+    // what each platform defines for it.
+    from(stdlibProjectDir.resolve("native-wasm/src")) {
+        include(
+            "kotlin/native/internal.kt",
+            "kotlin/collections/AbstractMutableCollection.kt",
+            "kotlin/collections/AbstractMutableList.kt",
+            "kotlin/collections/AbstractMutableMap.kt",
+            "kotlin/collections/AbstractMutableSet.kt",
+            "kotlin/collections/ArrayList.kt",
+            "kotlin/collections/ArraySorting.kt",
+            "kotlin/collections/Arrays.kt",
+            "kotlin/collections/HashMap.kt",
+            "kotlin/collections/HashSet.kt",
+            "kotlin/collections/Maps.kt",
+            "kotlin/collections/MutableCollections.kt",
+            "kotlin/collections/RandomAccess.kt",
+            "kotlin/collections/Sets.kt",
+        )
+        into("src/native-wasm")
     }
 
     duplicatesStrategy = DuplicatesStrategy.FAIL
@@ -221,10 +312,13 @@ fun JavaExec.configureJklibCompilation(
     doFirst {
         val allFiles = sourceTree.files
 
-        val commonPathSegment = "${File.separator}common${File.separator}"
-        val (commonSourceFiles, jvmSourceFiles) = allFiles
-            .map { it.absolutePath }
-            .partition { it.contains(commonPathSegment) }
+        fun fragmentOf(path: String): String = when {
+            path.contains("${File.separator}common${File.separator}") -> "common"
+            path.contains("${File.separator}native-wasm${File.separator}") -> "native-wasm"
+            else -> "platform"
+        }
+        val paths = allFiles.map { it.absolutePath }
+        val (jvmSourceFiles, commonSourceFiles) = paths.partition { fragmentOf(it) == "platform" }
 
         logger.lifecycle("Compiling ${jvmSourceFiles.size} JVM files and ${commonSourceFiles.size} Common files, total ${allFiles.size}")
         logger.lifecycle("Running K2JKlibCompiler with Java version: ${System.getProperty("java.version")}")
@@ -244,6 +338,9 @@ fun JavaExec.configureJklibCompilation(
             "-opt-in=kotlin.contracts.ExperimentalExtendedContracts",
             "-Xreturn-value-checker=full",
             "-Xcommon-sources=${(commonSourceFiles).joinToString(",")}",
+            "-Xfragments=common,native-wasm,platform",
+            "-Xfragment-refines=native-wasm:common,platform:native-wasm",
+            "-Xfragment-sources=${paths.joinToString(",") { "${fragmentOf(it)}:$it" }}",
         )
 
         args(jvmSourceFiles)

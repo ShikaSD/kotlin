@@ -7,6 +7,10 @@ package org.jetbrains.kotlin.backend.vm
 
 import org.jetbrains.kotlin.backend.vm.vmir.*
 import org.jetbrains.kotlin.builtins.PrimitiveType
+import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.ir.InternalSymbolFinderAPI
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
@@ -45,6 +49,7 @@ const val VM_RUNTIME_MODULE = "vm.runtime"
 private val RUNTIME_TYPES = mapOf(
     "kotlin.Number" to "vm.runtime.Number",
     "kotlin.Comparable" to "vm.runtime.Comparable",
+    "java.util.Comparator" to "vm.runtime.Comparator",
     "kotlin.CharSequence" to "vm.runtime.CharSequence",
     "java.lang.StringBuilder" to "vm.runtime.StringBuilder",
 )
@@ -75,6 +80,8 @@ private val RUNTIME_THROWABLES = mapOf(
     "java.lang.UnsupportedOperationException",
     "java.lang.IndexOutOfBoundsException",
     "java.util.NoSuchElementException",
+    "java.util.ConcurrentModificationException",
+    "java.lang.OutOfMemoryError",
 ).associateWith { "vm.runtime.${it.substringAfterLast('.')}" }
 
 /**
@@ -91,6 +98,13 @@ private val RUNTIME_THROWABLES = mapOf(
 class VmModuleGenerator(
     internal val irBuiltIns: IrBuiltIns,
     moduleName: String,
+    /**
+     * Whether the module is the standard library itself. Its declarations the runtime implements are left out, as are
+     * its intrinsics, which have no bodies; and a function it cannot generate yet becomes a stub throwing
+     * `UnsupportedOperationException`, reported through [reportStub], rather than failing the module, so a program can
+     * link against the rest.
+     */
+    private val isStdlib: Boolean = false,
     /** Told of each declaration of the standard library generated as a stub; see [isStdlib]. */
     private val reportStub: (String) -> Unit = {},
 ) {
@@ -110,17 +124,9 @@ class VmModuleGenerator(
     private val enumEntries = hashMapOf<IrEnumEntrySymbol, Int>()
     private val functionOwners = hashMapOf<IrFunctionSymbol, VmOwner>()
 
-    /**
-     * Whether the module is the standard library itself. Its declarations the runtime implements are left out, as are
-     * its intrinsics, which have no bodies; and a function it cannot generate yet becomes a stub throwing
-     * `UnsupportedOperationException`, reported through [reportStub], rather than failing the module, so a program can
-     * link against the rest.
-     */
-    private var isStdlib = false
 
     fun generate(fragment: IrModuleFragment): VmModule {
         this.fragment = fragment
-        isStdlib = fragment == irBuiltIns.anyClass.owner.fileOrNull?.module
         val functions = mutableListOf<IrFunction>()
         val classes = mutableListOf<IrClass>()
         val fileMembers = mutableMapOf<IrFile, FileMembers>()
@@ -180,8 +186,10 @@ class VmModuleGenerator(
             stubbing(function) { module.functions += VmFunctionGenerator(this, function).generate() }
                 ?: stub(function)?.let(module.functions::add)
         }
-        functions.filter { function -> function.parameters.any { it.defaultValue != null } }.mapTo(module.functions) {
-            VmFunctionGenerator.defaultStub(this, it, defaultStub(it))
+        for (function in functions.filter { function -> function.parameters.any { it.defaultValue != null } }) {
+            val symbol = stubbing(function) { defaultStub(function) } ?: continue
+            module.functions += stubbing(function) { VmFunctionGenerator.defaultStub(this, function, symbol) }
+                ?: VmFunctionGenerator.unsupportedStub(this, symbol, "the defaults of ${function.fqNameWhenAvailable ?: function.name}")
         }
         initializers.forEach { it() }
         for (declaration in classes) {
@@ -477,6 +485,7 @@ class VmModuleGenerator(
             "message" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.Throwable"), emptyList(), stringType)
             "cause" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.Throwable"), emptyList(), anyType)
             "compareTo" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.Comparable"), listOf(anyType), VmType.I64)
+            "compare" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.Comparator"), listOf(anyType, anyType), VmType.I64)
             "length" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.CharSequence"), emptyList(), VmType.I64)
             "get" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.CharSequence"), listOf(VmType.I64), VmType.I64)
             else -> error("The runtime declares no selector $name on Any")
@@ -490,6 +499,22 @@ class VmModuleGenerator(
 
     /** The runtime's `vm.builtin.random.seed`, which the VM stdlib's `kotlin.random.randomSeed` is. */
     internal val randomSeed: VmFunctionSymbol by lazy { runtimeFunction("vm.builtin.random.seed", emptyList(), VmType.I64) }
+
+    /** The standard library's `arrayIterator` overload for arrays of [arrayClass], which an array's `iterator()` calls. */
+    @OptIn(InternalSymbolFinderAPI::class)
+    internal fun arrayIterator(arrayClass: IrClassSymbol): IrSimpleFunction = arrayIterators.getOrPut(arrayClass) {
+        irBuiltIns.symbolFinder.findFunctions(CallableId(StandardNames.COLLECTIONS_PACKAGE_FQ_NAME, Name.identifier("arrayIterator")))
+            .map { it.owner }
+            .singleOrNull { it.parameters.singleOrNull()?.type?.classOrNull == arrayClass }
+            ?: unsupported("iterating a ${arrayClass.owner.name} without the VM standard library's arrayIterator")
+    }
+
+    private val arrayIterators = hashMapOf<IrClassSymbol, IrSimpleFunction>()
+
+    /** The runtime's `vm.builtin.array.copy`, which the VM stdlib's `kotlin.collections.copyArray` is. */
+    internal val arrayCopy: VmFunctionSymbol by lazy {
+        runtimeFunction("vm.builtin.array.copy", listOf(anyType, VmType.I64, anyType, VmType.I64, VmType.I64), null)
+    }
 
     /** The runtime's `vm.builtin.io.print`, which the VM stdlib's `kotlin.io.printString` is. */
     internal val print: VmFunctionSymbol by lazy { runtimeFunction("vm.builtin.io.print", listOf(stringType), null) }
@@ -886,7 +911,7 @@ class VmModuleGenerator(
 
     /** The runtime's selector for [root], a member of one of the classes [RUNTIME_TYPES] lists. */
     private fun runtimeTypeSelector(root: IrSimpleFunction): Int = when (val name = root.name.asString()) {
-        "compareTo", "get" -> runtimeSelector(name)
+        "compareTo", "compare", "get" -> runtimeSelector(name)
         "<get-length>" -> runtimeSelector("length")
         else -> unsupported("overriding ${root.render()}")
     }

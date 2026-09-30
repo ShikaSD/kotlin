@@ -44,6 +44,7 @@ fun main(args: Array<String>) {
             targetBaseDirs[KotlinTarget.JVM] = baseDir.resolveExistingDir("libraries/stdlib/jvm/src/generated")
             targetBaseDirs[KotlinTarget.JS] = baseDir.resolveExistingDir("libraries/stdlib/js/src/generated")
             targetBaseDirs[KotlinTarget.WASM] = baseDir.resolveExistingDir("libraries/stdlib/wasm/src/generated")
+            targetBaseDirs[KotlinTarget.VM] = baseDir.resolveExistingDir("libraries/stdlib/vm/platform-src/generated")
             targetBaseDirs[KotlinTarget.Native] = baseDir.resolveExistingDir("kotlin-native/runtime/src/main/kotlin/generated")
         }
         else -> {
@@ -58,7 +59,11 @@ fun main(args: Array<String>) {
         val targetDir = targetBaseDirs[target] ?: error("Target $target directory is not configured")
         val platformSuffix = when (val platform = target.platform) {
             Platform.Common -> ""
-            Platform.Native -> if (target.backend == Backend.Wasm) "Wasm" else "Native"
+            Platform.Native -> when (target.backend) {
+                Backend.Wasm -> "Wasm"
+                Backend.Vm -> "Vm"
+                else -> "Native"
+            }
             else -> platform.name.lowercase().capitalize()
         }
         targetDir.resolve("_${sourceFile.name.capitalize()}$platformSuffix.kt")

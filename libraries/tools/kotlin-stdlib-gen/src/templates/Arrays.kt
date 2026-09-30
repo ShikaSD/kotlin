@@ -842,6 +842,17 @@ object ArrayOps : TemplateGroupBase() {
                         """
                     }
                 }
+                on(Backend.Vm) {
+                    body {
+                        """
+                        AbstractList.checkRangeIndexes(startIndex, endIndex, this.size)
+                        val rangeSize = endIndex - startIndex
+                        AbstractList.checkRangeIndexes(destinationOffset, destinationOffset + rangeSize, destination.size)
+                        copyArray(this, startIndex, destination, destinationOffset, rangeSize)
+                        return destination
+                        """
+                    }
+                }
             }
         }
     }
@@ -1524,7 +1535,7 @@ object ArrayOps : TemplateGroupBase() {
             body { """return ArrayList<T>(this.unsafeCast<Array<Any?>>())""" }
         }
 
-        val iteratorWithSizeField = if (target == KotlinTarget.Native || target == KotlinTarget.WASM) """
+        val iteratorWithSizeField = if (target == KotlinTarget.Native || target == KotlinTarget.WASM || target == KotlinTarget.VM) """
                 override fun iterator(): Iterator<T> = object : Iterator<T> {
                     val size_ = size
                     var index = 0
@@ -1701,7 +1712,7 @@ object ArrayOps : TemplateGroupBase() {
                 body {
                     "arrayFill(this, fromIndex, toIndex, element)"
                 }
-                on(Backend.Wasm) {
+                for (backend in listOf(Backend.Wasm, Backend.Vm)) on(backend) {
                     body {
                         """
                         AbstractList.checkRangeIndexes(fromIndex, toIndex, size)
