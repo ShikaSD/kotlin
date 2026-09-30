@@ -1,92 +1,92 @@
 # Box tests under compiler/testData/codegen/box expected to fail on the VM; see JKlibVmExpectedFailures.
-# 1998 failures; the most common reasons:
-#     560  unsupported: a suspend lambda
-#     253  unsupported: the expression RICH_PROPERTY_REFERENCE …
-#      89  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-#      78  run: Execution result: RuntimeError(UncaughtException)
-#      50  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
-#      45  unsupported: a bridge from FUN …
-#      37  unsupported: a call to CONSTRUCTOR …
-#      34  unsupported: overriding FUN …
-#      27  unsupported: a value of type kotlin.Unit
-#      23  IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-#      22  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
-#      20  unsupported: the annotation class A
+# 1780 failures; the most common reasons:
+#     591  unsupported: a suspend lambda
+#     254  unsupported: the expression RICH_PROPERTY_REFERENCE …
+#      49  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
+#      49  run: Execution result: RuntimeError(UncaughtException)
+#      46  unsupported: a bridge from FUN …
+#      38  unsupported: a call to CONSTRUCTOR …
+#      35  unsupported: overriding FUN …
+#      28  unsupported: a value of type kotlin.Unit
+#      23  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
+#      21  unsupported: the annotation class A
 #      20  unsupported: the expression GET_CLASS …
 #      19  IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
-#      18  IllegalStateException: kotlin.UIntArray is no array type
-#      17  wrong result
+#      19  wrong result
 #      16  IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 #      15  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty<*>'.
 #      14  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 #      13  IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
 #      13  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::spliterator_8a56e74d22ceafe7" }
-#      11  IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 #      11  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
 #      11  unsupported: the expression CLASS_REFERENCE …
-#      10  IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
 #      10  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
-#      10  unsupported: a call to values
 #      10  unsupported: a value of type kotlin.Nothing
 #       9  IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE: Declaration annotated with '@OptionalExpectation' can only be used in common module sour
-#       9  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
+#       9  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 #       9  unsupported: implementing the function type Function0
 #       9  unsupported: implementing the function type Function1
 #       8  IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
 #       8  unsupported: a Unit field
-#       7  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
-#       7  unsupported: the annotation class Ann
+#       8  unsupported: the annotation class Ann
+#       7  unsupported: naming CONSTRUCTOR …
 #       7  unsupported: the annotation class Anno
 #       6  IllegalStateException: EXPECT_REFINEMENT_ANNOTATION_MISSING: 'expect' declaration refinement is an experimental feature. Mark the declaration with the '@ExpectR
 #       6  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
 #       6  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
-#       6  unsupported: a call to valueOf
+#       6  unsupported: `rem` on doubles
 #       6  unsupported: calling FUN …
-#       6  unsupported: naming CONSTRUCTOR …
-#       5  IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 #       5  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
 #       5  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
 #       5  unsupported: defaults for more than 64 parameters
 #       5  unsupported: the annotation class ImplicitIntegerCoercion
 #       4  AssertionFailedError: Java Compilation failed. Notice: This might be caused by a circular dependency between Java and Kotlin sources, which is not supported in 
-#       4  IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'abs'.
+#       4  IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
+#       4  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isInitialized' on receiver of type 'KMutableProperty0<String>'.
+#       4  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Nothing" }
+#       4  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Unit" }
+#       4  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.MutableList::replaceAll_b1df94db06c5d5be" }
+#       4  unsupported: a type test against java.lang.Runnable outside the VM modules
+#       4  unsupported: the annotation class Foo
+#       4  unsupported: the supertype Runnable outside the VM modules
+#       3  IllegalStateException: Boxing a value of the non-primitive T of <root>.Z
 
 annotations/annotationWithDefaultArgInDifferentModule.kt: unsupported: the annotation class MyConfig
 annotations/annotations0.kt: unsupported: the annotation class Foo
 annotations/genericAnnotations.kt: unsupported: the annotation class Test1
 annotations/instances/AnnotationInstantiationWithArray.kt: unsupported: the annotation class Outer
 annotations/instances/annotationAnnotationParam.kt: unsupported: the annotation class A
-annotations/instances/annotationAnyDispatch.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
+annotations/instances/annotationAnyDispatch.kt: unsupported: the annotation class Ann
 annotations/instances/annotationEqHc.kt: unsupported: the annotation class Bar
 annotations/instances/annotationFromStdlib.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.SinceKotlin" }
 annotations/instances/annotationInlineMultiModule.kt: unsupported: the annotation class LibAnn
 annotations/instances/annotationInstances.kt: unsupported: the annotation class Empty
 annotations/instances/annotationInstancesEmptyDefault.kt: unsupported: the annotation class A
 annotations/instances/annotationInstancesEmptyDefaultLowered.kt: unsupported: the annotation class A
-annotations/instances/annotationToString.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'replace' on receiver of type 'String'.
-annotations/instances/annotationToStringDefaultsAndEmptyArrays.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
-annotations/instances/annotationWithTypeParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'endsWith' on receiver of type 'String'.
+annotations/instances/annotationToString.kt: unsupported: the annotation class Empty
+annotations/instances/annotationToStringDefaultsAndEmptyArrays.kt: unsupported: the annotation class A
+annotations/instances/annotationWithTypeParameters.kt: unsupported: the annotation class One
 annotations/instances/annotationsUnsignedTypes.kt: unsupported: the annotation class AnnotationWithSignedArray
 annotations/instances/arrayContentEqAny.kt: unsupported: the annotation class A
 annotations/instances/arraysAndKClass.kt: unsupported: the annotation class KCls
 annotations/instances/differentAnnotationTypes.kt: unsupported: the annotation class A
 annotations/instances/differentOrder.kt: unsupported: the annotation class C
-annotations/instances/enumAndKClass.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
+annotations/instances/enumAndKClass.kt: unsupported: the annotation class AClass
 annotations/instances/enumArray.kt: unsupported: the annotation class WithEnum
 annotations/instances/inInlineFunction.kt: unsupported: the annotation class A
 annotations/instances/innerAnnotationInstantiation.kt: unsupported: the annotation class ExampleMapKey
-annotations/instances/instanceEquality.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
+annotations/instances/instanceEquality.kt: unsupported: the annotation class A1
 annotations/instances/mixedArray.kt: unsupported: the annotation class C
 annotations/instances/multifileEqHc.kt: unsupported: the annotation class A
 annotations/instances/multimoduleTypeParams.kt: unsupported: the annotation class Two
 annotations/instances/multiplatformInstantiation.kt: IllegalStateException: EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE: A: 'expect' and corresponding 'actual' are declared in the same module.
 annotations/instances/naNAndZero.kt: unsupported: the annotation class A
-annotations/instances/nested.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
+annotations/instances/nested.kt: unsupported: the annotation class Inner
 annotations/instances/nestedAnnotationInstances.kt: unsupported: the annotation class NestedAnnotation
 annotations/instances/nestedDefaults.kt: unsupported: the annotation class Inner
 annotations/instances/rearrangedArgumentsInAnnotationCall.kt: unsupported: the annotation class A
 annotations/instances/repeatableInstantiation.kt: unsupported: the annotation class Rep
-annotations/instances/typeAliasesAndGenericsInterop.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
+annotations/instances/typeAliasesAndGenericsInterop.kt: unsupported: the annotation class AnnAlias
 annotations/instances/unsignedAndBooleanArrays.kt: unsupported: the annotation class AnnBool
 annotations/instances/varargInAnnotationParameterInstantiation.kt: unsupported: the annotation class KotlinAnn
 annotations/instances/withDefaults.kt: unsupported: the annotation class C
@@ -98,7 +98,6 @@ annotations/recursiveAnnotationWithVarargAndWithoutDefaultValue.kt: unsupported:
 annotations/selfReferentialAnnotation.kt: unsupported: the annotation class Ann
 annotations/spreadOperatorInAnnotationArguments.kt: unsupported: the annotation class A
 annotations/spreadOperatorInArrayOf.kt: unsupported: the annotation class StringAnno
-annotations/typeAnnotations/checkingNotincorporatedInputTypes.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toInt' on receiver of type 'String'.
 argumentOrder/kt17691WithEnabledFeature.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Unit" }
 arithmetic/division.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 arithmetic/divisionByZero.kt: unsupported: `rem` on doubles
@@ -106,22 +105,13 @@ arrays/arrayInstanceOf.kt: link: Failed to link: UnresolvedImport { module: "kot
 arrays/arraysAreCloneable.kt: CompilationErrorException: There are still 9 unbound symbols Found unbound symbol:
 arrays/cloneArray.kt: CompilationErrorException: There is still an unbound symbol Found unbound symbol:
 arrays/clonePrimitiveArrays.kt: CompilationErrorException: There are still 8 unbound symbols Found unbound symbol:
-arrays/forInUnsignedArray/forInUnsignedArray.kt: IllegalStateException: kotlin.UIntArray is no array type
-arrays/forInUnsignedArray/forInUnsignedArrayIndices.kt: IllegalStateException: kotlin.UIntArray is no array type
-arrays/forInUnsignedArray/forInUnsignedArrayIndicesReversed.kt: IllegalStateException: kotlin.UIntArray is no array type
-arrays/forInUnsignedArray/forInUnsignedArrayReversed.kt: IllegalStateException: kotlin.UIntArray is no array type
-arrays/forInUnsignedArray/forInUnsignedArrayWithIndex.kt: IllegalStateException: kotlin.UIntArray is no array type
-arrays/forInUnsignedArray/forInUnsignedArrayWithIndexNoElementVar.kt: IllegalStateException: kotlin.UIntArray is no array type
-arrays/forInUnsignedArray/forInUnsignedArrayWithIndexNoIndexVar.kt: IllegalStateException: kotlin.UIntArray is no array type
-arrays/forInUnsignedArray/forInUnsignedArrayWithIndexReversed.kt: IllegalStateException: kotlin.UIntArray is no array type
 arrays/kt1291.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 arrays/kt2997.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
-arrays/kt42932.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'indexOfAny' on receiver of type 'String'.
 arrays/kt7288.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
 arrays/primitiveArrays.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.booleanArrayOf_c76cf6848634e571" }
 arrays/stdlib.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
-assert/alwaysDisable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'assert'.
-assert/alwaysEnable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'assert'.
+assert/alwaysDisable.kt: IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
+assert/alwaysEnable.kt: IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
 associatedObjects/associatedObjectNested.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
 associatedObjects/findAssociatedObject.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
 associatedObjects/findAssociatedObjectAndDCE.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
@@ -149,21 +139,15 @@ binaryOp/callNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Init
 binaryOp/eqNullableToPrimitiveWithSideEffects.kt: wrong result
 binaryOp/intrinsic.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
 binaryOp/intrinsicNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
-boxing/boxing1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 boxing/boxing12.kt: unsupported: overriding FUN …
-boxing/boxing13.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-boxing/boxing2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-boxing/boxing8.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-boxing/boxing9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 boxing/kt84727.kt: run: Execution result: RuntimeError(UncaughtException)
 boxing/kt84727_if.kt: run: Execution result: RuntimeError(UncaughtException)
 boxing/kt84727_inline.kt: run: Execution result: RuntimeError(UncaughtException)
 boxing/missingValueClassUnboxing.kt: IllegalStateException: VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION: Value classes without '@JvmInline' annotation are not yet supported.
 boxingOptimization/checkcastAndInstanceOf.kt: unsupported: a type test against java.lang.Object outside the VM modules
 boxingOptimization/kt5493.kt: unsupported: a value of type kotlin.Nothing
-boxingOptimization/unsignedArrayForEach.kt: IllegalStateException: kotlin.UByteArray is no array type
 branching/when7.kt: unsupported: a call to CONSTRUCTOR …
-branching/when_with_try1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toInt' on receiver of type 'String'.
+branching/when_with_try1.kt: unsupported: a call to CONSTRUCTOR …
 bridges/delegationComplexWithList.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::spliterator_8a56e74d22ceafe7" }
 bridges/fakeCovariantOverride.kt: unsupported: a bridge from FUN …
 bridges/fakeGenericCovariantOverride.kt: unsupported: a bridge from FUN …
@@ -195,7 +179,7 @@ bridges/specialGeneric.kt: unsupported: a call to CONSTRUCTOR …
 bridges/strListContains.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::spliterator_8a56e74d22ceafe7" }
 bridges/test10.kt: unsupported: a bridge from FUN …
 bridges/test11.kt: unsupported: a bridge from FUN …
-bridges/test14.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+bridges/test14.kt: unsupported: a bridge from FUN …
 bridges/test15.kt: unsupported: a bridge from FUN …
 bridges/test19.kt: run: Execution result: RuntimeError(UncaughtException)
 bridges/test20.kt: unsupported: a bridge from FUN …
@@ -225,8 +209,6 @@ callableReference/adaptedReferences/extensionFunctionAdaptedReferences.kt: unsup
 callableReference/adaptedReferences/extensionFunctionAnonymous.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/adaptedReferences/extensionPropertyWithAnonymousContextFun.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/adaptedReferences/extensionPropertyWithAnonymousExtensionFun.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-callableReference/adaptedReferences/inlineDefault.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'concatToString' on receiver of type 'CharArray'.
-callableReference/adaptedReferences/inlineVararg.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'concatToString' on receiver of type 'CharArray'.
 callableReference/adaptedReferences/suspendConversion/adaptedWithCoercionToUnit.kt: unsupported: a suspend lambda
 callableReference/adaptedReferences/suspendConversion/adaptedWithDefaultArguments.kt: unsupported: a suspend lambda
 callableReference/adaptedReferences/suspendConversion/adaptedWithVarargs.kt: unsupported: a suspend lambda
@@ -258,7 +240,6 @@ callableReference/adaptedReferences/suspendConversion/withContextParametersAsASu
 callableReference/adaptedReferences/suspendConversion/withParameters.kt: unsupported: a suspend lambda
 callableReference/adaptedReferences/suspendUnitConversion.kt: unsupported: a suspend lambda
 callableReference/adaptedReferences/varargViewedAsPrimitiveArray.kt: unsupported: overriding FUN …
-callableReference/arrayOfNulls.kt: IllegalStateException: RETURN_TYPE_MISMATCH: Return type mismatch: expected 'String', actual 'Char'.
 callableReference/bound/array.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/bound/companionObjectReceiverInheritsFromOuter.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/bound/emptyLHS.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -293,10 +274,8 @@ callableReference/equality/varargWithDefaults.kt: run: Execution result: Runtime
 callableReference/funInterfaceConstructor/funInterfaceConstructedObjectsEquality.kt: run: Execution result: RuntimeError(UncaughtException)
 callableReference/funInterfaceConstructor/funInterfaceConstructorEquality.kt: run: Execution result: RuntimeError(UncaughtException)
 callableReference/function/classMemberFromCompanionObject.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<C, Unit>'.
-callableReference/function/enumValueOfMethod.kt: unsupported: a call to valueOf
 callableReference/function/extensionFunctionAsASuperTypePassToSAMInterface.kt: unsupported: implementing the function type Function1
 callableReference/function/genericCallableReferenceArgumentsNonJVM.kt: IllegalStateException: TYPE_INTERSECTION_AS_REIFIED_ERROR: Type argument for reified type parameter 'R' was inferred to the intersection of ['Comparable<*>' & '
-callableReference/function/kt32462.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toFloat'.
 callableReference/function/local/equalsHashCode.kt: wrong result
 callableReference/function/local/localFunctionName.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction0<Unit>'.
 callableReference/function/overloadedFunVsVal.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -360,7 +339,7 @@ casts/intersectionTypeMultipleBounds.kt: unsupported: a bridge from FUN …
 casts/intersectionTypeSmartcast.kt: unsupported: a bridge from FUN …
 casts/is.kt: unsupported: a type test against java.lang.Runnable outside the VM modules
 casts/kt53677.kt: unsupported: a suspend lambda
-casts/kt65197.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Regex'.
+casts/kt65197.kt: run: Execution result: RuntimeError(UncaughtException)
 casts/kt68509.kt: unsupported: a suspend lambda
 casts/lambdaToUnitCast.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Unit" }
 casts/mutableCollections/asWithMutable.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
@@ -374,7 +353,6 @@ casts/notIs.kt: unsupported: a type test against java.lang.Runnable outside the 
 casts/objectToPrimitiveWithAssertion.kt: run: Execution result: RuntimeError(UncaughtException)
 casts/parallelHierarchy.kt: unsupported: a call to CONSTRUCTOR …
 casts/unitAsAny.kt: run: Execution result: RuntimeError(UncaughtException)
-checkcastOptimization/kt19246.kt: unsupported: a call to values
 checkcastOptimization/kt47851.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'getMethod' on receiver of type 'Any'.
 classDelegation/withBridge.kt: unsupported: a bridge from FUN …
 classLiteral/bareArray.kt: unsupported: a call to CONSTRUCTOR …
@@ -385,7 +363,6 @@ classLiteral/bound/smartCast.kt: unsupported: the expression GET_CLASS …
 classLiteral/classEquality.kt: unsupported: the expression GET_CLASS …
 classLiteral/java/kt11943.kt: IllegalStateException: RETURN_TYPE_MISMATCH: Return type mismatch: expected 'Class<*>', actual 'Unit'.
 classLiteral/primitiveClassEquality.kt: unsupported: the expression GET_CLASS …
-classes/comanionObjectFieldVsClassField.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'R'. Specify it explicitly.
 classes/delegationJava.kt: unsupported: overriding FUN …
 classes/inheritSetAndHashSet.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 classes/kt1120.kt: unsupported: a call to CONSTRUCTOR …
@@ -399,10 +376,7 @@ closures/capturedVarsOptimization/withCoroutinesNoStdLib.kt: unsupported: a susp
 closures/closureOnTopLevel1.kt: unsupported: implementing the function type Function0
 closures/closureOnTopLevel2.kt: unsupported: implementing the function type Function0
 collectionLiterals/array.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
-collectionLiterals/companionBlockOf.kt: run: Execution result: RuntimeError(UncaughtException)
 collectionLiterals/primitiveArrays.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
-collectionLiterals/stdlibSequence.kt: run: Execution result: RuntimeError(UncaughtException)
-collectionLiterals/unsignedArrays.kt: IllegalStateException: kotlin.UByteArray is no array type
 collections/addCollectionStubWithCovariantOverride.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::spliterator_8a56e74d22ceafe7" }
 collections/clashWithInternalMapMethod.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
 collections/inheritFromAbstractMutableListInt.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.MutableCollection::removeIf_d9e28e2d3e2433a7" }
@@ -410,7 +384,6 @@ collections/internalRemove.kt: link: Failed to link: UnresolvedImport { module: 
 collections/kt41123.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 collections/removeClash.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::spliterator_8a56e74d22ceafe7" }
 companion/delegatedPropertyOnCompanion.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-companion/genericLambdaOnStringCompanion.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String$Companion::INSTANCE" }
 companionBlocksAndExtensions/abstractClasses.kt: unsupported: the static property baseVal
 companionBlocksAndExtensions/basicBlockAndExtension.kt: unsupported: the static property compBlockVal
 companionBlocksAndExtensions/callableReferencesGenericCompanionBlockMembers.kt: unsupported: the static property marker
@@ -439,8 +412,7 @@ companionBlocksAndExtensions/initializersSequenceInParentVersusChild.kt: unsuppo
 companionBlocksAndExtensions/initializersSuperclassSeparateModule.kt: unsupported: the static property parentValue
 companionBlocksAndExtensions/initializersTransitiveSuperInterface.kt: unsupported: the static property i0Value
 companionBlocksAndExtensions/initializersTriggeredByObject.kt: unsupported: the static property blockProp1
-companionBlocksAndExtensions/inline_block.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toInt' on receiver of type 'String'.
-companionBlocksAndExtensions/inline_extensions.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toInt' on receiver of type 'String'.
+companionBlocksAndExtensions/inline_block.kt: unsupported: the static property compBlockVal
 companionBlocksAndExtensions/innerClasses.kt: unsupported: the static property outerVal
 companionBlocksAndExtensions/interfaceCompanionBlockAndObject.kt: unsupported: the static property blockA
 companionBlocksAndExtensions/interfaceCompanionBlockBackingField.kt: unsupported: the static property interfaceVal
@@ -464,12 +436,8 @@ companionBlocksAndExtensions/visibility.kt: unsupported: the static property pri
 compileKotlinAgainstKotlin/adaptedSuspendFunctionReference.kt: unsupported: a suspend lambda
 compileKotlinAgainstKotlin/clashingFakeOverrideSignatures.kt: run: Execution result: RuntimeError(UncaughtException)
 compileKotlinAgainstKotlin/coroutinesBinary.kt: unsupported: a suspend lambda
-compileKotlinAgainstKotlin/inlineClasses/extensionPropertyWithSameName.kt: IllegalStateException: RETURN_TYPE_MISMATCH: Return type mismatch: expected 'String', actual 'Char'.
 compileKotlinAgainstKotlin/inlineClasses/internalWithInlineClass.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'a'.
 compileKotlinAgainstKotlin/inlineClasses/oldMangling/useOldMangling.kt: unsupported: a suspend lambda
-compileKotlinAgainstKotlin/inlineClasses/privateConstructor.kt: IllegalStateException: CYCLIC_CONSTRUCTOR_DELEGATION_CALL: There's a cycle in the delegation calls chain.
-compileKotlinAgainstKotlin/inlineClasses/privateConstructorWithPrivateField.kt: IllegalStateException: CYCLIC_CONSTRUCTOR_DELEGATION_CALL: There's a cycle in the delegation calls chain.
-compileKotlinAgainstKotlin/inlineClasses/privateConstructorWithPrivateFieldUsingTypeTable.kt: IllegalStateException: RETURN_TYPE_MISMATCH: Return type mismatch: expected 'A<String>', actual 'A<Char>'.
 compileKotlinAgainstKotlin/inlineClasses/suspendFunWithDefaultMangling.kt: unsupported: a suspend lambda
 compileKotlinAgainstKotlin/innerClassConstructor.kt: unsupported: naming CONSTRUCTOR …
 compileKotlinAgainstKotlin/internalSetterOverridden.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Derived'.
@@ -478,7 +446,6 @@ compileKotlinAgainstKotlin/internalWithOtherModuleName.kt: IllegalStateException
 compileKotlinAgainstKotlin/nestedClassInAnnotationArgument.kt: unsupported: the annotation class Anno
 compileKotlinAgainstKotlin/propertyReference.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 compileKotlinAgainstKotlin/specialBridgesInDependencies.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
-constants/float.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'abs'.
 constants/numberLiteralCoercionToInferredType.kt: IllegalStateException: TYPE_INTERSECTION_AS_REIFIED_ERROR: Type argument for reified type parameter 'T' was inferred to the intersection of ['Comparable<*>?' & 
 contextParameters/contextualCallableReference.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<Int, String>'.
 contextParameters/contextualCallableReferenceEquality.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -492,57 +459,31 @@ contextParameters/suspendContextParemetersWithExtension.kt: unsupported: a suspe
 contextParameters/suspendContextualWithExtension.kt: unsupported: a suspend lambda
 contextParameters/useFromAnotherModuleSuspending.kt: unsupported: a suspend lambda
 contextParameters/withExtensionReceiverInSupertype.kt: unsupported: implementing the function type Function3
-contracts/isNullString.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isNullOrBlank' on receiver of type 'String?'.
 contracts/kt39374.kt: unsupported: a suspend lambda
 controlStructures/breakContinueInExpressions/breakInLoopConditions.kt: unsupported: a value of type kotlin.Nothing
 controlStructures/breakContinueInExpressions/inlinedBreakContinue/lambdaPassedToInlineFunction.kt: unsupported: the annotation class SomeAnnotation
 controlStructures/emptyFor.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 controlStructures/forInArray/forInDelegatedPropertyUpdatedInLoopBody.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 controlStructures/forInArray/forInFieldUpdatedInLoopBody.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
-controlStructures/forInArray/forInInlineClassArrayWithUpcast.kt: IllegalStateException: kotlin.UIntArray is no array type
 controlStructures/forInArrayWithIndex/forInEmptyArrayWithIndex.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
-controlStructures/forInCharSequence.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-controlStructures/forInCharSequenceMut.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-controlStructures/forInCharSequenceWithIndex/forInCharSeqWithIndexStops.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInCharSequenceTypeParameterWithIndex.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndex.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexBreakAndContinue.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexCheckSideEffects.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexNameBasedDestructuringShortForm.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexNoElementVarCheckSideEffects.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexNoIndexVarCheckSideEffects.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInEmptyStringWithIndex.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInStringWithIndex.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInStringWithIndexNameBasedDestructuringFullForm.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInStringWithIndexNameBasedDestructuringShortForm.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInStringWithIndexNoElementVar.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInStringWithIndexNoIndexOrElementVar.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInStringWithIndexNoIndexVar.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInStringWithIndexNotDestructured.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-controlStructures/forInCharSequenceWithIndex/forInStringWithIndexWithExplicitlyTypedIndexVariable.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
+controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexCheckSideEffects.kt: unsupported: overriding FUN …
+controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexNoElementVarCheckSideEffects.kt: unsupported: overriding FUN …
+controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexNoIndexVarCheckSideEffects.kt: unsupported: overriding FUN …
 controlStructures/forInIterableWithIndex/forInIterableWithIndexCheckSideEffects.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
 controlStructures/forInIterableWithIndex/forInIterableWithIndexNoElementVarCheckSideEffects.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
 controlStructures/forInIterableWithIndex/forInIterableWithIndexNoIndexVarCheckSideEffects.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
 controlStructures/forInSequenceWithIndex/forInSequenceWithIndexCheckSideEffects.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 controlStructures/forInSequenceWithIndex/forInSequenceWithIndexNoElementVarCheckSideEffects.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 controlStructures/forInSequenceWithIndex/forInSequenceWithIndexNoIndexVarCheckSideEffects.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
-controlStructures/forNullableCharInString.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 controlStructures/forUserType.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
 controlStructures/kt237.kt: unsupported: a value of type kotlin.Unit
 controlStructures/tryCatchExpression.kt: unsupported: a value of type kotlin.Unit
 controlStructures/tryFinally.kt: unsupported: a value of type kotlin.Unit
-controlflow/break.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-controlflow/for_loops.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 controlflow/for_loops_array_break_continue.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 controlflow/for_loops_array_indices.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
-controlflow/for_loops_array_nested.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-controlflow/for_loops_array_side_effects.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-controlflow/for_loops_call_order.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-controlflow/for_loops_coroutines.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-controlflow/for_loops_let_with_nullable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-controlflow/for_loops_nested.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-controlflow/for_loops_overflow.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-controlflow/for_loops_types.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+controlflow/for_loops_array_nested.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
+controlflow/for_loops_array_side_effects.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
+controlflow/for_loops_coroutines.kt: unsupported: a suspend lambda
 coroutines/32defaultParametersInSuspend.kt: unsupported: a suspend lambda
 coroutines/accessorForSuspend.kt: unsupported: a suspend lambda
 coroutines/anonymousObject.kt: unsupported: a suspend lambda
@@ -576,7 +517,7 @@ coroutines/controlFlow/forContinue.kt: unsupported: a suspend lambda
 coroutines/controlFlow/forStatement.kt: unsupported: a suspend lambda
 coroutines/controlFlow/forWithStep.kt: unsupported: a suspend lambda
 coroutines/controlFlow/ifStatement.kt: unsupported: a suspend lambda
-coroutines/controlFlow/kt22694_1_3.kt: unsupported: a call to values
+coroutines/controlFlow/kt22694_1_3.kt: unsupported: a suspend lambda
 coroutines/controlFlow/labeledWhile.kt: unsupported: a suspend lambda
 coroutines/controlFlow/multipleCatchBlocksSuspend.kt: unsupported: a suspend lambda
 coroutines/controlFlow/returnFromFinally.kt: unsupported: a suspend lambda
@@ -589,38 +530,38 @@ coroutines/controlFlow/throwInTryWithHandleResult.kt: unsupported: a suspend lam
 coroutines/controlFlow/whenWithSuspensions.kt: unsupported: a suspend lambda
 coroutines/controlFlow/whileStatement.kt: unsupported: a suspend lambda
 coroutines/controlFlow_chain.kt: unsupported: a suspend lambda
-coroutines/controlFlow_finally1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_finally2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_finally3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_finally4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_finally5.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_finally6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_finally7.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_if1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_if2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+coroutines/controlFlow_finally1.kt: unsupported: a suspend lambda
+coroutines/controlFlow_finally2.kt: unsupported: a suspend lambda
+coroutines/controlFlow_finally3.kt: unsupported: a suspend lambda
+coroutines/controlFlow_finally4.kt: unsupported: a suspend lambda
+coroutines/controlFlow_finally5.kt: unsupported: a suspend lambda
+coroutines/controlFlow_finally6.kt: unsupported: a suspend lambda
+coroutines/controlFlow_finally7.kt: unsupported: a suspend lambda
+coroutines/controlFlow_if1.kt: unsupported: a suspend lambda
+coroutines/controlFlow_if2.kt: unsupported: a suspend lambda
 coroutines/controlFlow_inline1.kt: unsupported: a suspend lambda
-coroutines/controlFlow_inline2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_inline3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_tryCatch1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_tryCatch2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_tryCatch3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_tryCatch4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_tryCatch5.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_while1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/controlFlow_while2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+coroutines/controlFlow_inline2.kt: unsupported: a suspend lambda
+coroutines/controlFlow_inline3.kt: unsupported: a suspend lambda
+coroutines/controlFlow_tryCatch1.kt: unsupported: a suspend lambda
+coroutines/controlFlow_tryCatch2.kt: unsupported: a suspend lambda
+coroutines/controlFlow_tryCatch3.kt: unsupported: a suspend lambda
+coroutines/controlFlow_tryCatch4.kt: unsupported: a suspend lambda
+coroutines/controlFlow_tryCatch5.kt: unsupported: a suspend lambda
+coroutines/controlFlow_while1.kt: unsupported: a suspend lambda
+coroutines/controlFlow_while2.kt: unsupported: a suspend lambda
 coroutines/controllerAccessFromInnerLambda.kt: unsupported: a suspend lambda
-coroutines/coroutineContext1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/coroutineContext2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+coroutines/coroutineContext1.kt: unsupported: a suspend lambda
+coroutines/coroutineContext2.kt: unsupported: a suspend lambda
 coroutines/coroutineContextInInlinedLambda.kt: unsupported: a suspend lambda
-coroutines/correctOrder1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+coroutines/correctOrder1.kt: unsupported: a suspend lambda
 coroutines/createCoroutineSafe.kt: unsupported: a value of type kotlin.Unit
 coroutines/createCoroutinesOnManualInstances.kt: unsupported: a value of type kotlin.Unit
 coroutines/crossInlineWithCapturedOuterReceiver.kt: unsupported: a suspend lambda
 coroutines/defaultParameterLambdaInSuspend.kt: unsupported: a suspend lambda
 coroutines/defaultParametersInSuspend.kt: unsupported: a suspend lambda
 coroutines/defaultSuspendLambdaWithCallSiteInAnotherFile.kt: unsupported: a suspend lambda
-coroutines/degenerate1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-coroutines/degenerate2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+coroutines/degenerate1.kt: unsupported: a suspend lambda
+coroutines/degenerate2.kt: unsupported: a suspend lambda
 coroutines/delegatedSuspendMember.kt: unsupported: a suspend lambda
 coroutines/deserializedSuspendFunctionProperty.kt: unsupported: a suspend lambda
 coroutines/dispatchResume.kt: unsupported: a suspend lambda
@@ -656,8 +597,8 @@ coroutines/featureIntersection/suspendInlineSuspendFinally.kt: unsupported: a su
 coroutines/featureIntersection/suspendOperatorPlus.kt: unsupported: a suspend lambda
 coroutines/featureIntersection/suspendOperatorPlusAssign.kt: unsupported: a suspend lambda
 coroutines/featureIntersection/suspendOperatorPlusCallFromLambda.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/tailrec/controlFlowIf.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
-coroutines/featureIntersection/tailrec/controlFlowWhen.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
+coroutines/featureIntersection/tailrec/controlFlowIf.kt: unsupported: a suspend lambda
+coroutines/featureIntersection/tailrec/controlFlowWhen.kt: unsupported: a suspend lambda
 coroutines/featureIntersection/tailrec/extention.kt: unsupported: a suspend lambda
 coroutines/featureIntersection/tailrec/infixCall.kt: unsupported: a suspend lambda
 coroutines/featureIntersection/tailrec/infixRecursiveCall.kt: unsupported: a suspend lambda
@@ -922,10 +863,10 @@ coroutines/nonLocalReturnFromInlineLambdaDeep.kt: unsupported: a suspend lambda
 coroutines/nullableSuspendFunctionType.kt: unsupported: a suspend lambda
 coroutines/overrideDefaultArgument.kt: unsupported: a suspend lambda
 coroutines/recursiveSuspend.kt: unsupported: a suspend lambda
-coroutines/redundantLocalsElimination/ktor_receivedMessage.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
+coroutines/redundantLocalsElimination/ktor_receivedMessage.kt: unsupported: a suspend lambda
 coroutines/returnByLabel.kt: unsupported: a suspend lambda
 coroutines/returnsNothing1.kt: unsupported: a suspend lambda
-coroutines/returnsUnit1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+coroutines/returnsUnit1.kt: unsupported: a suspend lambda
 coroutines/simple.kt: unsupported: a suspend lambda
 coroutines/simple2.kt: unsupported: a suspend lambda
 coroutines/simpleException.kt: unsupported: a suspend lambda
@@ -1025,9 +966,9 @@ coroutines/unitTypeReturn/suspendReturn.kt: unsupported: a suspend lambda
 coroutines/unitTypeReturn/unitSafeCall.kt: unsupported: a suspend lambda
 coroutines/unsafeTransform.kt: unsupported: a suspend lambda
 coroutines/varCaptuedInCoroutineIntrinsic.kt: unsupported: a suspend lambda
-coroutines/varSpilling/fakeInlinerVariables.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lowercase' on receiver of type 'String'.
+coroutines/varSpilling/fakeInlinerVariables.kt: unsupported: a suspend lambda
 coroutines/varSpilling/kt19475.kt: unsupported: a suspend lambda
-coroutines/varSpilling/kt38925.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
+coroutines/varSpilling/kt38925.kt: unsupported: a suspend lambda
 coroutines/varSpilling/kt64139.kt: unsupported: a suspend lambda
 coroutines/varSpilling/kt75926.kt: unsupported: a suspend lambda
 coroutines/varSpilling/kt79276.kt: unsupported: a suspend lambda
@@ -1043,8 +984,6 @@ coroutines/withReceiver.kt: unsupported: a suspend lambda
 dataClasses/dataClassWithManyFields.kt: unsupported: defaults for more than 64 parameters
 dataClasses/doubleParam.kt: wrong result
 dataClasses/floatParam.kt: wrong result
-dataClasses/toString/arrayParams.kt: run: Execution result: RuntimeError(UncaughtException)
-dataClasses/toString/primitiveArrays.kt: run: Execution result: RuntimeError(UncaughtException)
 dataClasses/toString/unitComponent.kt: unsupported: a Unit field
 dataClasses/unitComponent.kt: unsupported: a Unit field
 defaultArguments/constructor/annotation.kt: unsupported: the annotation class A
@@ -1063,7 +1002,7 @@ defaultArguments/suspendLambdaInTailrecDefault.kt: unsupported: a suspend lambda
 defaultArguments/useThisInLambda.kt: unsupported: calling FUN …
 delegatedProperty/accessTopLevelDelegatedPropertyInClinit.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/beforeDeclarationContainerOptimization.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-delegatedProperty/callableReferenceAsSecondArgumentOfDelegate.kt: IllegalStateException: DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE: Property delegate must have a 'getValue(SampleClass, KProperty1<SampleClass, ??? (Unresolved q
+delegatedProperty/callableReferenceAsSecondArgumentOfDelegate.kt: IllegalStateException: DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE: Property delegate must have a 'getValue(SampleClass, KProperty1<SampleClass, Regex>)' method. 
 delegatedProperty/capturePropertyInClosure.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/castGetReturnType.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/castSetParameter.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -1138,7 +1077,7 @@ delegatedProperty/kt4138.kt: unsupported: the expression RICH_PROPERTY_REFERENCE
 delegatedProperty/kt45431.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/kt6722.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/kt9712.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
-delegatedProperty/lazy.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+delegatedProperty/lazy.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/lazyDelegateInObject.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/local.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty<*>'.
 delegatedProperty/local/capturedLocalVal.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -1218,50 +1157,28 @@ delegation/kt44199.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved r
 devirtualization/inline_getter.kt: link: Failed to link: DuplicateSymbol { namespace: Function, symbol: 17 }
 diagnostics/functions/tailRecursion/checkStackDepth.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'java' on receiver of type 'KClass<Thread>'.
 elvis/genericNull.kt: unsupported: overriding FUN …
-enum/companionAccessingEnumValue.kt: unsupported: a call to values
-enum/companionObject.kt: unsupported: a call to values
-enum/companionObjectInEnum.kt: unsupported: a call to values
 enum/constructorWithReordering.kt: unsupported: the enum entry A without a constructor call
-enum/emptyEnumValuesValueOf.kt: unsupported: a call to values
-enum/enumCompanionInit.kt: unsupported: a call to values
-enum/enumCompanionInitJs.kt: unsupported: a call to values
-enum/enumEntries.kt: unsupported: a call to <get-entries>
-enum/enumEntriesCompatibilityCheck.kt: unsupported: a call to <get-entries>
-enum/enumEntriesCompatibilityCheckPrioritized.kt: unsupported: a call to <get-entries>
-enum/enumEntriesInCompanion.kt: unsupported: a call to <get-entries>
-enum/enumEntriesMultimoduleNoMappings.kt: link: Failed to link: UnresolvedImport { module: "lib", symbol: "MyEnum::_get_entries__abc84280abc44c4f" }
+enum/enumCompanionInitJs.kt: wrong result
 enum/enumEntriesNameClashes.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-enum/enumEntryMembers.kt: link: Failed to link: UnresolvedImport { module: "lib", symbol: "Foo::valueOf_bf00f4a63037aeef" }
 enum/enumEntryReferenceFromInnerClassConstructor1.kt: run: Execution result: RuntimeError(UncaughtException)
 enum/enumEntryReferenceFromInnerClassConstructor2.kt: run: Execution result: RuntimeError(UncaughtException)
 enum/enumEntryReferenceFromInnerClassConstructor3.kt: run: Execution result: RuntimeError(UncaughtException)
-enum/enumMultiModule.kt: link: Failed to link: UnresolvedImport { module: "lib", symbol: "FooEnum::valueOf_bf00f4a63037aeef" }
 enum/enumValueOf.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'assertContains'.
-enum/initEntriesInCompanionObject.kt: unsupported: a call to valueOf
 enum/initEntriesInCompanionObject2.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.enumValueOf_494a7f06ff1f1ac6" }
-enum/initEntriesInValueOf.kt: unsupported: a call to valueOf
 enum/initEnumAfterObjectAccessJs.kt: wrong result
 enum/k54079.kt: unsupported: the annotation class GradleOption
-enum/kt20651_inlineLambda.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Enum$Companion::INSTANCE" }
 enum/kt7257_boundReference2.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 enum/kt7257_boundReferenceWithImplicitReceiver.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-enum/loop.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-enum/multipleModules.kt: link: Failed to link: UnresolvedImport { module: "lib", symbol: "a.A::valueOf_bf00f4a63037aeef" }
-enum/sortEnumEntries.kt: run: Execution result: RuntimeError(UncaughtException)
-enum/switchLowering.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 enum/throwingEntryInitializer.kt: unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
-enum/valueOf2.kt: unsupported: a call to valueOf
-enum/valueof.kt: unsupported: a call to valueOf
-enum/values.kt: unsupported: a call to values
+enum/valueOf2.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.enumValueOf_494a7f06ff1f1ac6" }
+enum/values.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.enumValues_b789507c0dd37d97" }
 evaluate/annotationClassWithInner.kt: unsupported: the annotation class Anno
 evaluate/inJavaLangPackage.kt: IllegalStateException: TYPE_CANT_BE_USED_FOR_CONST_VAL: Const 'val' has type 'Double'. Only primitive types and 'String' are allowed.
 evaluate/intrinsicConst/companions.kt: unsupported: the static property x
-evaluate/intrinsicConst/constTrim.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_INITIALIZER: Const 'val' initializer must be a constant value.
 evaluate/intrinsicConst/enumNameWithInit.kt: wrong result
 evaluate/intrinsicConst/kCallableName.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty1<A, Int>'.
 evaluate/intrinsicConst/kCallableNameWithSideEffect.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty1<A, String>'.
 evaluate/intrinsicConst/kt58717.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction0<Unit>'.
-evaluate/intrinsicConst/lowerAndUpperCase.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_INITIALIZER: Const 'val' initializer must be a constant value.
 evaluate/kt55912.kt: unsupported: the annotation class Entity
 evaluate/objectConstValInAnnotationArgument.kt: unsupported: the annotation class Key
 evaluate/serialization/actualAnnotationOnFakeOverride.kt: unsupported: the annotation class A
@@ -1279,9 +1196,6 @@ evaluate/serialization/intrinsicConst.kt: unsupported: the annotation class Bina
 evaluate/serialization/nestedTypeAnnotation.kt: unsupported: the annotation class TypeAnnotation
 evaluate/serialization/typeAnnotation.kt: unsupported: the annotation class TypeAnnotation
 evaluate/stdlibConst.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_INITIALIZER: Const 'val' initializer must be a constant value.
-evaluate/thisPlusString.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
-exceptions/catch1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-exceptions/catch2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 extensionFunctions/delegatedPropertyWithExtensionType.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 extensionFunctions/extensionFunctionAsASupertypeOfValueClass.kt: unsupported: implementing the function type Function1
 extensionFunctions/extensionFunctionAsATypeLocal.kt: unsupported: implementing the function type Function1
@@ -1306,16 +1220,13 @@ fieldRename/delegates.kt: unsupported: the expression RICH_PROPERTY_REFERENCE �
 fir/deserializedOptInDeprecated.kt: unsupported: the annotation class My
 fir/kt68806.kt: unsupported: a call to CONSTRUCTOR …
 fir/missingDependencyClassInTypeArguments.kt: CompilationErrorException: Module "lib2" has a reference to symbol /Some|null[0]. Neither the module itself nor its dependencies contain such declaration.
-fp/atan2ZeroGuadrantsDouble.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'atan2'.
-fp/powDouble.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'pow'.
-fp/powFloat.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'pow'.
 fp/remainderMixedFpInfinitiesNans.kt: unsupported: `rem` on doubles
-fp/remainderMixedFpSubnormalDivisor.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'abs'.
-fp/remainderMixedIntFp.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'abs'.
-fp/remainderMixedLongFpLargeRatio.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'abs'.
+fp/remainderMixedFpSubnormalDivisor.kt: unsupported: `rem` on doubles
+fp/remainderMixedIntFp.kt: unsupported: `rem` on doubles
+fp/remainderMixedLongFpLargeRatio.kt: unsupported: `rem` on doubles
 fp/remainderVsModDouble.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mod' on receiver of type 'Double'.
 fp/remainderVsModFloat.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mod' on receiver of type 'Float'.
-fullValueClasses/basicSyntax.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'replace' on receiver of type 'String'.
+fullValueClasses/basicSyntax.kt: unsupported: the multi-field value class A
 fullValueClasses/construction.kt: unsupported: the multi-field value class Sealed
 fullValueClasses/inapplicableTypes.kt: unsupported: the multi-field value class UnitWrapper
 fullValueClasses/initializationOrderWithAbstractProperty.kt: unsupported: the multi-field value class Base
@@ -1332,7 +1243,7 @@ fullValueClasses/nonFinalSecondaryConstructorSideEffects.kt: unsupported: the mu
 fullValueClasses/nonFinalSingleFieldSideEffects.kt: unsupported: the multi-field value class Sealed
 fullValueClasses/nonFinalThisInInitSideEffects.kt: unsupported: the multi-field value class AbsWithThisInInit
 fullValueClasses/recursive.kt: unsupported: the multi-field value class B
-fullValueClasses/reservedNames.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'abs'.
+fullValueClasses/reservedNames.kt: unsupported: the multi-field value class OverridesHashCode
 fullValueClasses/valueObject.kt: unsupported: the multi-field value class Foo
 fullValueClasses/vararg.kt: unsupported: the multi-field value class Point
 funInterface/equality/functionReferencesBound.kt: run: Execution result: RuntimeError(UncaughtException)
@@ -1350,8 +1261,6 @@ funInterface/noConversionForSubtypeGeneric.kt: unsupported: implementing the fun
 funInterface/subtypeOfFunctionalTypeToFunInterfaceConversion.kt: unsupported: implementing the function type Function0
 funInterface/suspendFunInterfaceConversionCodegen.kt: unsupported: a suspend lambda
 funInterface/suspendFunctionAndFunInterfaceSharedClassSplit.kt: unsupported: a suspend lambda
-function/defaultsWithVarArg1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-function/defaultsWithVarArg2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 function/sum.kt: unsupported: `rem` on doubles
 function/unreachableStatementAfterReturn.kt: unsupported: a suspend lambda
 functions/bigArity/instanceOfCallableReference.kt: wrong result
@@ -1397,10 +1306,6 @@ inference/pcla/topDownCompletionBreakedByNonBuilderInferenceSession.kt: unsuppor
 inference/plusAssignInsideLambda.kt: unsupported: a suspend lambda
 inference/substituteIntersectionTypeInsideCapType.kt: unsupported: a call to CONSTRUCTOR …
 inference/suspendExtensionRecevierFromConstraint.kt: unsupported: a value of type kotlin.Unit
-initializers/initializers0.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-initializers/initializers2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-initializers/static_arrays.kt: IllegalStateException: kotlin.UIntArray is no array type
-initializers/static_list.kt: run: Execution result: RuntimeError(UncaughtException)
 inline/callableReferenceOfLocalInline.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
 inline/callableReferenceOfLocalKT77102.kt: unsupported: a Unit property
 inline/classDeclarationInsideInline.kt: unsupported: overriding FUN …
@@ -1408,12 +1313,7 @@ inline/crossinlineLambdaAllocation.kt: unsupported: a captured variable
 inline/fakeOverrideInliningCrossModule.kt: CompilationErrorException: Module "libB" has a reference to symbol /foo|foo(){}[0]. Neither the module itself nor its dependencies contain such declaration.
 inline/getClass.kt: unsupported: the expression GET_CLASS …
 inline/inline12.kt: unsupported: a call to CONSTRUCTOR …
-inline/inline17.kt: run: Execution result: RuntimeError(UncaughtException)
-inline/inline21.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-inline/inline24.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-inline/inline6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-inline/inline7.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-inline/inline9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+inline/inline24.kt: unsupported: a value of type kotlin.Unit
 inline/inlineChainCrossModule.kt: CompilationErrorException: Module "mid" has a reference to symbol /baz|baz(){}[0]. Neither the module itself nor its dependencies contain such declaration.
 inline/inlineLambdaNoCapture.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 inline/innerInlineFunCapturesOuter.kt: unsupported: naming CONSTRUCTOR …
@@ -1426,11 +1326,9 @@ inline/localInlineFunctionNameClash.kt: IllegalStateException: NOT_YET_SUPPORTED
 inline/localInlineFunctionReference.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
 inline/localObjectReturnedFromWhen.kt: unsupported: implementing the function type Function0
 inline/multipleInheritanceClash.kt: CompilationException: Back-end: Please report this problem https://kotl.in/issue
-inline/propertyAccessorInline.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-inline/statementAsLastExprInBlock.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Int$Companion::INSTANCE" }
 inline/typeSubstitutionInFakeOverride.kt: unsupported: the expression CLASS_REFERENCE …
 inlineArgsInPlace/arrayDequeRemoveAll.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.MutableCollection::removeIf_d9e28e2d3e2433a7" }
-inlineArgsInPlace/kt49370.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toCharArray' on receiver of type 'String'.
+inlineArgsInPlace/kt49370.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mod' on receiver of type 'Long'.
 inlineArgsInPlace/kt49407.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 inlineArgsInPlace/suspensionPointInsideArgument.kt: unsupported: a suspend lambda
 inlineClasses/UIntArraySortExample.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
@@ -1451,9 +1349,6 @@ inlineClasses/boxReturnValueOnOverride/inlineClassInOverriddenReturnTypes.kt: un
 inlineClasses/boxReturnValueOnOverride/inlineClassInOverriddenReturnTypesGeneric.kt: unsupported: a bridge from FUN …
 inlineClasses/boxReturnValueOnOverride/kt31585.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
 inlineClasses/boxReturnValueOnOverride/kt31585Generic.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
-inlineClasses/boxReturnValueOnOverride/kt35234.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toDouble' on receiver of type 'String'.
-inlineClasses/boxReturnValueOnOverride/kt35234Generic.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toDouble' on receiver of type 'String'.
-inlineClasses/boxReturnValueOnOverride/kt35234a.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toDouble' on receiver of type 'String'.
 inlineClasses/callableReferences/boundInlineClassExtensionVal.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inlineClasses/callableReferences/boundInlineClassExtensionValGeneric.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inlineClasses/callableReferences/boundInlineClassMemberVal.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -1480,11 +1375,9 @@ inlineClasses/checkBoxingUnboxingForInheritedTypeSpecializedFunctions.kt: unsupp
 inlineClasses/checkCallingMembersInsideInlineClassGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Foo
 inlineClasses/constructorCallableReference.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inlineClasses/constructorCallableReferenceGeneric.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-inlineClasses/contextsAndAccessors/accessPrivateInlineClassConstructorFromLambda.kt: unsupported: overriding FUN …
-inlineClasses/contextsAndAccessors/accessPrivateInlineClassConstructorFromLambdaGeneric.kt: unsupported: overriding FUN …
 inlineClasses/contextsAndAccessors/kt26858Generic.kt: run: Execution result: RuntimeError(UncaughtException)
 inlineClasses/createInlineClassInArgumentPositionGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.AsInt
-inlineClasses/customIterator.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'substring' on receiver of type 'String'.
+inlineClasses/customIterator.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 inlineClasses/defaultParameterValues/defaultParameterValuesOfInlineClassTypeBoxingGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Z
 inlineClasses/defaultParameterValues/defaultValueOfInlineClassTypeInInlineFunInInlineClassGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Host
 inlineClasses/defaultWithInlineClassArgumentGeneric.kt: run: Execution result: RuntimeError(UncaughtException)
@@ -1494,7 +1387,6 @@ inlineClasses/functionNameMangling/reflectionForFunctionWithMangledName.kt: Ille
 inlineClasses/functionNameMangling/reflectionForFunctionWithMangledNameGeneric.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<S<String>, S<String>>'.
 inlineClasses/functionNameMangling/reflectionForPropertyOfInlineClassType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KMutableProperty0<S>'.
 inlineClasses/functionNameMangling/reflectionForPropertyOfInlineClassTypeGeneric.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KMutableProperty0<S<String>>'.
-inlineClasses/hiddenConstructor/kt28855.kt: IllegalStateException: kotlin.UIntArray is no array type
 inlineClasses/inlineClassCollection/inlineCollectionOfInlineClass.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::spliterator_8a56e74d22ceafe7" }
 inlineClasses/inlineClassCollection/inlineCollectionOfInlineClassGeneric.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::spliterator_8a56e74d22ceafe7" }
 inlineClasses/inlineClassCollection/inlineListOfInlineClass.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::spliterator_8a56e74d22ceafe7" }
@@ -1513,13 +1405,10 @@ inlineClasses/jvmInline.kt: unsupported: a suspend lambda
 inlineClasses/kt25750.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inlineClasses/kt25750Generic.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inlineClasses/kt25771.kt: unsupported: a value of type kotlin.Nothing
-inlineClasses/kt27113.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'concatToString' on receiver of type 'CharArray'.
-inlineClasses/kt28405.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
 inlineClasses/kt32793.kt: unsupported: a suspend lambda
 inlineClasses/kt47823.kt: unsupported: a value of type kotlin.Nothing
 inlineClasses/kt57973.kt: IllegalStateException: No declaration of FUN name:f-impl visibility:public modality:FINAL <> ($this:<root>.IC, i1:kotlin.Long, i2:kotlin.Long, i3:kotlin.Long, i
 inlineClasses/kt70461.kt: unsupported: a call to CONSTRUCTOR …
-inlineClasses/multifileClass.kt: IllegalStateException: kotlin.UIntArray is no array type
 inlineClasses/propertyDelegation/captureLocalVarDelegatedToInlineClass.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inlineClasses/propertyDelegation/captureLocalVarDelegatedToInlineClassGeneric.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inlineClasses/propertyDelegation/delegateClassVarToInlineClass.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -1545,15 +1434,12 @@ inlineClasses/propertyDelegation/kt42933Generic.kt: unsupported: the expression 
 inlineClasses/referToPropertyInCompanionObjectOfInlineClassGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Foo
 inlineClasses/removeInInlineCollectionOfInlineClassAsInt.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.MutableCollection::removeIf_d9e28e2d3e2433a7" }
 inlineClasses/secondaryConstructorsWithBody.kt: unsupported: an init block of the value class VC
-inlineClasses/unboxGenericParameter/genericArrayInlineClassCast.kt: IllegalStateException: kotlin.UIntArray is no array type
 inlineClasses/unboxParameterOfSuspendLambdaBeforeInvoke.kt: unsupported: a suspend lambda
 inlineClasses/unboxParameterOfSuspendLambdaBeforeInvokeGeneric.kt: unsupported: a suspend lambda
 inlineClasses/unboxResultParameterWhenCapturingToCrossinlineLambda.kt: unsupported: a suspend lambda
 inlineClasses/valueClassInstanceOfNumberAndComparableInInlineFunction.kt: unsupported: a value of type kotlin.Unit
 inlineClasses/whenWithSubject.kt: unsupported: overriding FUN …
 inlineClasses/whenWithSubjectGeneric.kt: unsupported: overriding FUN …
-inlineEvaluationOrder/inlineFunctionAsParameterOfQualifiedCall.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'replace' on receiver of type 'String'.
-inlineEvaluationOrder/methodDecomposedWithBind.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'R'. Specify it explicitly.
 inlineEvaluationOrder/propertyAccessWithSideEffect.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 innerClass/inCallableReferenceLHSclassReference.kt: unsupported: the expression GET_CLASS …
 innerClass/inheritanceMultipleModules1.kt: unsupported: naming CONSTRUCTOR …
@@ -1563,7 +1449,6 @@ innerClass/multipleModules.kt: unsupported: naming CONSTRUCTOR …
 innerNested/considerPropertyInitValueFromNestedClass.kt: unsupported: the annotation class Ann
 intrinsics/kt8666.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 intrinsics/nullPlusString.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
-intrinsics/trimMarginWithBlankString.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimMargin' on receiver of type 'String'.
 ir/anonymousClassLeak.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 ir/kt25405.kt: unsupported: a value of type kotlin.Unit
 ir/kt52677.kt: unsupported: the annotation class MySerializable
@@ -1582,33 +1467,18 @@ javaInterop/objectMethods/cloneCallsSuper.kt: unsupported: a call to clone
 javaInterop/objectMethods/cloneCallsSuperAndModifies.kt: unsupported: a call to clone
 javaInterop/objectMethods/cloneableClassWithoutClone.kt: unsupported: a call to clone
 jdk/kt1397.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
-jdk/noStringToCharArray.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'toCharArray' on receiver of type 'String'.
-kclass/kclass1.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
+kclass/kclass1.kt: unsupported: the annotation class MyDsl
 klib/kt33411.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'getK'.
 labels/nestedLabelsInlinedClashingAtFunctionsWithClosure.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
-lambda/lambda10.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-lambda/lambda11.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-lambda/lambda12.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-lambda/lambda4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-lambda/lambda6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-lambda/lambda8.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-lambda/lambda9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 lambda/lambda_kt49360_withFlow.kt: unsupported: a suspend lambda
 lateinit/globalIsInitialized.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isInitialized' on receiver of type 'KMutableProperty0<String>'.
 lateinit/innerIsInitialized.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isInitialized' on receiver of type 'KMutableProperty0<String>'.
 lateinit/isInitialized.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isInitialized' on receiver of type 'KMutableProperty0<String>'.
 lateinit/localCapturedNotInitialized.kt: wrong result
 lateinit/localNotInitialized.kt: link: : IR compile error: RegisterAllocation(UndefinedValue(0))
-literals/listof1.kt: run: Execution result: RuntimeError(UncaughtException)
-localClass/innerTakesCapturedFromOuter.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 localClasses/localGenericWithTypeParameters.kt: unsupported: the expression CLASS_REFERENCE …
-localEscapeAnalysis/arraysFieldWrite.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-lower/forLoopsLowering/arrays.kt: IllegalStateException: kotlin.UIntArray is no array type
-lower/forLoopsLowering/progressions.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-lower/forLoopsLowering/withIndex.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
 lower/localDelegatedProperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 mangling/internal.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'foo'.
-multiDecl/component.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'substring' on receiver of type 'String'.
 multiplatform/k2/annotations/expectAnnotationCallInLibrary.kt: unsupported: the annotation class Ann
 multiplatform/k2/annotations/optionalExpectation.kt: unsupported: the annotation class B
 multiplatform/k2/basic/delegatedByExpectExtensionProperty.kt: IllegalStateException: DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE: Property delegate must have a 'getValue(B, KProperty1<*, *>)' method. None of the following fu
@@ -1618,8 +1488,6 @@ multiplatform/k2/basic/expectActualTypealiasCoercion.kt: unsupported: the annota
 multiplatform/k2/basic/extensionFunctionAsASupertype.kt: unsupported: implementing the function type Function1
 multiplatform/k2/basic/extensionFunctionAsASupertypeConversion.kt: unsupported: implementing the function type Function1
 multiplatform/k2/basic/interfaceMethodFromSuperTypeIsImplementedInOtherExpectSuperClass.kt: NoSuchElementException: List contains no element matching the predicate.
-multiplatform/k2/basic/nameBasedDestructuringFullForm.kt: run: Execution result: RuntimeError(UncaughtException)
-multiplatform/k2/basic/nameBasedDestructuringShortForm.kt: run: Execution result: RuntimeError(UncaughtException)
 multiplatform/k2/basic/removeExpectDeclarationsFromMetadata.kt: unsupported: the annotation class WithoutActual
 multiplatform/k2/commonFakeOverridePropertyRef.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 multiplatform/k2/commonInternal.kt: unsupported: the annotation class AnnInFriend
@@ -1629,7 +1497,6 @@ multiplatform/k2/defaultArguments/superCall.kt: IllegalStateException: SUPER_CAL
 multiplatform/k2/defaultArguments/suspend.kt: unsupported: a suspend lambda
 multiplatform/k2/defaultArguments/typeAlias.kt: unsupported: the annotation class Foo2
 multiplatform/k2/defaultArguments/typeAlias2.kt: unsupported: the annotation class Foo2
-multiplatform/k2/enumStaticMethods.kt: unsupported: a call to valueOf
 multiplatform/k2/expectRefinement.kt: IllegalStateException: EXPECT_REFINEMENT_ANNOTATION_MISSING: 'expect' declaration refinement is an experimental feature. Mark the declaration with the '@ExpectR
 multiplatform/k2/expectStatic.kt: unsupported: the static property a
 multiplatform/k2/expectValInInlineClass.kt: IllegalStateException: VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION: Value classes without '@JvmInline' annotation are not yet supported.
@@ -1646,32 +1513,15 @@ multiplatform/k2/hmpp/kt83572.kt: IllegalStateException: UNRESOLVED_REFERENCE: U
 multiplatform/k2/hmpp/moveToDiagnostic/optInActual2-2.kt: unsupported: the annotation class Ann
 multiplatform/k2/hmpp/overridingInternalFromFriend.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Foo'.
 multiplatform/k2/hmpp/stdlibRegressions.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.doubleArrayOf_43c58aefc57c329c" }
-multiplatform/k2/hmpp/typealiasNameClash.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
 multiplatform/k2/kt57391.kt: IllegalStateException: CLI phase returned null. See errors in the message collector
 multiplatform/k2/migratedOldTests/mpp_optional_expectation.kt: unsupported: the annotation class Optional
 multiplatform/k2/migratedOldTests/remap_expect_property_ref.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-multiplatform/k2/multipleExpectsSameActual_On.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'repeat' on receiver of type 'String'.
 nameBasedDestructuring/fullFormExtraPropType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
-nameBasedDestructuring/fullFormFromSmartCast.kt: run: Execution result: RuntimeError(UncaughtException)
-nameBasedDestructuring/fullFormLoopsAndLambdas.kt: run: Execution result: RuntimeError(UncaughtException)
 nameBasedDestructuring/shortFormExtraPropType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
-nameBasedDestructuring/shortFormFromSmartCast.kt: run: Execution result: RuntimeError(UncaughtException)
-nameBasedDestructuring/shortFormLoopsAndLambdas.kt: run: Execution result: RuntimeError(UncaughtException)
 nonLocalReturns/suspendConversion.kt: unsupported: a suspend lambda
 nothingValue/nothingValueException.kt: unsupported: a call to CONSTRUCTOR …
 nothingValue/toStringOnNothing.kt: IllegalStateException: Boxing a value of the non-primitive kotlin.Nothing
-object/fields2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-object/initialization1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-objectExpression/expr3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-objectIntrinsics/objects.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Int$Companion::INSTANCE" }
 objects/companionObjectAccess/companionObjectInitOrderWithSuperinterface.kt: wrong result
-objects/companionObjectAccess/primitiveCompanion/byteCompanionObject.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Byte$Companion::INSTANCE" }
-objects/companionObjectAccess/primitiveCompanion/charCompanionObject.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Char$Companion::INSTANCE" }
-objects/companionObjectAccess/primitiveCompanion/doubleCompanionObject.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Double$Companion::INSTANCE" }
-objects/companionObjectAccess/primitiveCompanion/floatCompanionObject.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Float$Companion::INSTANCE" }
-objects/companionObjectAccess/primitiveCompanion/intCompanionObject.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Int$Companion::INSTANCE" }
-objects/companionObjectAccess/primitiveCompanion/longCompanionObject.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Long$Companion::INSTANCE" }
-objects/companionObjectAccess/primitiveCompanion/shortCompanionObject.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Short$Companion::INSTANCE" }
 objects/flist.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 objects/interfaceCompanionObjectReference.kt: unsupported: the annotation class Anno
 objects/kt1047.kt: unsupported: the static field out outside the VM modules
@@ -1683,10 +1533,8 @@ objects/throwingInitializersObjects.kt: unsupported: a Unit field
 objects/useAnonymousObjectAsIterator.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 operatorConventions/annotatedAssignment.kt: unsupported: the annotation class Annotation
 operatorConventions/kt14227.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
-operatorConventions/kt44647.kt: unsupported: StringBuilder.setCharAt
 operatorConventions/suspendOperators.kt: unsupported: a suspend lambda
 operatorConventions/untilOperator.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
-optimizations/kt20844.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'uppercase' on receiver of type 'String'.
 package/initializationOrder.kt: unsupported: a Unit property
 package/jsExportNameClash.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsExport'.
 package/jsExportNameClashIntermodule.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsExport'.
@@ -1695,7 +1543,7 @@ primitiveTypes/equalityWithObject/boxedNanEquals.kt: wrong result
 primitiveTypes/equalityWithObject/kt42281.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
 primitiveTypes/kt14868.kt: unsupported: overriding FUN …
 primitiveTypes/kt1508.kt: unsupported: overriding FUN …
-primitiveTypes/kt16732.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'single' on receiver of type 'String'.
+primitiveTypes/kt16732.kt: unsupported: overriding FUN …
 primitiveTypes/kt2275.kt: unsupported: overriding FUN …
 primitiveTypes/kt684.kt: unsupported: the static field out outside the VM modules
 primitiveTypes/kt79977.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
@@ -1718,7 +1566,6 @@ properties/eagerInitializationGlobal3.kt: IllegalStateException: UNRESOLVED_REFE
 properties/eagerInitializationGlobal4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
 properties/genericPropertyMultiModule.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 properties/kt1159.kt: unsupported: a call to CONSTRUCTOR …
-properties/kt1398.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'uppercase' on receiver of type 'String'.
 properties/kt1714.kt: unsupported: a call to CONSTRUCTOR …
 properties/kt4383.kt: unsupported: a Unit field
 properties/kt78962.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
@@ -1742,25 +1589,15 @@ propertyCallableReference/varExtension.kt: unsupported: the expression RICH_PROP
 propertyCallableReference/varModule.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 publishedApi/inlineFromFriendModule.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'published'.
 ranges/contains/generated/arrayIndices.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
-ranges/contains/generated/charSequenceIndices.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'indices' on receiver of type 'CharSequence'.
-ranges/contains/inCharSequence.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
 ranges/contains/smartCastOnBothEndsGeneric.kt: run: Execution result: RuntimeError(UncaughtException)
-ranges/forInCharSequenceLengthDecreasedInLoopBody.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-ranges/forInCharSequenceLengthIncreasedInLoopBody.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-ranges/forInCharSequenceWithCustomIterator.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-ranges/forInCharSequenceWithMultipleGetFunctions.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-ranges/forInCustomCharSequence.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
+ranges/forInCharSequenceWithCustomIterator.kt: unsupported: overriding FUN …
+ranges/forInCharSequenceWithMultipleGetFunctions.kt: unsupported: overriding FUN …
+ranges/forInCustomCharSequence.kt: unsupported: overriding FUN …
 ranges/forInCustomIterable.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
 ranges/forInDoubleRangeWithCustomIterator.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 ranges/forInFloatRangeWithCustomIterator.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
-ranges/forInIndices/forInArrayListIndices.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'lowercase' on receiver of type 'String'.
-ranges/forInIndices/forInCharSequenceIndices.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-ranges/forInIndices/forInCharSequenceTypeParameterIndices.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
 ranges/forInIndices/kt13241_Array.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
-ranges/forInIndices/kt13241_CharSequence.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
 ranges/forInIndices/kt43159_ArrayUpperBound.kt: IllegalStateException: UPPER_BOUND_CANNOT_BE_ARRAY: Upper bound of type parameter cannot be an array.
-ranges/forInReversed/forInReversedCharSequenceIndices.kt: IllegalStateException: ITERATOR_AMBIGUITY: Method 'iterator()' is ambiguous for this expression. Applicable candidates:
-ranges/forInStringVarUpdatedInLoopBody.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 ranges/safeCallRangeTo.kt: unsupported: the expression CLASS_REFERENCE …
 ranges/unsigned/kt67383.kt: timeout: execute
 reflection/classLiterals/lambdaClass.kt: unsupported: the expression GET_CLASS …
@@ -1781,24 +1618,17 @@ reflection/typeOf/nonReifiedTypeParameters/recursiveBoundWithInline.kt: IllegalS
 reflection/typeOf/nonReifiedTypeParameters/recursiveBoundWithoutInline.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 regressions/dataClassInInlineFunctionWithTypeParameters.kt: unsupported: a call to CONSTRUCTOR …
 regressions/dataClassInRegularFunctionWithTypeParameters.kt: unsupported: a call to CONSTRUCTOR …
-regressions/generic.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
 regressions/hashCodeNPE.kt: unsupported: a call to CONSTRUCTOR …
 regressions/kt1779.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 regressions/kt2210.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
-regressions/kt2246.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'assert'.
-regressions/kt344.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'substring' on receiver of type 'String'.
+regressions/kt2246.kt: IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
 regressions/kt344Runnable.kt: unsupported: the supertype Runnable outside the VM modules
 regressions/kt47279.kt: unsupported: a value of type kotlin.Nothing
-regressions/kt5056.kt: run: Execution result: RuntimeError(UncaughtException)
 regressions/kt5953.kt: unsupported: a value of type kotlin.Unit
-regressions/kt6434.kt: run: Execution result: RuntimeError(UncaughtException)
 regressions/kt71119.kt: unsupported: a call to CONSTRUCTOR …
 regressions/objectCaptureOuterConstructorProperty.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 regressions/objectInsideDelegation.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-reified/callableReferenceInlinedFun.kt: run: Execution result: RuntimeError(UncaughtException)
-reified/callableReferenceInlinedFunFromOtherModule.kt: run: Execution result: RuntimeError(UncaughtException)
 reified/capture.kt: unsupported: the expression CLASS_REFERENCE …
-reified/copyToArray.kt: run: Execution result: RuntimeError(UncaughtException)
 reified/kt39256_privateInlineWithAnonymousObject.kt: unsupported: the expression CLASS_REFERENCE …
 reified/nullableNothingArrayAsStringArray.kt: IllegalStateException: UNSUPPORTED: 'Array<Nothing?>' is not supported on the JVM.
 reified/overrideResolution.kt: unsupported: a bridge from FUN …
@@ -1809,13 +1639,8 @@ reified/reifiedNullableNothing3.kt: IllegalStateException: UNSUPPORTED: 'Array<N
 reified/reifiedNullableNothing4.kt: IllegalStateException: UNSUPPORTED: 'Array<Nothing?>' is not supported on the JVM.
 reified/reifiedTypeArgumentWithIntersectionTypeAsTypeArgument.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 reified/reifiedTypeArgumentWithRecursion.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
-reified/spreads.kt: run: Execution result: RuntimeError(UncaughtException)
 reified/varargs.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 safeCall/genericNull.kt: unsupported: overriding FUN …
-safeCall/primitiveEqSafeCall.kt: unsupported: overriding FUN …
-safeCall/primitiveNotEqSafeCall.kt: unsupported: overriding FUN …
-safeCall/safeCallEqPrimitive.kt: unsupported: overriding FUN …
-safeCall/safeCallNotEqPrimitive.kt: unsupported: overriding FUN …
 sam/constructors/sameWrapperClass.kt: unsupported: a call to getClass
 sam/constructors/sameWrapperClass2.kt: unsupported: the expression GET_CLASS …
 sam/constructors/suspendSamConstructorAdaptation.kt: unsupported: a suspend lambda
@@ -1826,8 +1651,7 @@ sam/kt63564.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 sameFileInSourceAndDependencies/differingNumberOfGenericTypeParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE_WRONG_RECEIVER: Candidate 'fun B<*>.foo(): Unit' is inapplicable because of a receiver type mismatch. Actual receive
 sameFileInSourceAndDependencies/nestedClassDeclaration.kt: IllegalStateException: IrClassSymbolImpl is already bound. Signature: /Host|null[0]. Owner: CLASS CLASS name:Host modality:FINAL visibility:public superTypes:[k
 secondaryConstructors/fieldInitializerOptimization.kt: unsupported: a call to CONSTRUCTOR …
-serialization/deserializedMembers.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-serialization/serializedVararg.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+serialization/deserializedMembers.kt: unsupported: naming CONSTRUCTOR …
 size/add.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsExport'.
 size/helloWorldPromise.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'Promise'.
 specialBuiltins/bridgeNotEmptyMap.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.MutableMap::replaceAll_704a8cc35f5776cf" }
@@ -1849,7 +1673,6 @@ specialBuiltins/removeAtTwoSpecialBridges.kt: link: Failed to link: UnresolvedIm
 specialBuiltins/removeSetInt.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 specialBuiltins/throwableComplex.kt: unsupported: calling FUN …
 specialBuiltins/throwableImpl.kt: unsupported: calling FUN …
-specialBuiltins/valuesInsideEnum.kt: unsupported: a call to values
 strictEquals/abstractBound.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
 strictEquals/crossModuleInheritance.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
 strictEquals/delegated.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
@@ -1863,19 +1686,15 @@ strictEquals/nullableLhs.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION
 strictEquals/referenceEqualityGuard.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
 strictEquals/simple.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
 strictEquals/typealiasInBound.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
-stringTrim/stringTrim.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
+stringTrim/stringTrim.kt: run: Execution result: RuntimeError(UncaughtException)
 strings/charSequenceGet.kt: unsupported: overriding FUN …
 strings/charSequenceSubSequence.kt: unsupported: overriding FUN …
 strings/concatGenericWithStringUpperBound.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
-strings/forInString.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
-strings/kt13213.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trim' on receiver of type 'String'.
-strings/kt13213a.kt: IllegalStateException: ITERATOR_MISSING: For-loop range must have an 'iterator()' method.
 strings/kt2592.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.String::_init__b1a680d3b1e10e75" }
 strings/kt3571.kt: unsupported: overriding FUN …
 strings/kt5956.kt: unsupported: overriding FUN …
 strings/kt894.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 strings/simpleStringPlus.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
-strings/trimOptimization.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 strings/twoArgumentNullableStringOperatorPlus.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 strings/twoArgumentNullableStringPlus.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 super/basicmethodSuperClass.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
@@ -1907,29 +1726,9 @@ syntheticAccessors/functionsWithDefaultValues/severalDefaultValuesCrossModuleTra
 syntheticAccessors/functionsWithDefaultValues/topLevelFunctionCrossModuleCase.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'bar'.
 syntheticAccessors/functionsWithDefaultValues/topLevelFunctionCrossModuleTransitiveCase.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'baz'.
 syntheticAccessors/protectedMemberReferenceAccessor/kt46597_property.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-toArray/kt3177-toTypedArray.kt: run: Execution result: RuntimeError(UncaughtException)
-toArray/returnToTypedArray.kt: run: Execution result: RuntimeError(UncaughtException)
 topLevelInitializtion/failInInitializer1.kt: unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
 topLevelInitializtion/failInInitializer2.kt: unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
 traits/noPrivateDelegation.kt: unsupported: a call to getDeclaredMethods
-try/catch3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/catch4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/catch5.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/catch6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/catch8.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/finally1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/finally10.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/finally11.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/finally2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/finally3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/finally4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/finally5.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/finally6.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/finally7.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/finally8.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/finally9.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/returnsDifferentTypes.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
-try/try4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'trimIndent' on receiver of type 'String'.
 typeErasure/funWithReifiedTypeParameter.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 typeErasure/funWithReifiedTypeParameterAndContextParameter.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 typeErasure/funWithReifiedTypeParameterAndExtensionReceiver.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
@@ -1961,17 +1760,14 @@ unitConversion/unitConversionWithSamSubtype.kt: unsupported: implementing the fu
 unitConversion/unitConversionWithSuspend.kt: unsupported: a suspend lambda
 unsignedTypes/implicitIntegerCoercionNamedArg.kt: unsupported: the annotation class ImplicitIntegerCoercion
 unsignedTypes/implicitIntegerCoercionOverloadResolutionAmbiguity.kt: unsupported: the annotation class ImplicitIntegerCoercion
-unsignedTypes/iterateOverArrayOfUnsignedValues.kt: IllegalStateException: kotlin.UIntArray is no array type
 unsignedTypes/kt25784.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 unsignedTypes/kt61418.kt: unsupported: the annotation class ImplicitIntegerCoercion
-unsignedTypes/nullableSmartcastUnsignedArray.kt: IllegalStateException: kotlin.UByteArray is no array type
 unsignedTypes/signedToUnsignedConversions.kt: unsupported: the annotation class ImplicitIntegerCoercion
-unsignedTypes/unsignedArraySize.kt: IllegalStateException: kotlin.UIntArray is no array type
 unsignedTypes/unsignedInStringInterpolation.kt: wrong result
 unsignedTypes/unsignedTypeValuesInsideStringTemplates.kt: wrong result
 unsignedTypes/varargsOfUnsignedTypes.kt: unsupported: the annotation class AnnoUByte
 vararg/emptyVarArg.kt: IllegalStateException: kotlin.UIntArray is no array type
-vararg/inlineClassArraysAsNamedArgumentInVararg.kt: IllegalStateException: kotlin.UIntArray is no array type
+vararg/inlineClassArraysAsNamedArgumentInVararg.kt: run: Execution result: RuntimeError(UncaughtException)
 vararg/useSuspendFunResultAsVararg.kt: unsupported: a suspend lambda
 vararg/varargInFunParam.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
 versionOverloads/basicWrappers.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
@@ -2031,21 +1827,7 @@ volatile/volatileInt.kt: IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_NO
 volatile/volatileLong.kt: IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE: Declaration annotated with '@OptionalExpectation' can only be used in common module sour
 volatile/volatileShort.kt: IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE: Declaration annotated with '@OptionalExpectation' can only be used in common module sour
 volatile/volatileString.kt: IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE: Declaration annotated with '@OptionalExpectation' can only be used in common module sour
-when/NoWhenBranchMatchedExceptionAfter.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
-when/NoWhenBranchMatchedExceptionAfterAnonymous.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
-when/NoWhenBranchMatchedExceptionAfterNullable.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
-when/NoWhenBranchMatchedExceptionAfterQualified.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'startsWith' on receiver of type 'String'.
-when/guard/whenWithGuard.kt: run: Execution result: RuntimeError(UncaughtException)
-when/integralWhenWithNoInlinedConstants.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'assert'.
-when/kt45081.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'it'.
+when/NoWhenBranchMatchedExceptionAfterAnonymous.kt: wrong result
+when/integralWhenWithNoInlinedConstants.kt: IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
 when/noElseExhaustiveUnitExpected.kt: unsupported: a value of type kotlin.Unit
 when/nothingTyped.kt: unsupported: a value of type kotlin.Nothing
-when/switchOptimizationDense.kt: run: Execution result: RuntimeError(UncaughtException)
-when/switchOptimizationMultipleConditions.kt: run: Execution result: RuntimeError(UncaughtException)
-when/switchOptimizationSparse.kt: run: Execution result: RuntimeError(UncaughtException)
-when/switchOptimizationStatement.kt: run: Execution result: RuntimeError(UncaughtException)
-when/switchOptimizationTypes.kt: run: Execution result: RuntimeError(UncaughtException)
-when/switchOptimizationUnordered.kt: run: Execution result: RuntimeError(UncaughtException)
-when/switchOptimizationWithGap.kt: run: Execution result: RuntimeError(UncaughtException)
-when/whenSubjectVariable/denseIntSwitchWithSubjectVariable.kt: run: Execution result: RuntimeError(UncaughtException)
-when/whenSubjectVariable/sparseIntSwitchWithSubjectVariable.kt: run: Execution result: RuntimeError(UncaughtException)

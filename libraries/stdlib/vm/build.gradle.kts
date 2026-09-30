@@ -125,6 +125,7 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
             "kotlin/annotations/Inference.kt",
             "kotlin/comparisons/Comparisons.kt",
             "kotlin/experimental/inferenceMarker.kt",
+            "kotlin/experimental/ExperimentalNativeApi.kt",
             "kotlin/util/Tuples.kt",
             "kotlin/concurrent/Volatile.kt",
             "kotlin/collections/UArraySorting.kt",
@@ -141,8 +142,7 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
             "kotlin/util/Numbers.kt",
             "kotlin/internal/serializationUtil.kt",
             "kotlin/util/Preconditions.kt",
-            "kotlin/text/StringBuilder.kt",
-            "kotlin/text/Appendable.kt",
+            "kotlin/text/**",
             "kotlin/internal/throwNoWhenBranchMatchedException.kt",
             "kotlin/concurrent/atomics/AtomicArrays.common.kt",
             "kotlin/concurrent/atomics/Atomics.common.kt",
@@ -160,7 +160,6 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
 
     from(stdlibProjectDir.resolve("unsigned/src")) {
         include("**/*.kt")
-        exclude("kotlin/UStrings.kt")
         into("src/common/unsigned")
     }
 
@@ -173,6 +172,8 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
             "generated/_Maps.kt",
             "generated/_Sets.kt",
             "generated/_Sequences.kt",
+            "generated/_Strings.kt",
+            "generated/_OneToManyTitlecaseMappings.kt",
             "generated/_UArrays.kt",
             "generated/_UCollections.kt",
             "generated/_UComparisons.kt",
@@ -180,6 +181,8 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
             "kotlin/collections/UByteValueSet.kt",
             "kotlin/Comparator.kt",
             "kotlin/KotlinH.kt",
+            "kotlin/TextH.kt",
+            "kotlin/MathH.kt",
             "kotlin/SequencesH.kt",
             "kotlin/JsAnnotationsH.kt",
             "kotlin/collections/AbstractMutableCollection.kt",
@@ -208,7 +211,6 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
         include(
             "runtime/kotlin/NoWhenBranchMatchedException.kt",
             "runtime/kotlin/UninitializedPropertyAccessException.kt",
-            "runtime/kotlin/text/TypeAliases.kt",
             "src/kotlin/ArrayIntrinsics.kt",
             "src/kotlin/Unit.kt",
             "src/kotlin/enums/EnumEntriesJVM.kt",
@@ -220,14 +222,14 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
             "runtime/kotlin/jvm/internal/FunctionBase.kt",
             "runtime/kotlin/jvm/annotations/JvmPlatformAnnotations.kt",
             "src/kotlin/internal/throwNoWhenBranchMatchedException.kt",
-            "src/kotlin/text/StringBuilderJVM.kt",
         )
+        // Wasm's atomics instead, in Kotlin: the JVM's builtins declare them for its compiler to implement.
+        exclude("builtins/Atomics.kt", "builtins/AtomicArrays.kt")
         into("src/jvm")
     }
 
     from(stdlibProjectDir.resolve("jvm-minimal-for-test/jvm-src")) {
         include(
-            "minimalAtomics.kt",
             "minimalThrowables.kt",
         )
         into("src/jvm")
@@ -239,18 +241,36 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
         include("**/*.kt")
         into("src/common/vm")
     }
-    from(stdlibProjectDir.resolve("../../kotlin-native/runtime/src/main/kotlin")) {
-        include("kotlin/Unsigned.kt")
-        into("src/jvm/native")
+    // Wasm's `kotlin.math`, whose float instructions the VM has as the functions of `kotlin.vm.internal`.
+    from(stdlibProjectDir.resolve("wasm/src")) {
+        include("kotlin/math/**")
+        filter { line -> line.replace("kotlin.wasm.internal.wasm_", "kotlin.vm.internal.") }
+        into("src/jvm/wasm-math")
+    }
+    from(stdlibProjectDir.resolve("native-wasm/wasi")) {
+        include("kotlin/text/StringBuilder.kt")
+        into("src/native-wasm")
     }
     from(stdlibProjectDir.resolve("wasm/src")) {
-        include("kotlin/Comparator.kt", "kotlin/Lazy.kt", "kotlin/Sequences.kt", "kotlin/coroutines/Coroutines.kt")
+        include(
+            "kotlin/Comparator.kt",
+            "kotlin/Lazy.kt",
+            "kotlin/Sequences.kt",
+            "kotlin/coroutines/Coroutines.kt",
+            "kotlin/concurrent/atomics/*.kt",
+            "kotlin/Assertions.kt",
+            "kotlin/text/regex/BitSet.kt",
+            "kotlin/text/regex/DecompositionHelpers.kt",
+            "kotlin/text/regex/DecompositionValues.kt",
+            "kotlin/text/regex/ObsoleteNativeApi.kt",
+            "kotlin/text/CharacterCodingExceptionWasm.kt",
+            "kotlin/text/StringNumberConversionsWasm.kt",
+            "kotlin/text/utf8Encoding.kt",
+        )
         into("src/jvm/wasm")
     }
     from(file("platform-src")) {
         include("**/*.kt")
-        // Generated beside the rest, for the common sources they are the VM's half of, which the VM does not build yet.
-        exclude("generated/_StringsVm.kt")
         into("src/jvm/vm")
     }
 
@@ -268,6 +288,12 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
     from(stdlibProjectDir.resolve("native-wasm/src")) {
         include(
             "kotlin/native/internal.kt",
+            "kotlin/native/BitSet.kt",
+            "kotlin/native/ObsoleteNativeApi.kt",
+            "kotlin/Assertions.kt",
+            "kotlin/internal/dtoa/*.kt",
+            "kotlin/text/**",
+            "generated/**",
             "kotlin/collections/AbstractMutableCollection.kt",
             "kotlin/collections/AbstractMutableList.kt",
             "kotlin/collections/AbstractMutableMap.kt",
@@ -282,6 +308,10 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
             "kotlin/collections/RandomAccess.kt",
             "kotlin/collections/Sets.kt",
         )
+        // The JVM frontend the VM compiles with wants every value class marked as the JVM's `@JvmInline`.
+        filesMatching("**/internal/dtoa/cbigint.kt") {
+            filter { line -> line.replace("private value class", "@kotlin.jvm.JvmInline private value class") }
+        }
         into("src/native-wasm")
     }
 

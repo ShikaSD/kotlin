@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.ir.util.constructedClass
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.isFunctionOrKFunction
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
+import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.ir.util.render
@@ -29,6 +30,13 @@ import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.util.OperatorNameConventions
+
+/** The externals of the VM's `kotlin.vm.internal` that are its float built-ins, by the built-in's name. */
+private val FLOAT_BUILTINS = listOf("f64", "f32").flatMap { type ->
+    listOf("sqrt" to "sqrt", "ceil" to "ceil", "floor" to "floor", "truncate" to "trunc").map { names ->
+        "kotlin.vm.internal.${type}_${names.first}" to "vm.builtin.$type.${names.second}"
+    }
+}.toMap()
 
 /**
  * Generates one function's body. A Kotlin variable is one VM value assigned as often as the variable is, since VM values
@@ -376,15 +384,18 @@ internal class VmFunctionGenerator private constructor(
     }
 
     private fun box(value: VmValue, type: IrType): VmValue {
-        gen.inlinedValueClassOf(type)?.let { valueClass ->
-            val boxClass = gen.testedClass(valueClass.defaultType) ?: unsupported("boxing ${valueClass.name}")
-            val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.NewObject(it, boxClass)) }
-            emit(VmInstruction.StoreField(box, gen.fieldIndex(gen.valueClassField(valueClass)), value))
-            return box
-        }
+        gen.inlinedValueClassOf(type)?.let { return valueClassBox(it, value) }
         val kind = type.getPrimitiveType() ?: error("Boxing a value of the non-primitive ${type.render()}")
         val valueOf = gen.valueOf(kind)
         return newValue(valueOf.returnType!!).also { emit(VmInstruction.Call(it, VmCallee.Static(valueOf), listOf(value))) }
+    }
+
+    /** An instance of [valueClass] holding [value]: nothing it constructs does more than store it. */
+    private fun valueClassBox(valueClass: IrClass, value: VmValue): VmValue {
+        val boxClass = gen.testedClass(valueClass.defaultType) ?: unsupported("boxing ${valueClass.name}")
+        val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.NewObject(it, boxClass)) }
+        emit(VmInstruction.StoreField(box, gen.fieldIndex(gen.valueClassField(valueClass)), value))
+        return box
     }
 
     /** A box's value: the cast fails for a box of another class, and the load for null. */
@@ -493,6 +504,9 @@ internal class VmFunctionGenerator private constructor(
         is IrGetObjectValue -> {
             if (expression.type.isUnit()) {
                 null
+            } else if (gen.isStatelessCompanion(expression.symbol.owner)) {
+                // Only an extension of it takes such a companion, which it has nothing to read from.
+                constant(gen.anyType, 0)
             } else {
                 newValue(gen.anyType).also { emit(VmInstruction.LoadGlobal(it, gen.objectInstance(expression.symbol.owner))) }
             }
@@ -1214,6 +1228,7 @@ internal class VmFunctionGenerator private constructor(
                 arrayMember(callee, args)?.let { return it }
                 stringBuilderMember(callee, args)?.let { return it }
                 enumMember(callee, args)?.let { return Intrinsic(it) }
+                enumSpecialMember(callee, args)?.let { return Intrinsic(it) }
                 // `arrayOf` and `intArrayOf` and the like, whose vararg is the array they return.
                 if (callee.isArrayOf()) return Intrinsic(operand(args[0]))
                 when (callee.fqNameWhenAvailable?.asString()) {
@@ -1244,6 +1259,18 @@ internal class VmFunctionGenerator private constructor(
                     "kotlin.random.randomSeed" -> return Intrinsic(newValue(VmType.I64).also {
                         emit(VmInstruction.Call(it, VmCallee.Static(gen.randomSeed), emptyList()))
                     })
+                    in FLOAT_BUILTINS -> {
+                        val type = if (callee.returnType.isFloat()) VmType.F32 else VmType.F64
+                        val builtin = gen.floatBuiltin(FLOAT_BUILTINS.getValue(callee.fqNameWhenAvailable!!.asString()), type)
+                        return Intrinsic(newValue(type).also { emit(VmInstruction.Call(it, VmCallee.Static(builtin), listOf(operand(args[0])))) })
+                    }
+                    "kotlin.text.stringFromChars" -> return Intrinsic(newValue(gen.stringType).also {
+                        emit(VmInstruction.Call(it, VmCallee.Static(gen.stringFromChars), args.map(::operand)))
+                    })
+                    "kotlin.text.stringGetChars" -> {
+                        emit(VmInstruction.Call(null, VmCallee.Static(gen.stringGetChars), args.map(::operand)))
+                        return Intrinsic(null)
+                    }
                     "kotlin.collections.copyArray" -> {
                         emit(VmInstruction.Call(null, VmCallee.Static(gen.arrayCopy), args.map(::operand)))
                         return Intrinsic(null)
@@ -1344,7 +1371,10 @@ internal class VmFunctionGenerator private constructor(
      * in order, before the array is made, since its length needs the spread arrays' lengths.
      */
     private fun vararg(expression: IrVararg): VmValue {
-        val slot = gen.arrayElementSlot(expression.type)
+        // A vararg of an unsigned type is its array class, a value class wrapping the array of the signed type.
+        val valueClass = expression.type.classOrNull?.owner?.takeIf { it.isValue }
+        val arrayType = valueClass?.let { gen.valueClassField(it).type } ?: expression.type
+        val slot = gen.arrayElementSlot(arrayType)
         val elements = expression.elements.map { element ->
             when (element) {
                 is IrSpreadElement -> VarargElement(operand(element.expression), isSpread = true)
@@ -1357,7 +1387,7 @@ internal class VmFunctionGenerator private constructor(
             val spreadLength = newValue(VmType.I64).also { emit(VmInstruction.ArrayLength(it, element.value)) }
             length = binary(VmBinaryOp.ADD, length, spreadLength)
         }
-        val array = newArray(expression.type, length)
+        val array = newArray(arrayType, length)
         val index = constant(VmType.I64, 0)
         val one = constant(VmType.I64, 1)
         for (element in elements) {
@@ -1368,7 +1398,7 @@ internal class VmFunctionGenerator private constructor(
                 emit(VmInstruction.Copy(index, binary(VmBinaryOp.ADD, index, one)))
             }
         }
-        return array
+        return if (valueClass == null || valueClass.isInlinedValueClass()) array else valueClassBox(valueClass, array)
     }
 
     /** A vararg element's value: the element, or the array a spread element copies from. */
@@ -1392,6 +1422,39 @@ internal class VmFunctionGenerator private constructor(
         emit(VmInstruction.Copy(from, binary(VmBinaryOp.ADD, from, one)))
         jumpTo(header)
         current = exit
+    }
+
+    /**
+     * An enum class's `values()`, `valueOf` and `entries`, whose bodies the frontend leaves to the backend: an array of
+     * the entries, in their order, and the standard library's functions over it. Null for any other callee.
+     */
+    private fun enumSpecialMember(callee: IrSimpleFunction, args: List<IrExpression>): VmValue? {
+        if (callee.origin != IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER) return null
+        val enumClass = callee.parentAsClass
+        fun values(): VmValue {
+            val entries = enumClass.declarations.filterIsInstance<IrEnumEntry>()
+            val array = newArray(gen.irBuiltIns.arrayClass.typeWith(enumClass.defaultType), constant(VmType.I64, entries.size.toLong()))
+            entries.forEachIndexed { index, entry ->
+                val value = newValue(gen.anyType).also { emit(VmInstruction.LoadGlobal(it, gen.enumEntryGlobal(entry))) }
+                emit(VmInstruction.ArraySet(array, constant(VmType.I64, index.toLong()), value))
+            }
+            return array
+        }
+        fun call(name: String, arguments: List<VmValue>): VmValue {
+            val target = gen.staticTarget(gen.enumsFunction(name))
+            return newValue(gen.anyType).also { emit(VmInstruction.Call(it, target.callee, arguments)) }
+        }
+        return when (callee.name.asString()) {
+            "values" -> values()
+            "<get-entries>" -> call("enumEntries", listOf(values()))
+            "valueOf" -> {
+                val className = newValue(gen.stringType).also {
+                    emit(VmInstruction.StringConstant(it, enumClass.fqNameWhenAvailable?.asString() ?: enumClass.name.asString()))
+                }
+                call("valueOfEnum", listOf(values(), operand(args[0]), className))
+            }
+            else -> null
+        }
     }
 
     /** `Enum`'s final members, which read the fields every entry has, or null for any other callee. */

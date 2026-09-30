@@ -2748,4 +2748,152 @@ class JKlibVmBackendTest {
         """
         assertTrue(runBox(tempDir, source))
     }
+
+    /** `joinToString` appends to the standard library's `StringBuilder`, now Wasm and Native's Kotlin class. */
+    @Test
+    fun testJoinToStringSeparatesTheElements(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if (listOf(1, 2, 3).joinToString(", ") == "1, 2, 3") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testTrimIndentRemovesTheCommonIndent(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if ("\n    a\n      b\n".trimIndent() == "a\n  b") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testStringBuilderInsertsAtAnIndex(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if (StringBuilder("OK").insert(1, "-").toString() == "O-K") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testUppercaseMapsEachChar(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if ("ok".uppercase() == "OK") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testToIntParsesDecimalDigits(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if ("-42".toInt() == -42) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** Wasm and Native's regex engine, in Kotlin. */
+    @Test
+    fun testRegexMatchesAPattern(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if (Regex("a+b").matches("aaab")) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `sqrt` is Wasm's, over the VM's `vm.builtin.f64.sqrt`. */
+    @Test
+    fun testSqrtIsTheSquareRoot(@TempDir tempDir: File) {
+        val source = """
+            import kotlin.math.sqrt
+
+            fun box(): String = if (sqrt(2.25) == 1.5) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A data class's `toString` shows an array property's content, through the standard library's `contentToString`. */
+    @Test
+    fun testDataClassToStringShowsAnArraysContent(@TempDir tempDir: File) {
+        val source = """
+            data class Data(val values: IntArray)
+
+            fun box(): String = if (Data(intArrayOf(1, 2)).toString() == "Data(values=[1, 2])") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** An enum class's `values()`, whose body the frontend leaves to the backend, is an array of its entries. */
+    @Test
+    fun testEnumValuesListsTheEntriesInOrder(@TempDir tempDir: File) {
+        val source = """
+            enum class E { A, B }
+
+            fun box(): String = if (E.values().joinToString("") { it.name } == "AB") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testEnumEntriesListsTheEntriesInOrder(@TempDir tempDir: File) {
+        val source = """
+            enum class E { A, B }
+
+            fun box(): String = if (E.entries.map { it.name } == listOf("A", "B")) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testEnumValueOfFindsTheEntryByName(@TempDir tempDir: File) {
+        val source = """
+            enum class E { A, B }
+
+            fun box(): String = if (E.valueOf("B") == E.B) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testEnumValueOfAnUnknownNameThrows(@TempDir tempDir: File) {
+        val source = """
+            enum class E { A }
+
+            fun box(): String {
+                try {
+                    E.valueOf("C")
+                } catch (e: IllegalArgumentException) {
+                    return "OK"
+                }
+                return "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `String.Companion` has no state, so an extension of it takes nothing for it. */
+    @Test
+    fun testExtensionOfStringsCompanionSortsIgnoringCase(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String =
+                if (listOf("b", "A").sortedWith(String.CASE_INSENSITIVE_ORDER) == listOf("A", "b")) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A vararg of an unsigned type is its array class, which wraps the signed array holding the elements. */
+    @Test
+    fun testUnsignedArrayOfHoldsItsElements(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if (ulongArrayOf(1uL, 2uL)[1] == 2uL) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** An unsigned value above `Long.MAX_VALUE` in another radix, whose digits the VM's `ulongToString` writes. */
+    @Test
+    fun testULongToStringInARadix(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if (ULong.MAX_VALUE.toString(16) == "ffffffffffffffff") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
 }

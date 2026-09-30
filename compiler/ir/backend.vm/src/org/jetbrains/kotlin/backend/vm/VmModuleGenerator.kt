@@ -249,7 +249,7 @@ class VmModuleGenerator(
                 field.initializer == null -> VmGlobalStart.Zero
                 else -> VmGlobalStart.Owned(owner!!)
             }
-            globals[field.symbol] = declareGlobal(globalName(field), vmType(field.type) ?: unsupported("a Unit property"), start)
+            globals[field.symbol] = declareGlobal(definedGlobalName(field), vmType(field.type) ?: unsupported("a Unit property"), start)
         }
         if (owner == null) return null
         members.functions.forEach { functionOwners[it.symbol] = owner }
@@ -329,6 +329,18 @@ class VmModuleGenerator(
     private fun globalName(field: IrField): String =
         sanitized(field.correspondingPropertySymbol?.owner?.fqNameWhenAvailable?.asString() ?: field.name.asString())
 
+    /**
+     * [globalName], made distinct from the module's other globals by a counter. Only private properties of two files in
+     * one package share a name, and no other module imports those.
+     */
+    private fun definedGlobalName(field: IrField): String {
+        val name = globalName(field)
+        if (usedGlobalNames.add(name)) return name
+        return generateSequence(1) { it + 1 }.map { "${name}_$it" }.first(usedGlobalNames::add)
+    }
+
+    private val usedGlobalNames = hashSetOf<String>()
+
     private fun enumEntryName(entry: IrEnumEntry): String = "${entry.parentAsClass.vmName}::${entry.name.asString()}"
 
     private fun instanceName(declaration: IrClass): String = "${declaration.vmName}::INSTANCE"
@@ -341,6 +353,10 @@ class VmModuleGenerator(
         importGlobal(field, globalName(field), vmType(field.type) ?: unsupported("a Unit property"))
             ?: unsupported("the static field ${field.name} outside the VM modules")
     }
+
+    /** Whether [declaration] is the companion of a class the runtime implements, `Char`'s or `String`'s, which has no state. */
+    internal fun isStatelessCompanion(declaration: IrClass): Boolean =
+        declaration.isCompanion && declaration.parentClassOrNull?.let(::isRuntimeImplemented) == true
 
     internal fun objectInstance(declaration: IrClass): Int = objectInstances.getOrPut(declaration.symbol) {
         importGlobal(declaration, instanceName(declaration), anyType) ?: unsupported("the object ${declaration.name} outside the VM modules")
@@ -491,6 +507,8 @@ class VmModuleGenerator(
             "compareTo" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.Comparable"), listOf(anyType), VmType.I64)
             "length" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.CharSequence"), emptyList(), VmType.I64)
             "get" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.CharSequence"), listOf(VmType.I64), VmType.I64)
+            "subSequence" ->
+                VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.CharSequence"), listOf(VmType.I64, VmType.I64), anyType)
             else -> error("The runtime declares no selector $name on Any")
         }
         module.selectors.size - 1
@@ -516,6 +534,14 @@ class VmModuleGenerator(
     }
 
     private val arrayIterators = hashMapOf<IrClassSymbol, IrSimpleFunction>()
+
+    /** The standard library's `kotlin.enums` function [name], which an enum class's `entries` or `valueOf` calls. */
+    @OptIn(InternalSymbolFinderAPI::class)
+    internal fun enumsFunction(name: String): IrSimpleFunction =
+        irBuiltIns.symbolFinder.findFunctions(CallableId(StandardNames.BUILT_INS_PACKAGE_FQ_NAME.child(Name.identifier("enums")), Name.identifier(name)))
+            .map { it.owner }
+            .singleOrNull { function -> function.parameters.firstOrNull()?.type?.classOrNull == irBuiltIns.arrayClass }
+            ?: unsupported("an enum's members without the standard library's kotlin.enums.$name")
 
     /**
      * The `kotlin.collections` extension [name] on a nullable [arrayClass], `contentToString` or `contentHashCode`: what a
@@ -546,6 +572,21 @@ class VmModuleGenerator(
     internal val arrayCopy: VmFunctionSymbol by lazy {
         runtimeFunction("vm.builtin.array.copy", listOf(anyType, VmType.I64, anyType, VmType.I64, VmType.I64), null)
     }
+
+    /** The runtime's `vm.builtin.string.from_chars`, which the VM stdlib's `kotlin.text.stringFromChars` is. */
+    internal val stringFromChars: VmFunctionSymbol by lazy {
+        runtimeFunction("vm.builtin.string.from_chars", listOf(charArrayType, VmType.I64, VmType.I64), stringType)
+    }
+
+    /** The runtime's `vm.builtin.string.get_chars`, which the VM stdlib's `kotlin.text.stringGetChars` is. */
+    internal val stringGetChars: VmFunctionSymbol by lazy {
+        runtimeFunction("vm.builtin.string.get_chars", listOf(stringType, VmType.I64, VmType.I64, charArrayType, VmType.I64), null)
+    }
+
+    private val charArrayType: VmType get() = VmType.Ref(arrayClass(VmType.U16))
+
+    /** The runtime's float built-in [name], taking and answering a [type]. */
+    internal fun floatBuiltin(name: String, type: VmType): VmFunctionSymbol = runtimeFunction(name, listOf(type), type)
 
     /** The runtime's `vm.builtin.io.print`, which the VM stdlib's `kotlin.io.printString` is. */
     internal val print: VmFunctionSymbol by lazy { runtimeFunction("vm.builtin.io.print", listOf(stringType), null) }
@@ -952,7 +993,7 @@ class VmModuleGenerator(
 
     /** The runtime's selector for [root], a member of one of the classes [RUNTIME_TYPES] lists. */
     private fun runtimeTypeSelector(root: IrSimpleFunction): Int = when (val name = root.name.asString()) {
-        "compareTo", "get" -> runtimeSelector(name)
+        "compareTo", "get", "subSequence" -> runtimeSelector(name)
         "<get-length>" -> runtimeSelector("length")
         else -> unsupported("overriding ${root.render()}")
     }
