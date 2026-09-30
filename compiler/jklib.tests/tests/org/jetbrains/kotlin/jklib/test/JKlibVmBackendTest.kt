@@ -2896,4 +2896,136 @@ class JKlibVmBackendTest {
         """
         assertTrue(runBox(tempDir, source))
     }
+
+    /** A `sequence` block suspends at each `yield`, which the iterator's `next` resumes. */
+    @Test
+    fun testSequenceYieldsItsValuesInOrder(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val values = sequence {
+                    yield(1)
+                    yield(2)
+                    yield(3)
+                }.toList()
+                return if (values == listOf(1, 2, 3)) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `suspendCoroutine` parks the coroutine until its continuation, which the code outside holds, is resumed. */
+    @Test
+    fun testSuspendCoroutineResumesWithTheValueGivenLater(@TempDir tempDir: File) {
+        val source = """
+            import kotlin.coroutines.*
+
+            fun box(): String {
+                var parked: Continuation<Int>? = null
+                var result = 0
+                val block: suspend () -> Unit = {
+                    result = suspendCoroutine { parked = it }
+                }
+                block.startCoroutine(Continuation(EmptyCoroutineContext) { it.getOrThrow() })
+                if (result != 0) return "fail: resumed early"
+                parked!!.resume(42)
+                return if (result == 42) "OK" else "fail: " + result
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A coroutine resumed with an exception gets it at its suspension point, where a `catch` can take it. */
+    @Test
+    fun testResumeWithExceptionReachesTheCatchAroundTheSuspension(@TempDir tempDir: File) {
+        val source = """
+            import kotlin.coroutines.*
+
+            fun box(): String {
+                var parked: Continuation<Int>? = null
+                var caught: String? = null
+                val block: suspend () -> Unit = {
+                    try {
+                        suspendCoroutine<Int> { parked = it }
+                    } catch (e: IllegalStateException) {
+                        caught = e.message
+                    }
+                }
+                block.startCoroutine(Continuation(EmptyCoroutineContext) { it.getOrThrow() })
+                parked!!.resumeWithException(IllegalStateException("boom"))
+                return if (caught == "boom") "OK" else "fail: " + caught
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `coroutineContext` is the context the coroutine was started with. */
+    @Test
+    fun testCoroutineContextIsTheOneTheCoroutineStartedWith(@TempDir tempDir: File) {
+        val source = """
+            import kotlin.coroutines.*
+
+            class Tag : AbstractCoroutineContextElement(Key) {
+                companion object Key : CoroutineContext.Key<Tag>
+            }
+
+            fun box(): String {
+                val tag = Tag()
+                var seen: Tag? = null
+                val block: suspend () -> Unit = { seen = coroutineContext[Tag] }
+                block.startCoroutine(Continuation(tag) { it.getOrThrow() })
+                return if (seen === tag) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A suspend lambda with a receiver runs on the receiver `startCoroutine` is given. */
+    @Test
+    fun testStartCoroutineOfALambdaWithAReceiverPassesTheReceiver(@TempDir tempDir: File) {
+        val source = """
+            import kotlin.coroutines.*
+
+            fun box(): String {
+                var result = ""
+                val block: suspend String.() -> Unit = { result = this + "K" }
+                block.startCoroutine("O", Continuation(EmptyCoroutineContext) { it.getOrThrow() })
+                return result
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A suspend function that does not suspend is a call answering its value. */
+    @Test
+    fun testSuspendFunctionCalledFromALambdaAnswersItsValue(@TempDir tempDir: File) {
+        val source = """
+            import kotlin.coroutines.*
+
+            suspend fun answer(): Int = 42
+
+            fun box(): String {
+                var result = 0
+                val block: suspend () -> Unit = { result = answer() }
+                block.startCoroutine(Continuation(EmptyCoroutineContext) { it.getOrThrow() })
+                return if (result == 42) "OK" else "fail: " + result
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** An exception a coroutine does not catch is what its completion is resumed with. */
+    @Test
+    fun testCompletionReceivesTheExceptionTheCoroutineThrows(@TempDir tempDir: File) {
+        val source = """
+            import kotlin.coroutines.*
+
+            fun box(): String {
+                var failure: Throwable? = null
+                val block: suspend () -> Unit = { throw IllegalStateException("boom") }
+                block.startCoroutine(Continuation(EmptyCoroutineContext) { failure = it.exceptionOrNull() })
+                return if (failure?.message == "boom") "OK" else "fail: " + failure
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
 }

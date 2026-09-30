@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.ir.util.constructedClass
 import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.isFunctionOrKFunction
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
@@ -30,6 +29,11 @@ import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.util.OperatorNameConventions
+
+/** The externals of the VM's `kotlin.vm.internal` that are its coroutine built-ins, by the built-in's name. */
+private val COROUTINE_BUILTINS = listOf("new", "resume", "resume_throw", "suspend", "current").associate { name ->
+    "kotlin.vm.internal.coroutine_$name" to "vm.builtin.coroutine.$name"
+}
 
 /** The externals of the VM's `kotlin.vm.internal` that are its float built-ins, by the built-in's name. */
 private val FLOAT_BUILTINS = listOf("f64", "f32").flatMap { type ->
@@ -346,7 +350,9 @@ internal class VmFunctionGenerator private constructor(
         }
     }
 
-    private fun vmType(type: IrType): VmType = gen.vmType(type) ?: unsupported("a value of type ${type.render()}")
+    /** How a register holds [type]; `Unit` is null there, a value only where something stores it, as the variable of a generic `T`. */
+    private fun vmType(type: IrType): VmType =
+        gen.vmType(type) ?: if (type.isUnit()) gen.anyType else unsupported("a value of type ${type.render()}")
 
     /** The value of [expression], which must have one: a zero placeholder when the expression never completes. */
     private fun operand(expression: IrExpression): VmValue = expression(expression) ?: constant(vmType(expression.type), 0)
@@ -781,6 +787,8 @@ internal class VmFunctionGenerator private constructor(
 
     /** `as`: the VM's cast lets null through, so a cast to a non-null type checks for it first. */
     private fun cast(value: VmValue, type: IrType): VmValue {
+        // A `Unit` value is null, so nothing tells one from another.
+        if (type.makeNotNull().isUnit()) return value
         val tested = gen.testedClass(type)
         if (!type.isNullable()) throwIfNull(value)
         if (tested == null) return value
@@ -938,7 +946,6 @@ internal class VmFunctionGenerator private constructor(
      */
     private fun functionValue(reference: IrRichFunctionReference): VmValue {
         val invoke = reference.invokeFunction
-        if (invoke.isSuspend) unsupported("a suspend lambda")
         val captured = freeVariables(invoke)
         val captures = captured.map { values[it] ?: unsupported("capturing ${it.owner.render()}") }
         val boundCount = reference.boundValues.size
@@ -980,7 +987,7 @@ internal class VmFunctionGenerator private constructor(
     /** `invoke` on a function type, which calls through the value; see [functionValue] for what crosses the call. */
     private fun functionValueCall(call: IrCall, callee: IrSimpleFunction): Intrinsic? {
         val receiver = call.dispatchReceiver ?: return null
-        if (callee.name != OperatorNameConventions.INVOKE || !receiver.type.isFunctionOrKFunction()) return null
+        if (callee.name != OperatorNameConventions.INVOKE || !receiver.type.isFunctionValueType()) return null
         val args = call.arguments.map { reference(it ?: unsupported("a default argument")) }
         val result = newValue(gen.anyType)
         emit(VmInstruction.Call(result, VmCallee.Value, args))
@@ -1274,6 +1281,12 @@ internal class VmFunctionGenerator private constructor(
                     "kotlin.collections.copyArray" -> {
                         emit(VmInstruction.Call(null, VmCallee.Static(gen.arrayCopy), args.map(::operand)))
                         return Intrinsic(null)
+                    }
+                    in COROUTINE_BUILTINS -> {
+                        val builtin = gen.coroutineBuiltin(COROUTINE_BUILTINS.getValue(callee.fqNameWhenAvailable!!.asString()))
+                        return Intrinsic(newValue(builtin.returnType!!).also {
+                            emit(VmInstruction.Call(it, VmCallee.Static(builtin), args.map(::operand)))
+                        })
                     }
                     "kotlin.io.printString" -> {
                         emit(VmInstruction.Call(null, VmCallee.Static(gen.print), listOf(operand(args[0]))))

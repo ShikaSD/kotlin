@@ -1,31 +1,29 @@
 # Box tests under compiler/testData/codegen/box expected to fail on the VM; see JKlibVmExpectedFailures.
-# 1780 failures; the most common reasons:
-#     591  unsupported: a suspend lambda
-#     254  unsupported: the expression RICH_PROPERTY_REFERENCE …
+# 1216 failures; the most common reasons:
+#     261  unsupported: the expression RICH_PROPERTY_REFERENCE …
+#      63  run: Execution result: RuntimeError(UncaughtException)
 #      49  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
-#      49  run: Execution result: RuntimeError(UncaughtException)
-#      46  unsupported: a bridge from FUN …
-#      38  unsupported: a call to CONSTRUCTOR …
+#      47  unsupported: a bridge from FUN …
+#      41  unsupported: a call to CONSTRUCTOR …
 #      35  unsupported: overriding FUN …
-#      28  unsupported: a value of type kotlin.Unit
-#      23  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
+#      26  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
+#      22  unsupported: the expression GET_CLASS …
+#      22  wrong result
 #      21  unsupported: the annotation class A
-#      20  unsupported: the expression GET_CLASS …
 #      19  IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
-#      19  wrong result
 #      16  IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 #      15  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty<*>'.
 #      14  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
+#      14  unsupported: implementing the function type Function1
 #      13  IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
 #      13  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::spliterator_8a56e74d22ceafe7" }
-#      11  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
-#      11  unsupported: the expression CLASS_REFERENCE …
+#      13  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
+#      13  unsupported: the expression CLASS_REFERENCE …
+#      11  unsupported: implementing the function type Function0
 #      10  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
 #      10  unsupported: a value of type kotlin.Nothing
 #       9  IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE: Declaration annotated with '@OptionalExpectation' can only be used in common module sour
 #       9  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
-#       9  unsupported: implementing the function type Function0
-#       9  unsupported: implementing the function type Function1
 #       8  IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
 #       8  unsupported: a Unit field
 #       8  unsupported: the annotation class Ann
@@ -36,9 +34,9 @@
 #       6  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
 #       6  unsupported: `rem` on doubles
 #       6  unsupported: calling FUN …
+#       6  unsupported: defaults for more than 64 parameters
 #       5  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
 #       5  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
-#       5  unsupported: defaults for more than 64 parameters
 #       5  unsupported: the annotation class ImplicitIntegerCoercion
 #       4  AssertionFailedError: Java Compilation failed. Notice: This might be caused by a circular dependency between Java and Kotlin sources, which is not supported in 
 #       4  IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
@@ -47,9 +45,11 @@
 #       4  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Unit" }
 #       4  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.MutableList::replaceAll_b1df94db06c5d5be" }
 #       4  unsupported: a type test against java.lang.Runnable outside the VM modules
+#       4  unsupported: implementing the function type SuspendFunction0
 #       4  unsupported: the annotation class Foo
 #       4  unsupported: the supertype Runnable outside the VM modules
 #       3  IllegalStateException: Boxing a value of the non-primitive T of <root>.Z
+#       3  IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 
 annotations/annotationWithDefaultArgInDifferentModule.kt: unsupported: the annotation class MyConfig
 annotations/annotations0.kt: unsupported: the annotation class Foo
@@ -122,7 +122,7 @@ basics/expression_as_statement.kt: unsupported: a call to CONSTRUCTOR …
 basics/k42000_1.kt: unsupported: overriding FUN …
 basics/k42000_crossmodule.kt: unsupported: overriding FUN …
 basics/null_check.kt: unsupported: a call to CONSTRUCTOR …
-basics/unchecked_cast10.kt: unsupported: a value of type kotlin.Unit
+basics/unchecked_cast10.kt: unsupported: a call to CONSTRUCTOR …
 basics/unchecked_cast12.kt: run: Execution result: RuntimeError(ManagedReference(InvalidReference))
 basics/unchecked_cast13.kt: wrong result
 basics/unchecked_cast2.kt: unsupported: a call to CONSTRUCTOR …
@@ -130,10 +130,9 @@ basics/unchecked_cast4.kt: unsupported: a call to CONSTRUCTOR …
 basics/unchecked_cast7.kt: unsupported: a call to CONSTRUCTOR …
 basics/unchecked_cast8.kt: run: Execution result: RuntimeError(UncaughtException)
 basics/unchecked_cast9.kt: unsupported: a call to CONSTRUCTOR …
-basics/unit1.kt: unsupported: a value of type kotlin.Unit
-basics/unit2.kt: unsupported: a value of type kotlin.Unit
+basics/unit1.kt: run: Execution result: RuntimeError(UncaughtException)
+basics/unit2.kt: run: Execution result: RuntimeError(UncaughtException)
 basics/unit3.kt: run: Execution result: RuntimeError(UncaughtException)
-basics/unit4.kt: unsupported: a value of type kotlin.Unit
 binaryOp/call.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
 binaryOp/callNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
 binaryOp/eqNullableToPrimitiveWithSideEffects.kt: wrong result
@@ -184,8 +183,8 @@ bridges/test15.kt: unsupported: a bridge from FUN …
 bridges/test19.kt: run: Execution result: RuntimeError(UncaughtException)
 bridges/test20.kt: unsupported: a bridge from FUN …
 bridges/test21.kt: run: Execution result: RuntimeError(UncaughtException)
-bridges/test23.kt: unsupported: a value of type kotlin.Unit
-bridges/test24.kt: unsupported: a value of type kotlin.Unit
+bridges/test23.kt: unsupported: a call to CONSTRUCTOR …
+bridges/test24.kt: wrong result
 bridges/test3.kt: unsupported: a bridge from FUN …
 bridges/test4.kt: unsupported: a bridge from FUN …
 bridges/test5.kt: unsupported: a bridge from FUN …
@@ -205,40 +204,18 @@ callableReference/adaptedReferences/contextFunctionAnonymous.kt: unsupported: th
 callableReference/adaptedReferences/contextFunctionWithExtensionProperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/adaptedReferences/contextPropertyWithSam.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/adaptedReferences/contextTypeWithSam.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-callableReference/adaptedReferences/extensionFunctionAdaptedReferences.kt: unsupported: a suspend lambda
 callableReference/adaptedReferences/extensionFunctionAnonymous.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/adaptedReferences/extensionPropertyWithAnonymousContextFun.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/adaptedReferences/extensionPropertyWithAnonymousExtensionFun.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-callableReference/adaptedReferences/suspendConversion/adaptedWithCoercionToUnit.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/adaptedWithDefaultArguments.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/adaptedWithVarargs.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/bound.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/boundExtension.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/crossInline.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/extensionFunction.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/extensionFunctionAsASuperType.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/extensionTypeProperty.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/inlineAdaptedWithCoercionToUnit.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/inlineAdaptedWithDefaultArguments.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/inlineAdaptedWithVarargs.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/inlineBound.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/inlineSimple.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/inlineWithContextParameter.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/inlineWithContextParameterAsAPropertyType.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/inlineWithContextParameterAsASupertype.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/inlineWithExtensionAsASuperType.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/inlineWithExtensionFunction.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/inlineWithExtensionProperty.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/inlineWithParameters.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/isAs.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/nullableParameter.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/propertyReferenceToSuspendFunction.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/simple.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/withContextParameterAsAPropertyType.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/withContextParameters.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/withContextParametersAsASupertype.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendConversion/withParameters.kt: unsupported: a suspend lambda
-callableReference/adaptedReferences/suspendUnitConversion.kt: unsupported: a suspend lambda
+callableReference/adaptedReferences/suspendConversion/extensionFunctionAsASuperType.kt: unsupported: implementing the function type Function1
+callableReference/adaptedReferences/suspendConversion/extensionTypeProperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
+callableReference/adaptedReferences/suspendConversion/inlineWithContextParameterAsAPropertyType.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
+callableReference/adaptedReferences/suspendConversion/inlineWithContextParameterAsASupertype.kt: unsupported: implementing the function type Function1
+callableReference/adaptedReferences/suspendConversion/inlineWithExtensionAsASuperType.kt: unsupported: implementing the function type Function1
+callableReference/adaptedReferences/suspendConversion/inlineWithExtensionProperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
+callableReference/adaptedReferences/suspendConversion/propertyReferenceToSuspendFunction.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
+callableReference/adaptedReferences/suspendConversion/withContextParameterAsAPropertyType.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
+callableReference/adaptedReferences/suspendConversion/withContextParametersAsASupertype.kt: unsupported: implementing the function type Function1
 callableReference/adaptedReferences/varargViewedAsPrimitiveArray.kt: unsupported: overriding FUN …
 callableReference/bound/array.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/bound/companionObjectReceiverInheritsFromOuter.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -260,7 +237,7 @@ callableReference/equality/capturedVararg.kt: run: Execution result: RuntimeErro
 callableReference/equality/coercionToUnit.kt: run: Execution result: RuntimeError(UncaughtException)
 callableReference/equality/coercionToUnitWithDefaults.kt: run: Execution result: RuntimeError(UncaughtException)
 callableReference/equality/coercionToUnitWithVararg.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/equality/conversionCombinations.kt: unsupported: a suspend lambda
+callableReference/equality/conversionCombinations.kt: run: Execution result: RuntimeError(UncaughtException)
 callableReference/equality/extensionFunctionEquality.kt: run: Execution result: RuntimeError(UncaughtException)
 callableReference/equality/kproperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/equality/kpropertyWithCapturingEquality.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -268,8 +245,8 @@ callableReference/equality/kpropertyWithCapturingInequality.kt: unsupported: the
 callableReference/equality/noCoercionToUnitIfFunctionAlreadyReturnsUnit.kt: run: Execution result: RuntimeError(UncaughtException)
 callableReference/equality/overloadedFunctionEquality.kt: run: Execution result: RuntimeError(UncaughtException)
 callableReference/equality/simpleEquality.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/equality/suspendConversion.kt: unsupported: a suspend lambda
-callableReference/equality/suspendFunctionEquality.kt: unsupported: a suspend lambda
+callableReference/equality/suspendConversion.kt: run: Execution result: RuntimeError(UncaughtException)
+callableReference/equality/suspendFunctionEquality.kt: run: Execution result: RuntimeError(UncaughtException)
 callableReference/equality/varargWithDefaults.kt: run: Execution result: RuntimeError(UncaughtException)
 callableReference/funInterfaceConstructor/funInterfaceConstructedObjectsEquality.kt: run: Execution result: RuntimeError(UncaughtException)
 callableReference/funInterfaceConstructor/funInterfaceConstructorEquality.kt: run: Execution result: RuntimeError(UncaughtException)
@@ -338,10 +315,8 @@ casts/functions/safeAsFunKSmall.kt: run: Execution result: RuntimeError(Uncaught
 casts/intersectionTypeMultipleBounds.kt: unsupported: a bridge from FUN …
 casts/intersectionTypeSmartcast.kt: unsupported: a bridge from FUN …
 casts/is.kt: unsupported: a type test against java.lang.Runnable outside the VM modules
-casts/kt53677.kt: unsupported: a suspend lambda
+casts/kt53677.kt: run: Execution result: RuntimeError(UncaughtException)
 casts/kt65197.kt: run: Execution result: RuntimeError(UncaughtException)
-casts/kt68509.kt: unsupported: a suspend lambda
-casts/lambdaToUnitCast.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Unit" }
 casts/mutableCollections/asWithMutable.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 casts/mutableCollections/isWithMutable.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 casts/mutableCollections/reifiedAsWithMutable.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
@@ -370,9 +345,6 @@ classes/kt1535.kt: unsupported: implementing the function type Function0
 classes/kt508.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 closures/captureInSuperConstructorCall/outerCapturedAsImplicitThisInBoundReference.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 closures/capturedVarsOptimization/closureBoxedVarOptimizations.kt: unsupported: a call to CONSTRUCTOR …
-closures/capturedVarsOptimization/kt44347.kt: unsupported: a suspend lambda
-closures/capturedVarsOptimization/withCoroutines.kt: unsupported: a suspend lambda
-closures/capturedVarsOptimization/withCoroutinesNoStdLib.kt: unsupported: a suspend lambda
 closures/closureOnTopLevel1.kt: unsupported: implementing the function type Function0
 closures/closureOnTopLevel2.kt: unsupported: implementing the function type Function0
 collectionLiterals/array.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
@@ -429,16 +401,11 @@ companionBlocksAndExtensions/resolutionPriority.kt: unsupported: the static prop
 companionBlocksAndExtensions/staticInitializerSyntheticNameCollision.kt: unsupported: the static property trigger
 companionBlocksAndExtensions/staticInitializerSyntheticNameCollisionCrossKinds.kt: unsupported: the static property trigger
 companionBlocksAndExtensions/staticInitializerSyntheticNameCollisionInheritance.kt: unsupported: the static property parentTrigger
-companionBlocksAndExtensions/suspend.kt: unsupported: a suspend lambda
 companionBlocksAndExtensions/throwingInitializers.kt: unsupported: the static property never
 companionBlocksAndExtensions/topLevelInitTriggersCompanionBlock.kt: unsupported: the static property bar
 companionBlocksAndExtensions/visibility.kt: unsupported: the static property privateProp
-compileKotlinAgainstKotlin/adaptedSuspendFunctionReference.kt: unsupported: a suspend lambda
 compileKotlinAgainstKotlin/clashingFakeOverrideSignatures.kt: run: Execution result: RuntimeError(UncaughtException)
-compileKotlinAgainstKotlin/coroutinesBinary.kt: unsupported: a suspend lambda
 compileKotlinAgainstKotlin/inlineClasses/internalWithInlineClass.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'a'.
-compileKotlinAgainstKotlin/inlineClasses/oldMangling/useOldMangling.kt: unsupported: a suspend lambda
-compileKotlinAgainstKotlin/inlineClasses/suspendFunWithDefaultMangling.kt: unsupported: a suspend lambda
 compileKotlinAgainstKotlin/innerClassConstructor.kt: unsupported: naming CONSTRUCTOR …
 compileKotlinAgainstKotlin/internalSetterOverridden.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Derived'.
 compileKotlinAgainstKotlin/internalWithDefaultArgs.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'a'.
@@ -449,17 +416,9 @@ compileKotlinAgainstKotlin/specialBridgesInDependencies.kt: IllegalStateExceptio
 constants/numberLiteralCoercionToInferredType.kt: IllegalStateException: TYPE_INTERSECTION_AS_REIFIED_ERROR: Type argument for reified type parameter 'T' was inferred to the intersection of ['Comparable<*>?' & 
 contextParameters/contextualCallableReference.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<Int, String>'.
 contextParameters/contextualCallableReferenceEquality.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-contextParameters/explicitPassing.kt: unsupported: a suspend lambda
-contextParameters/kt52213.kt: unsupported: a suspend lambda
-contextParameters/kt53551.kt: unsupported: a suspend lambda
-contextParameters/kt58476.kt: unsupported: a suspend lambda
-contextParameters/kt65953.kt: unsupported: a suspend lambda
-contextParameters/kt66368.kt: unsupported: a suspend lambda
-contextParameters/suspendContextParemetersWithExtension.kt: unsupported: a suspend lambda
-contextParameters/suspendContextualWithExtension.kt: unsupported: a suspend lambda
-contextParameters/useFromAnotherModuleSuspending.kt: unsupported: a suspend lambda
+contextParameters/kt53551.kt: run: Execution result: RuntimeError(UncaughtException)
+contextParameters/suspendContextParemetersWithExtension.kt: wrong result
 contextParameters/withExtensionReceiverInSupertype.kt: unsupported: implementing the function type Function3
-contracts/kt39374.kt: unsupported: a suspend lambda
 controlStructures/breakContinueInExpressions/breakInLoopConditions.kt: unsupported: a value of type kotlin.Nothing
 controlStructures/breakContinueInExpressions/inlinedBreakContinue/lambdaPassedToInlineFunction.kt: unsupported: the annotation class SomeAnnotation
 controlStructures/emptyFor.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
@@ -476,511 +435,43 @@ controlStructures/forInSequenceWithIndex/forInSequenceWithIndexCheckSideEffects.
 controlStructures/forInSequenceWithIndex/forInSequenceWithIndexNoElementVarCheckSideEffects.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 controlStructures/forInSequenceWithIndex/forInSequenceWithIndexNoIndexVarCheckSideEffects.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 controlStructures/forUserType.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
-controlStructures/kt237.kt: unsupported: a value of type kotlin.Unit
-controlStructures/tryCatchExpression.kt: unsupported: a value of type kotlin.Unit
-controlStructures/tryFinally.kt: unsupported: a value of type kotlin.Unit
 controlflow/for_loops_array_break_continue.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 controlflow/for_loops_array_indices.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 controlflow/for_loops_array_nested.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 controlflow/for_loops_array_side_effects.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
-controlflow/for_loops_coroutines.kt: unsupported: a suspend lambda
-coroutines/32defaultParametersInSuspend.kt: unsupported: a suspend lambda
-coroutines/accessorForSuspend.kt: unsupported: a suspend lambda
-coroutines/anonymousObject.kt: unsupported: a suspend lambda
-coroutines/asyncIteratorNullMerge_1_3.kt: unsupported: a suspend lambda
-coroutines/asyncIteratorToList_1_3.kt: unsupported: a suspend lambda
-coroutines/asyncIterator_1_3.kt: unsupported: a suspend lambda
-coroutines/await.kt: unsupported: a suspend lambda
-coroutines/beginWithException.kt: unsupported: a suspend lambda
-coroutines/beginWithExceptionNoHandleException.kt: unsupported: a suspend lambda
-coroutines/bridges/interfaceGenericDefault.kt: unsupported: a suspend lambda
-coroutines/bridges/interfaceSpecialization.kt: unsupported: a suspend lambda
-coroutines/bridges/lambdaWithLongReceiver.kt: unsupported: a suspend lambda
-coroutines/bridges/lambdaWithMultipleParameters.kt: unsupported: a suspend lambda
-coroutines/bridges/mapSuspendAbstractClear.kt: unsupported: a suspend lambda
-coroutines/bridges/mapSuspendClear.kt: unsupported: a suspend lambda
+coroutines/bridges/mapSuspendAbstractClear.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
+coroutines/bridges/mapSuspendClear.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
 coroutines/builderInferenceAndGenericArrayAcessCall.kt: unsupported: a call to CONSTRUCTOR …
 coroutines/captureInfixFun.kt: unsupported: a call to CONSTRUCTOR …
-coroutines/captureMutableLocalVariableInsideCoroutineBlock.kt: unsupported: a suspend lambda
 coroutines/captureUnaryOperator.kt: unsupported: a call to CONSTRUCTOR …
-coroutines/capturedVarInSuspendLambda.kt: unsupported: a suspend lambda
-coroutines/catchWithInlineInsideSuspend.kt: unsupported: a suspend lambda
-coroutines/coercionToUnit.kt: unsupported: a suspend lambda
-coroutines/controlFlow/breakFinally.kt: unsupported: a suspend lambda
-coroutines/controlFlow/breakStatement.kt: unsupported: a suspend lambda
-coroutines/controlFlow/complexChainSuspend.kt: unsupported: a suspend lambda
-coroutines/controlFlow/doWhileStatement.kt: unsupported: a suspend lambda
-coroutines/controlFlow/doWhileWithInline.kt: unsupported: a suspend lambda
-coroutines/controlFlow/doubleBreak.kt: unsupported: a suspend lambda
-coroutines/controlFlow/finallyCatch.kt: unsupported: a suspend lambda
-coroutines/controlFlow/forContinue.kt: unsupported: a suspend lambda
-coroutines/controlFlow/forStatement.kt: unsupported: a suspend lambda
-coroutines/controlFlow/forWithStep.kt: unsupported: a suspend lambda
-coroutines/controlFlow/ifStatement.kt: unsupported: a suspend lambda
-coroutines/controlFlow/kt22694_1_3.kt: unsupported: a suspend lambda
-coroutines/controlFlow/labeledWhile.kt: unsupported: a suspend lambda
-coroutines/controlFlow/multipleCatchBlocksSuspend.kt: unsupported: a suspend lambda
-coroutines/controlFlow/returnFromFinally.kt: unsupported: a suspend lambda
-coroutines/controlFlow/returnWithFinally.kt: unsupported: a suspend lambda
-coroutines/controlFlow/suspendInStringTemplate.kt: unsupported: a suspend lambda
-coroutines/controlFlow/switchLikeWhen.kt: unsupported: a suspend lambda
-coroutines/controlFlow/throwFromCatch.kt: unsupported: a suspend lambda
-coroutines/controlFlow/throwFromFinally.kt: unsupported: a suspend lambda
-coroutines/controlFlow/throwInTryWithHandleResult.kt: unsupported: a suspend lambda
-coroutines/controlFlow/whenWithSuspensions.kt: unsupported: a suspend lambda
-coroutines/controlFlow/whileStatement.kt: unsupported: a suspend lambda
-coroutines/controlFlow_chain.kt: unsupported: a suspend lambda
-coroutines/controlFlow_finally1.kt: unsupported: a suspend lambda
-coroutines/controlFlow_finally2.kt: unsupported: a suspend lambda
-coroutines/controlFlow_finally3.kt: unsupported: a suspend lambda
-coroutines/controlFlow_finally4.kt: unsupported: a suspend lambda
-coroutines/controlFlow_finally5.kt: unsupported: a suspend lambda
-coroutines/controlFlow_finally6.kt: unsupported: a suspend lambda
-coroutines/controlFlow_finally7.kt: unsupported: a suspend lambda
-coroutines/controlFlow_if1.kt: unsupported: a suspend lambda
-coroutines/controlFlow_if2.kt: unsupported: a suspend lambda
-coroutines/controlFlow_inline1.kt: unsupported: a suspend lambda
-coroutines/controlFlow_inline2.kt: unsupported: a suspend lambda
-coroutines/controlFlow_inline3.kt: unsupported: a suspend lambda
-coroutines/controlFlow_tryCatch1.kt: unsupported: a suspend lambda
-coroutines/controlFlow_tryCatch2.kt: unsupported: a suspend lambda
-coroutines/controlFlow_tryCatch3.kt: unsupported: a suspend lambda
-coroutines/controlFlow_tryCatch4.kt: unsupported: a suspend lambda
-coroutines/controlFlow_tryCatch5.kt: unsupported: a suspend lambda
-coroutines/controlFlow_while1.kt: unsupported: a suspend lambda
-coroutines/controlFlow_while2.kt: unsupported: a suspend lambda
-coroutines/controllerAccessFromInnerLambda.kt: unsupported: a suspend lambda
-coroutines/coroutineContext1.kt: unsupported: a suspend lambda
-coroutines/coroutineContext2.kt: unsupported: a suspend lambda
-coroutines/coroutineContextInInlinedLambda.kt: unsupported: a suspend lambda
-coroutines/correctOrder1.kt: unsupported: a suspend lambda
-coroutines/createCoroutineSafe.kt: unsupported: a value of type kotlin.Unit
-coroutines/createCoroutinesOnManualInstances.kt: unsupported: a value of type kotlin.Unit
-coroutines/crossInlineWithCapturedOuterReceiver.kt: unsupported: a suspend lambda
-coroutines/defaultParameterLambdaInSuspend.kt: unsupported: a suspend lambda
-coroutines/defaultParametersInSuspend.kt: unsupported: a suspend lambda
-coroutines/defaultSuspendLambdaWithCallSiteInAnotherFile.kt: unsupported: a suspend lambda
-coroutines/degenerate1.kt: unsupported: a suspend lambda
-coroutines/degenerate2.kt: unsupported: a suspend lambda
-coroutines/delegatedSuspendMember.kt: unsupported: a suspend lambda
-coroutines/deserializedSuspendFunctionProperty.kt: unsupported: a suspend lambda
-coroutines/dispatchResume.kt: unsupported: a suspend lambda
-coroutines/doubleColonExpressionsGenerationInBuilderInference.kt: unsupported: a suspend lambda
-coroutines/emptyClosure.kt: unsupported: a suspend lambda
-coroutines/emptyCommonConstraintSystemForCoroutineInferenceCall.kt: unsupported: a suspend lambda
-coroutines/epam.kt: unsupported: a suspend lambda
-coroutines/falseUnitCoercion.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/breakWithNonEmptyStack.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/callableReference/bigArity.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/callableReference/bound/emptyLHS.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/callableReference/function/adapted.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/callableReference/function/local/equalsHashCode.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/callableReference/lambdaParameterUsed.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/callableReference/longArgs.kt: unsupported: a suspend lambda
+coroutines/createCoroutinesOnManualInstances.kt: run: Execution result: RuntimeError(UncaughtException)
+coroutines/doubleColonExpressionsGenerationInBuilderInference.kt: unsupported: the expression CLASS_REFERENCE …
+coroutines/featureIntersection/callableReference/function/local/equalsHashCode.kt: wrong result
 coroutines/featureIntersection/defaultExpect.kt: IllegalStateException: EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE: withLimit: 'expect' and corresponding 'actual' are declared in the same module.
 coroutines/featureIntersection/delegate.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
-coroutines/featureIntersection/destructuringInLambdas.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/funInterface.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/funInterface/kt49294.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/funInterface/kt50950.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/inlineSuspendFinally.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/interfaceMethodWithBody.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/interfaceMethodWithBodyGeneric.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/overrideInInlineClass.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/overrideInInnerClass.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/safeCallOnTwoReceivers.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/safeCallOnTwoReceiversLong.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/suspendDestructuringInLambdas.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/suspendFunctionAsSupertypeIsCheckWithArity.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.coroutines.SuspendFunction3" }
-coroutines/featureIntersection/suspendFunctionIsAs.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/suspendInlineSuspendFinally.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/suspendOperatorPlus.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/suspendOperatorPlusAssign.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/suspendOperatorPlusCallFromLambda.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/tailrec/controlFlowIf.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/tailrec/controlFlowWhen.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/tailrec/extention.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/tailrec/infixCall.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/tailrec/infixRecursiveCall.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/tailrec/kt38920_localTailrec.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/tailrec/realIteratorFoldl.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/tailrec/realStringEscape.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/tailrec/realStringRepeat.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/tailrec/returnInParentheses.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/tailrec/sum.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/tailrec/tailCallInBlockInParentheses.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/tailrec/tailCallInParentheses.kt: unsupported: a suspend lambda
-coroutines/featureIntersection/tailrec/whenWithIs.kt: unsupported: a suspend lambda
+coroutines/featureIntersection/funInterface/kt49294.kt: unsupported: a call to CONSTRUCTOR …
+coroutines/featureIntersection/suspendFunctionAsSupertypeIsCheckWithArity.kt: unsupported: implementing the function type SuspendFunction0
+coroutines/featureIntersection/suspendFunctionIsAs.kt: run: Execution result: RuntimeError(UncaughtException)
+coroutines/featureIntersection/tailrec/controlFlowIf.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
+coroutines/featureIntersection/tailrec/controlFlowWhen.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 coroutines/functionReference_eqeq_name.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KSuspendFunction1<Int, Int>'.
-coroutines/functionReference_invokeAsFunction.kt: unsupported: a suspend lambda
-coroutines/functionReference_lambdaAsSuspendLambda.kt: run: Execution result: RuntimeError(UncaughtException)
-coroutines/functionReference_simple.kt: unsupported: a suspend lambda
-coroutines/generate.kt: unsupported: a value of type kotlin.Unit
-coroutines/generatedCodeMarkers/simple.kt: unsupported: a suspend lambda
-coroutines/handleException.kt: unsupported: a suspend lambda
-coroutines/handleResultCallEmptyBody.kt: unsupported: a suspend lambda
-coroutines/handleResultNonUnitExpression.kt: unsupported: a suspend lambda
-coroutines/handleResultSuspended.kt: unsupported: a suspend lambda
+coroutines/functionReference_invokeAsFunction.kt: run: Execution result: RuntimeError(UncaughtException)
+coroutines/generate.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 coroutines/illegalStateOnInvalidLabel.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'javaClass' on receiver of type 'suspend () -> Unit'.
-coroutines/indirectInlineUsedAsNonInline.kt: unsupported: a suspend lambda
-coroutines/infiniteLoopInNextMeaningful.kt: unsupported: a suspend lambda
-coroutines/inlineCallWithReturns.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/boxReturnValueOfSuspendFunctionReference.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/boxReturnValueOfSuspendLambda.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/boxTypeParameterOfSuperType.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/boxTypeParameterOfSuperTypeResult.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/boxUnboxInsideCoroutine.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/boxUnboxInsideCoroutine_Any.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/boxUnboxInsideCoroutine_InlineAny.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/boxUnboxInsideCoroutine_InlineInt.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/boxUnboxInsideCoroutine_Int.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/boxUnboxInsideCoroutine_Long.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/boxUnboxInsideCoroutine_NAny.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/boxUnboxInsideCoroutine_nonLocalReturn.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/boxUnboxInsideCoroutine_suspendFunType.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/bridgeGenerationCrossinline.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/bridgeGenerationNonInline.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/covariantOverrideSuspendFun.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/covariantOverrideSuspendFunSameJvmType.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/covariantOverrideSuspendFunWithNullableInlineClass.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/covariantOverrideSuspendFunWithNullableInlineClassSameJvmType.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/covariantOverrideSuspendFunWithNullableInlineClass_Any.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/covariantOverrideSuspendFunWithNullableInlineClass_Int.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/covariantOverrideSuspendFunWithNullableInlineClass_NullableAny.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/covariantOverrideSuspendFunWithNullableInlineClass_NullableAny_null.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/covariantOverrideSuspendFunWithNullableInlineClass_NullableInt.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/covariantOverrideSuspendFunWithNullableInlineClass_NullableInt_null.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/covariantOverrideSuspendFun_Any.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/covariantOverrideSuspendFun_Int.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/createMangling.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/createOverride.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/defaultStub.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/genericOverrideSuspendFun.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/genericOverrideSuspendFun_Any.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/genericOverrideSuspendFun_Any_NullableInlineClassUpperBound.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/genericOverrideSuspendFun_Int.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/genericOverrideSuspendFun_NullableAny.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/genericOverrideSuspendFun_NullableAny_null.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/genericOverrideSuspendFun_NullableInt.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/genericOverrideSuspendFun_NullableInt_null.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/interfaceDelegateWithInlineClass.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/invokeOperator.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/overrideSuspendFun.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/overrideSuspendFun_Any.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/overrideSuspendFun_Any_itf.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/overrideSuspendFun_Any_this.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/overrideSuspendFun_Int.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/returnResult.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/direct/syntheticAccessor.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/genericParameterResult.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/kt47129.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/kt84305.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/nonLocalReturn.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/boxReturnValueOfSuspendFunctionReference.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/boxReturnValueOfSuspendLambda.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/boxTypeParameterOfSuperType.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/boxTypeParameterOfSuperTypeResult.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/boxUnboxInsideCoroutine.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/boxUnboxInsideCoroutine_Any.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/boxUnboxInsideCoroutine_InlineAny.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/boxUnboxInsideCoroutine_InlineInt.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/boxUnboxInsideCoroutine_Int.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/boxUnboxInsideCoroutine_Long.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/boxUnboxInsideCoroutine_NAny.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/boxUnboxInsideCoroutine_nonLocalReturn.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/boxUnboxInsideCoroutine_suspendFunType.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/bridgeGenerationCrossinline.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/bridgeGenerationNonInline.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/covariantOverrideSuspendFun.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/covariantOverrideSuspendFunSameJvmType.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/covariantOverrideSuspendFunWithNullableInlineClass.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/covariantOverrideSuspendFunWithNullableInlineClassSameJvmType.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/covariantOverrideSuspendFunWithNullableInlineClass_Any.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/covariantOverrideSuspendFunWithNullableInlineClass_Int.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/covariantOverrideSuspendFunWithNullableInlineClass_NullableAny.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/covariantOverrideSuspendFunWithNullableInlineClass_NullableAny_null.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/covariantOverrideSuspendFunWithNullableInlineClass_NullableInt.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/covariantOverrideSuspendFunWithNullableInlineClass_NullableInt_null.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/covariantOverrideSuspendFun_Any.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/covariantOverrideSuspendFun_Int.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/createMangling.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/createOverride.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/defaultStub.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/genericOverrideSuspendFun.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/genericOverrideSuspendFun_Any.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/genericOverrideSuspendFun_Any_NullableInlineClassUpperBound.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/genericOverrideSuspendFun_Int.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/genericOverrideSuspendFun_NullableAny.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/genericOverrideSuspendFun_NullableAny_null.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/genericOverrideSuspendFun_NullableInt.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/genericOverrideSuspendFun_NullableInt_null.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/interfaceDelegateWithInlineClass.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/invokeOperator.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/overrideSuspendFun.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/overrideSuspendFun_Any.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/overrideSuspendFun_Any_itf.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/overrideSuspendFun_Any_this.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/overrideSuspendFun_Int.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/returnResult.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resume/syntheticAccessor.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/boxReturnValueOfSuspendFunctionReference.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/boxReturnValueOfSuspendLambda.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/boxTypeParameterOfSuperType.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/boxTypeParameterOfSuperTypeResult.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/boxUnboxInsideCoroutine.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/boxUnboxInsideCoroutine_Any.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/boxUnboxInsideCoroutine_InlineAny.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/boxUnboxInsideCoroutine_InlineInt.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/boxUnboxInsideCoroutine_Int.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/boxUnboxInsideCoroutine_Long.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/boxUnboxInsideCoroutine_NAny.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/boxUnboxInsideCoroutine_nonLocalReturn.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/boxUnboxInsideCoroutine_suspendFunType.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/bridgeGenerationCrossinline.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/bridgeGenerationNonInline.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/covariantOverrideSuspendFun.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/covariantOverrideSuspendFunSameJvmType.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/covariantOverrideSuspendFunWithNullableInlineClass.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/covariantOverrideSuspendFunWithNullableInlineClassSameJvmType.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/covariantOverrideSuspendFunWithNullableInlineClass_Any.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/covariantOverrideSuspendFunWithNullableInlineClass_Int.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/covariantOverrideSuspendFunWithNullableInlineClass_NullableAny.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/covariantOverrideSuspendFunWithNullableInlineClass_NullableAny_null.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/covariantOverrideSuspendFunWithNullableInlineClass_NullableInt.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/covariantOverrideSuspendFun_Any.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/covariantOverrideSuspendFun_Int.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/createMangling.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/createOverride.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/genericOverrideSuspendFun.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/genericOverrideSuspendFun_Any.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/genericOverrideSuspendFun_Any_NullableInlineClassUpperBound.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/genericOverrideSuspendFun_Int.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/genericOverrideSuspendFun_NullableAny.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/genericOverrideSuspendFun_NullableInt.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/interfaceDelegateWithInlineClass.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/invokeOperator.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/overrideSuspendFun.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/overrideSuspendFun_Any.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/overrideSuspendFun_Any_itf.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/overrideSuspendFun_Any_this.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/overrideSuspendFun_Int.kt: unsupported: a suspend lambda
-coroutines/inlineClasses/resumeWithException/returnResult.kt: unsupported: a suspend lambda
-coroutines/inlineFunInGenericClass.kt: unsupported: a suspend lambda
-coroutines/inlineSuspendLambdaNonLocalReturn.kt: unsupported: a suspend lambda
-coroutines/inlineSuspendTypealias.kt: unsupported: a suspend lambda
-coroutines/inlinedTryCatchFinally.kt: unsupported: a suspend lambda
-coroutines/innerSuspensionCalls.kt: unsupported: a suspend lambda
-coroutines/intLikeVarSpilling/complicatedMerge.kt: unsupported: a suspend lambda
-coroutines/intLikeVarSpilling/i2bResult.kt: unsupported: a suspend lambda
-coroutines/intLikeVarSpilling/listThrowablePairInOneSlot.kt: unsupported: a suspend lambda
-coroutines/intLikeVarSpilling/loadFromBooleanArray.kt: unsupported: a suspend lambda
-coroutines/intLikeVarSpilling/loadFromByteArray.kt: unsupported: a suspend lambda
-coroutines/intLikeVarSpilling/noVariableInTable.kt: unsupported: a suspend lambda
-coroutines/intLikeVarSpilling/sameIconst1ManyVars.kt: unsupported: a suspend lambda
-coroutines/intLikeVarSpilling/unusedCatchVar.kt: unsupported: a suspend lambda
-coroutines/intLikeVarSpilling/usedInMethodCall.kt: unsupported: a suspend lambda
-coroutines/intLikeVarSpilling/usedInVarStore.kt: unsupported: a suspend lambda
-coroutines/intrinsicSemantics/coroutineContext.kt: unsupported: a suspend lambda
-coroutines/intrinsicSemantics/coroutineContextReceiver.kt: unsupported: a suspend lambda
-coroutines/intrinsicSemantics/coroutineContextReceiverNotIntrinsic.kt: unsupported: a suspend lambda
-coroutines/intrinsicSemantics/intercepted.kt: unsupported: a suspend lambda
-coroutines/intrinsicSemantics/releaseIntercepted.kt: unsupported: a suspend lambda
-coroutines/intrinsicSemantics/resultExceptionOrNullInLambda.kt: unsupported: a suspend lambda
-coroutines/intrinsicSemantics/startCoroutine.kt: unsupported: a suspend lambda
-coroutines/intrinsicSemantics/startCoroutineUninterceptedOrReturn.kt: unsupported: a suspend lambda
-coroutines/intrinsicSemantics/startCoroutineUninterceptedOrReturnInterception.kt: unsupported: a suspend lambda
-coroutines/intrinsicSemantics/suspendCoroutineUninterceptedOrReturn.kt: unsupported: a suspend lambda
-coroutines/iterateOverArray.kt: unsupported: a suspend lambda
-coroutines/kt12958.kt: unsupported: a suspend lambda
-coroutines/kt15016.kt: unsupported: a suspend lambda
-coroutines/kt15017.kt: unsupported: a suspend lambda
-coroutines/kt15930.kt: unsupported: a suspend lambda
-coroutines/kt21080.kt: unsupported: a suspend lambda
-coroutines/kt21605.kt: unsupported: a suspend lambda
-coroutines/kt24135.kt: unsupported: a suspend lambda
-coroutines/kt25912.kt: unsupported: a suspend lambda
-coroutines/kt28844.kt: unsupported: a suspend lambda
-coroutines/kt30858.kt: unsupported: a suspend lambda
-coroutines/kt35967.kt: unsupported: a suspend lambda
-coroutines/kt41394.kt: unsupported: a suspend lambda
-coroutines/kt42028.kt: unsupported: a suspend lambda
-coroutines/kt42554.kt: unsupported: a suspend lambda
-coroutines/kt44221.kt: unsupported: a suspend lambda
-coroutines/kt44710.kt: unsupported: a suspend lambda
-coroutines/kt44781.kt: unsupported: a suspend lambda
-coroutines/kt45377.kt: unsupported: a suspend lambda
-coroutines/kt46813.kt: unsupported: a suspend lambda
-coroutines/kt49168.kt: unsupported: a suspend lambda
-coroutines/kt49317.kt: unsupported: a suspend lambda
-coroutines/kt51530.kt: unsupported: a suspend lambda
-coroutines/kt51718.kt: unsupported: a suspend lambda
-coroutines/kt52311_nullOnLeft.kt: unsupported: a suspend lambda
-coroutines/kt52311_nullOnRight.kt: unsupported: a suspend lambda
-coroutines/kt52561.kt: unsupported: a suspend lambda
-coroutines/kt55494.kt: unsupported: a suspend lambda
-coroutines/kt56407.kt: unsupported: a suspend lambda
-coroutines/kt82803.kt: unsupported: a suspend lambda
-coroutines/kt83728.kt: unsupported: a suspend lambda
-coroutines/lastExpressionIsLoop.kt: unsupported: a suspend lambda
-coroutines/lastStatementInc.kt: unsupported: a suspend lambda
-coroutines/lastStementAssignment.kt: unsupported: a suspend lambda
-coroutines/lastUnitExpression.kt: unsupported: a suspend lambda
-coroutines/localCallableRef.kt: unsupported: a suspend lambda
-coroutines/localDelegate.kt: unsupported: a suspend lambda
-coroutines/localFunctions/named/callTopLevelFromLocal.kt: unsupported: a suspend lambda
-coroutines/localFunctions/named/capturedParameters.kt: unsupported: a suspend lambda
-coroutines/localFunctions/named/capturedVariables.kt: unsupported: a suspend lambda
-coroutines/localFunctions/named/defaultArgument.kt: unsupported: a suspend lambda
-coroutines/localFunctions/named/extension.kt: unsupported: a suspend lambda
-coroutines/localFunctions/named/infix.kt: unsupported: a suspend lambda
-coroutines/localFunctions/named/insideLambda.kt: unsupported: a suspend lambda
-coroutines/localFunctions/named/nestedLocals.kt: unsupported: a suspend lambda
-coroutines/localFunctions/named/simple.kt: unsupported: a suspend lambda
-coroutines/localFunctions/named/simpleSuspensionPoint.kt: unsupported: a suspend lambda
-coroutines/localFunctions/named/stateMachine.kt: unsupported: a suspend lambda
-coroutines/localFunctions/named/withArguments.kt: unsupported: a suspend lambda
-coroutines/longRangeInSuspendCall.kt: unsupported: a suspend lambda
-coroutines/longRangeInSuspendFun.kt: unsupported: a suspend lambda
-coroutines/mergeNullAndString.kt: unsupported: a suspend lambda
-coroutines/multiModule/inheritFromAnotherModule.kt: unsupported: a suspend lambda
-coroutines/multiModule/inlineCrossModule.kt: unsupported: a suspend lambda
-coroutines/multiModule/inlineFunctionWithOptionalParam.kt: unsupported: a suspend lambda
-coroutines/multiModule/inlineMultiModule.kt: unsupported: a suspend lambda
-coroutines/multiModule/inlineMultiModuleOverride.kt: unsupported: a suspend lambda
-coroutines/multiModule/inlineMultiModuleWithController.kt: unsupported: a suspend lambda
-coroutines/multiModule/inlineMultiModuleWithInnerInlining.kt: unsupported: a suspend lambda
-coroutines/multiModule/inlineTailCall.kt: unsupported: a suspend lambda
-coroutines/multiModule/simple.kt: unsupported: a suspend lambda
-coroutines/multipleInvokeCalls.kt: unsupported: a suspend lambda
-coroutines/multipleInvokeCallsInsideInlineLambda1.kt: unsupported: a suspend lambda
-coroutines/multipleInvokeCallsInsideInlineLambda2.kt: unsupported: a suspend lambda
-coroutines/multipleInvokeCallsInsideInlineLambda3.kt: unsupported: a suspend lambda
-coroutines/nestedTryCatch.kt: unsupported: a suspend lambda
-coroutines/noSuspensionPoints.kt: unsupported: a suspend lambda
-coroutines/nonLocalReturn.kt: unsupported: a suspend lambda
-coroutines/nonLocalReturnFromInlineLambda.kt: unsupported: a suspend lambda
-coroutines/nonLocalReturnFromInlineLambdaDeep.kt: unsupported: a suspend lambda
-coroutines/nullableSuspendFunctionType.kt: unsupported: a suspend lambda
-coroutines/overrideDefaultArgument.kt: unsupported: a suspend lambda
-coroutines/recursiveSuspend.kt: unsupported: a suspend lambda
-coroutines/redundantLocalsElimination/ktor_receivedMessage.kt: unsupported: a suspend lambda
-coroutines/returnByLabel.kt: unsupported: a suspend lambda
-coroutines/returnsNothing1.kt: unsupported: a suspend lambda
-coroutines/returnsUnit1.kt: unsupported: a suspend lambda
-coroutines/simple.kt: unsupported: a suspend lambda
-coroutines/simple2.kt: unsupported: a suspend lambda
-coroutines/simpleException.kt: unsupported: a suspend lambda
-coroutines/simpleSuspendCallableReference.kt: unsupported: a suspend lambda
-coroutines/simpleWithDefaultValue.kt: unsupported: a suspend lambda
-coroutines/simpleWithHandleResult.kt: unsupported: a value of type kotlin.Unit
-coroutines/stackUnwinding/exception.kt: unsupported: a suspend lambda
-coroutines/stackUnwinding/rethrowInFinally.kt: unsupported: a suspend lambda
-coroutines/stackUnwinding/rethrowInFinallyWithSuspension.kt: unsupported: a suspend lambda
-coroutines/stackUnwinding/simple.kt: unsupported: a suspend lambda
-coroutines/stackUnwinding/suspendInCycle.kt: unsupported: a suspend lambda
-coroutines/statementLikeLastExpression.kt: unsupported: a suspend lambda
-coroutines/stopAfter.kt: unsupported: a suspend lambda
-coroutines/suspendCallsInArguments.kt: unsupported: a suspend lambda
-coroutines/suspendConversion.kt: unsupported: a suspend lambda
-coroutines/suspendConversion/intersectionTypeToSubtypeConversion.kt: unsupported: a suspend lambda
-coroutines/suspendConversion/onArgument.kt: unsupported: a suspend lambda
-coroutines/suspendConversion/onInlineArgument.kt: unsupported: a suspend lambda
-coroutines/suspendConversion/onNullableArgument.kt: unsupported: a suspend lambda
-coroutines/suspendConversion/subtypeOfFunctionalTypeToSuspendConversion.kt: unsupported: a suspend lambda
-coroutines/suspendConversion/suspendConversionBetweenFunInterfaces.kt: unsupported: a suspend lambda
-coroutines/suspendCoroutineFromStateMachine.kt: unsupported: a suspend lambda
-coroutines/suspendDefaultImpl.kt: unsupported: a suspend lambda
-coroutines/suspendDelegation.kt: unsupported: a suspend lambda
-coroutines/suspendDoWhileContinueInsideElvis.kt: unsupported: a suspend lambda
-coroutines/suspendForLoopBreakContinueInsideElvis.kt: unsupported: a suspend lambda
-coroutines/suspendFromInlineLambda.kt: unsupported: a suspend lambda
-coroutines/suspendFunImportedFromObject.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/dispatchResume.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/handleException.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/ifExpressionInsideCoroutine_1_3.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/inline.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/inlineTwoReceivers.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/member.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/noinlineTwoReceivers.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/operators.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/privateFunctions.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/privateInFile.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/returnNoSuspend.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/simple.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/superCall.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/superCallAbstractClass.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/superCallInterface.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/superCallOverload.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsCoroutine/withVariables.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsSupertype.kt: run: Execution result: RuntimeError(UncaughtException)
-coroutines/suspendFunctionAsSupertypeCall.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionAsSupertypeWithInlinedFunInKlib.kt: run: Execution result: RuntimeError(UncaughtException)
-coroutines/suspendFunctionMethodReference.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionTypeCall/localVal.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionTypeCall/manyParameters.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionTypeCall/manyParametersNoCapture.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionTypeCall/simple.kt: unsupported: a suspend lambda
-coroutines/suspendFunctionTypeCall/suspendModifier.kt: unsupported: a suspend lambda
-coroutines/suspendInCycle.kt: unsupported: a suspend lambda
-coroutines/suspendInTheMiddleOfObjectConstruction.kt: unsupported: a suspend lambda
-coroutines/suspendInTheMiddleOfObjectConstructionEvaluationOrder.kt: unsupported: a suspend lambda
-coroutines/suspendInTheMiddleOfObjectConstructionWithJumpOut.kt: unsupported: a suspend lambda
-coroutines/suspendInlineReference.kt: unsupported: a suspend lambda
-coroutines/suspendLambdaWithArgumentRearrangement.kt: unsupported: a suspend lambda
-coroutines/suspendLambdaWithFieldShadowingCoroutineImplField.kt: unsupported: a suspend lambda
-coroutines/suspendLambdaWithValueClassSpilledField.kt: unsupported: a suspend lambda
-coroutines/suspendTwoProblematicExpressionsInOneCoroutine.kt: unsupported: a suspend lambda
-coroutines/suspendWhileBreakContinueInsideElvis.kt: unsupported: a suspend lambda
-coroutines/suspendWhileContinueInsideElvisWithFinally.kt: unsupported: a suspend lambda
-coroutines/suspensionInsideSafeCall.kt: unsupported: a suspend lambda
-coroutines/suspensionInsideSafeCallWithElvis.kt: unsupported: a suspend lambda
-coroutines/tailCallOptimizations/crossinline.kt: unsupported: a suspend lambda
-coroutines/tailCallOptimizations/inlineWithoutStateMachine.kt: unsupported: a suspend lambda
-coroutines/tailCallOptimizations/innerObjectRetransformation.kt: unsupported: a value of type kotlin.Unit
-coroutines/tailCallOptimizations/tryCatch.kt: unsupported: a suspend lambda
-coroutines/tailCallOptimizations/unit/functionReference.kt: unsupported: a suspend lambda
-coroutines/tailCallOptimizations/unit/kt55559.kt: unsupported: a suspend lambda
-coroutines/tailCallOptimizations/unit/kt72710.kt: unsupported: a value of type kotlin.Unit
-coroutines/tailCallOptimizations/unit/override.kt: unsupported: a suspend lambda
-coroutines/tailCallOptimizations/unit/override2.kt: unsupported: a suspend lambda
-coroutines/tailCallOptimizations/unit/override3.kt: unsupported: a suspend lambda
-coroutines/tailCallOptimizations/unit/overrideCrossinline.kt: unsupported: a suspend lambda
-coroutines/tailCallOptimizations/unit/overrideOverriden.kt: unsupported: a suspend lambda
-coroutines/tailCallOptimizations/unit/simple.kt: unsupported: a suspend lambda
-coroutines/tailCallOptimizations/wrapContinuation/multilineSuspendingCallWithDefaultParameterValue.kt: unsupported: a suspend lambda
-coroutines/tailCallToNothing.kt: unsupported: a suspend lambda
-coroutines/tailOperations/suspendWithIf.kt: unsupported: a suspend lambda
-coroutines/tailOperations/suspendWithTryCatch.kt: unsupported: a suspend lambda
-coroutines/tailOperations/suspendWithWhen.kt: unsupported: a suspend lambda
-coroutines/tailOperations/tailInlining.kt: unsupported: a suspend lambda
-coroutines/throwOnFailureExecution.kt: unsupported: a suspend lambda
-coroutines/tryCatchFinallyWithHandleResult.kt: unsupported: a suspend lambda
-coroutines/tryCatchWithHandleResult.kt: unsupported: a suspend lambda
-coroutines/tryFinallyInsideInlineLambda.kt: unsupported: a suspend lambda
-coroutines/tryFinallyWithHandleResult.kt: unsupported: a suspend lambda
-coroutines/unitTypeReturn/coroutineNonLocalReturn.kt: unsupported: a suspend lambda
-coroutines/unitTypeReturn/coroutineReturn.kt: unsupported: a suspend lambda
-coroutines/unitTypeReturn/interfaceDelegation.kt: unsupported: a suspend lambda
-coroutines/unitTypeReturn/suspendNonLocalReturn.kt: unsupported: a suspend lambda
-coroutines/unitTypeReturn/suspendReturn.kt: unsupported: a suspend lambda
-coroutines/unitTypeReturn/unitSafeCall.kt: unsupported: a suspend lambda
-coroutines/unsafeTransform.kt: unsupported: a suspend lambda
-coroutines/varCaptuedInCoroutineIntrinsic.kt: unsupported: a suspend lambda
-coroutines/varSpilling/fakeInlinerVariables.kt: unsupported: a suspend lambda
-coroutines/varSpilling/kt19475.kt: unsupported: a suspend lambda
-coroutines/varSpilling/kt38925.kt: unsupported: a suspend lambda
-coroutines/varSpilling/kt64139.kt: unsupported: a suspend lambda
-coroutines/varSpilling/kt75926.kt: unsupported: a suspend lambda
-coroutines/varSpilling/kt79276.kt: unsupported: a suspend lambda
-coroutines/varSpilling/kt85203.kt: unsupported: a suspend lambda
-coroutines/varSpilling/kt85203_2.kt: unsupported: a suspend lambda
-coroutines/varSpilling/lvtWithInlineOnly.kt: unsupported: a suspend lambda
-coroutines/varSpilling/nullSpilling.kt: unsupported: a suspend lambda
-coroutines/varSpilling/safeCallElvis.kt: unsupported: a suspend lambda
-coroutines/varValueConflictsWithTable.kt: unsupported: a suspend lambda
-coroutines/varValueConflictsWithTableSameSort.kt: unsupported: a suspend lambda
-coroutines/varargCallFromSuspend.kt: unsupported: a suspend lambda
-coroutines/withReceiver.kt: unsupported: a suspend lambda
+coroutines/intrinsicSemantics/intercepted.kt: run: Execution result: RuntimeError(UncaughtException)
+coroutines/intrinsicSemantics/startCoroutineUninterceptedOrReturn.kt: run: Execution result: RuntimeError(UncaughtException)
+coroutines/intrinsicSemantics/suspendCoroutineUninterceptedOrReturn.kt: run: Execution result: RuntimeError(UncaughtException)
+coroutines/kt51530.kt: unsupported: defaults for more than 64 parameters
+coroutines/localDelegate.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
+coroutines/multiModule/inlineMultiModuleOverride.kt: run: Load error: Some(ConcreteClassMissingMethod { type_id: 13, selector_id: 0 })
+coroutines/suspendConversion/intersectionTypeToSubtypeConversion.kt: unsupported: implementing the function type Function0
+coroutines/suspendConversion/subtypeOfFunctionalTypeToSuspendConversion.kt: unsupported: implementing the function type Function0
+coroutines/suspendConversion/suspendConversionBetweenFunInterfaces.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Function1::invoke_c8aa6c1c865f31a1" }
+coroutines/suspendFunctionAsSupertype.kt: unsupported: implementing the function type SuspendFunction0
+coroutines/suspendFunctionAsSupertypeCall.kt: unsupported: implementing the function type SuspendFunction0
+coroutines/suspendFunctionAsSupertypeWithInlinedFunInKlib.kt: unsupported: implementing the function type SuspendFunction0
+coroutines/tailCallOptimizations/unit/override3.kt: unsupported: a bridge from FUN …
+coroutines/varSpilling/fakeInlinerVariables.kt: unsupported: the expression GET_CLASS …
 dataClasses/dataClassWithManyFields.kt: unsupported: defaults for more than 64 parameters
 dataClasses/doubleParam.kt: wrong result
 dataClasses/floatParam.kt: wrong result
@@ -998,7 +489,6 @@ defaultArguments/implementedByFake2.kt: unsupported: a bridge from FUN …
 defaultArguments/implementedByFake3.kt: unsupported: a bridge from FUN …
 defaultArguments/kt52702.kt: unsupported: a call to CONSTRUCTOR …
 defaultArguments/private/clashingNames.kt: unsupported: a call to CONSTRUCTOR …
-defaultArguments/suspendLambdaInTailrecDefault.kt: unsupported: a suspend lambda
 defaultArguments/useThisInLambda.kt: unsupported: calling FUN …
 delegatedProperty/accessTopLevelDelegatedPropertyInClinit.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/beforeDeclarationContainerOptimization.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -1203,9 +693,7 @@ extensionFunctions/extensionFunctionAsSupertype.kt: unsupported: implementing th
 extensionFunctions/extensionFunctionDifferentReceivers.kt: unsupported: a value of type kotlin.Nothing
 extensionFunctions/extensionFunctionInValueClass.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 extensionFunctions/nestedExtensionFunctionAsASupertype.kt: unsupported: implementing the function type Function2
-extensionFunctions/suspendConversionForExtensionFunAsAFunType.kt: unsupported: a suspend lambda
-extensionFunctions/suspendConversionForExtensionFunAsAPropertyType.kt: unsupported: a suspend lambda
-extensionFunctions/suspendConversionForExtensionFunAsASuperType.kt: unsupported: a suspend lambda
+extensionFunctions/suspendConversionForExtensionFunAsASuperType.kt: unsupported: implementing the function type Function1
 extensionProperties/extensionPropertyDelegated.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 extensionProperties/extensionPropertyDifferentReceiver.kt: unsupported: a value of type kotlin.Nothing
 extensionProperties/extensionPropertyWithInline.kt: unsupported: the expression CLASS_REFERENCE …
@@ -1250,19 +738,15 @@ funInterface/equality/functionReferencesBound.kt: run: Execution result: Runtime
 funInterface/equality/functionReferencesUnbound.kt: run: Execution result: RuntimeError(UncaughtException)
 funInterface/equality/lambdaRuntimeConversion.kt: run: Execution result: RuntimeError(UncaughtException)
 funInterface/equality/localFunctionReferences.kt: run: Execution result: RuntimeError(UncaughtException)
-funInterface/funInterfaceWithSuspendMethod.kt: unsupported: a suspend lambda
 funInterface/intersectionTypeToFunInterfaceConversion.kt: unsupported: implementing the function type Function0
 funInterface/kt46908_functionSupertype.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Function0::invoke_bf495f239bf769f7" }
-funInterface/kt77685-sam.kt: unsupported: a suspend lambda
-funInterface/kt77685.kt: unsupported: a suspend lambda
+funInterface/kt77685-sam.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.coroutines.SuspendFunction0::invoke_bf495f239bf769f7" }
+funInterface/kt77685.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.coroutines.SuspendFunction0::invoke_bf495f239bf769f7" }
 funInterface/multimodule.kt: CompilationErrorException: Module "m2" has a reference to symbol /I.f|f(){}[0]. Neither the module itself nor its dependencies contain such declaration.
 funInterface/noConversionForSubtype.kt: unsupported: implementing the function type Function1
 funInterface/noConversionForSubtypeGeneric.kt: unsupported: implementing the function type Function1
 funInterface/subtypeOfFunctionalTypeToFunInterfaceConversion.kt: unsupported: implementing the function type Function0
-funInterface/suspendFunInterfaceConversionCodegen.kt: unsupported: a suspend lambda
-funInterface/suspendFunctionAndFunInterfaceSharedClassSplit.kt: unsupported: a suspend lambda
 function/sum.kt: unsupported: `rem` on doubles
-function/unreachableStatementAfterReturn.kt: unsupported: a suspend lambda
 functions/bigArity/instanceOfCallableReference.kt: wrong result
 functions/bigArity/subclass.kt: unsupported: implementing the function type Function42
 functions/functionExpression/functionExpression.kt: unsupported: the annotation class A
@@ -1276,36 +760,23 @@ functions/kt3214.kt: link: Failed to link: UnresolvedImport { module: "kotlin-st
 functions/localFunctions/kt4777.kt: unsupported: overriding FUN …
 ieee754/dataClass.kt: wrong result
 ieee754/inline.kt: wrong result
-inference/builderInferenceLeakingVariable.kt: unsupported: a suspend lambda
-inference/eagerLambdaAnalysisSuspendAndNotSuspend.kt: unsupported: a suspend lambda
-inference/eagerLambdaAnalysisSuspendAndSam.kt: unsupported: a suspend lambda
-inference/kt35684.kt: unsupported: a suspend lambda
 inference/kt39824.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-inference/kt49838.kt: unsupported: a suspend lambda
-inference/pcla/callableReferencesProperCompletion.kt: unsupported: a suspend lambda
-inference/pcla/issues/kt42139.kt: unsupported: a suspend lambda
+inference/kt49838.kt: unsupported: the expression CLASS_REFERENCE …
+inference/pcla/callableReferencesProperCompletion.kt: unsupported: the expression GET_CLASS …
+inference/pcla/issues/kt42139.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Unit" }
 inference/pcla/issues/kt45083.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-inference/pcla/issues/kt47744.kt: unsupported: a suspend lambda
 inference/pcla/issues/kt52838b.kt: unsupported: a call to CONSTRUCTOR …
 inference/pcla/issues/kt52838c.kt: unsupported: a call to CONSTRUCTOR …
 inference/pcla/issues/kt54767a.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inference/pcla/issues/kt54767b.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inference/pcla/issues/kt64069.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inference/pcla/issues/kt76171.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-inference/pcla/memberScope.kt: unsupported: a value of type kotlin.Unit
-inference/pcla/nullability.kt: unsupported: a value of type kotlin.Unit
 inference/pcla/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/ThroughDelegatedLocalVariableMaterializeCase.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inference/pcla/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/ThroughDelegatedLocalVariableYieldCase.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-inference/pcla/oneParameter/oneTypeVariable/oneTypeInfoOrigin/targetTypes/SuspendingFunction.kt: unsupported: a suspend lambda
 inference/pcla/pclaRootIsTrySyntheticCallWithDelegate.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-inference/pcla/specialCallsWithCallableReferencesDontRewriteAtSlice.kt: unsupported: a suspend lambda
-inference/pcla/specialCallsWithLambdas.kt: unsupported: a suspend lambda
-inference/pcla/substituteStubTypeIntoCR.kt: unsupported: a suspend lambda
-inference/pcla/substitutelambdaExtensionReceiverType.kt: unsupported: a suspend lambda
+inference/pcla/specialCallsWithCallableReferencesDontRewriteAtSlice.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inference/pcla/topDownCompletionBreakedByNonBuilderInferenceSession.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-inference/plusAssignInsideLambda.kt: unsupported: a suspend lambda
 inference/substituteIntersectionTypeInsideCapType.kt: unsupported: a call to CONSTRUCTOR …
-inference/suspendExtensionRecevierFromConstraint.kt: unsupported: a value of type kotlin.Unit
 inline/callableReferenceOfLocalInline.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
 inline/callableReferenceOfLocalKT77102.kt: unsupported: a Unit property
 inline/classDeclarationInsideInline.kt: unsupported: overriding FUN …
@@ -1313,7 +784,6 @@ inline/crossinlineLambdaAllocation.kt: unsupported: a captured variable
 inline/fakeOverrideInliningCrossModule.kt: CompilationErrorException: Module "libB" has a reference to symbol /foo|foo(){}[0]. Neither the module itself nor its dependencies contain such declaration.
 inline/getClass.kt: unsupported: the expression GET_CLASS …
 inline/inline12.kt: unsupported: a call to CONSTRUCTOR …
-inline/inline24.kt: unsupported: a value of type kotlin.Unit
 inline/inlineChainCrossModule.kt: CompilationErrorException: Module "mid" has a reference to symbol /baz|baz(){}[0]. Neither the module itself nor its dependencies contain such declaration.
 inline/inlineLambdaNoCapture.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 inline/innerInlineFunCapturesOuter.kt: unsupported: naming CONSTRUCTOR …
@@ -1330,7 +800,6 @@ inline/typeSubstitutionInFakeOverride.kt: unsupported: the expression CLASS_REFE
 inlineArgsInPlace/arrayDequeRemoveAll.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.MutableCollection::removeIf_d9e28e2d3e2433a7" }
 inlineArgsInPlace/kt49370.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mod' on receiver of type 'Long'.
 inlineArgsInPlace/kt49407.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
-inlineArgsInPlace/suspensionPointInsideArgument.kt: unsupported: a suspend lambda
 inlineClasses/UIntArraySortExample.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 inlineClasses/UIntArraySortExampleGeneric.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 inlineClasses/annotatedMemberExtensionProperty.kt: unsupported: the annotation class Anno
@@ -1381,8 +850,6 @@ inlineClasses/customIterator.kt: link: Failed to link: UnresolvedImport { module
 inlineClasses/defaultParameterValues/defaultParameterValuesOfInlineClassTypeBoxingGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Z
 inlineClasses/defaultParameterValues/defaultValueOfInlineClassTypeInInlineFunInInlineClassGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Host
 inlineClasses/defaultWithInlineClassArgumentGeneric.kt: run: Execution result: RuntimeError(UncaughtException)
-inlineClasses/funInterface/mangledSamWrappers.kt: unsupported: a value of type kotlin.Unit
-inlineClasses/funInterface/mangledSamWrappersGeneric.kt: unsupported: a value of type kotlin.Unit
 inlineClasses/functionNameMangling/reflectionForFunctionWithMangledName.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<S, S>'.
 inlineClasses/functionNameMangling/reflectionForFunctionWithMangledNameGeneric.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<S<String>, S<String>>'.
 inlineClasses/functionNameMangling/reflectionForPropertyOfInlineClassType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KMutableProperty0<S>'.
@@ -1401,11 +868,9 @@ inlineClasses/interfaceDelegation/kt38337.kt: link: Failed to link: UnresolvedIm
 inlineClasses/interfaceDelegation/kt38337Generic.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
 inlineClasses/interfaceDelegation/memberFunDelegatedToInlineClassIntGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Z
 inlineClasses/interfaceDelegation/memberFunDelegatedToInlineClassLongGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Z
-inlineClasses/jvmInline.kt: unsupported: a suspend lambda
 inlineClasses/kt25750.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inlineClasses/kt25750Generic.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inlineClasses/kt25771.kt: unsupported: a value of type kotlin.Nothing
-inlineClasses/kt32793.kt: unsupported: a suspend lambda
 inlineClasses/kt47823.kt: unsupported: a value of type kotlin.Nothing
 inlineClasses/kt57973.kt: IllegalStateException: No declaration of FUN name:f-impl visibility:public modality:FINAL <> ($this:<root>.IC, i1:kotlin.Long, i2:kotlin.Long, i3:kotlin.Long, i
 inlineClasses/kt70461.kt: unsupported: a call to CONSTRUCTOR …
@@ -1434,10 +899,8 @@ inlineClasses/propertyDelegation/kt42933Generic.kt: unsupported: the expression 
 inlineClasses/referToPropertyInCompanionObjectOfInlineClassGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Foo
 inlineClasses/removeInInlineCollectionOfInlineClassAsInt.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.MutableCollection::removeIf_d9e28e2d3e2433a7" }
 inlineClasses/secondaryConstructorsWithBody.kt: unsupported: an init block of the value class VC
-inlineClasses/unboxParameterOfSuspendLambdaBeforeInvoke.kt: unsupported: a suspend lambda
-inlineClasses/unboxParameterOfSuspendLambdaBeforeInvokeGeneric.kt: unsupported: a suspend lambda
-inlineClasses/unboxResultParameterWhenCapturingToCrossinlineLambda.kt: unsupported: a suspend lambda
-inlineClasses/valueClassInstanceOfNumberAndComparableInInlineFunction.kt: unsupported: a value of type kotlin.Unit
+inlineClasses/unboxParameterOfSuspendLambdaBeforeInvoke.kt: run: Execution result: RuntimeError(UncaughtException)
+inlineClasses/unboxParameterOfSuspendLambdaBeforeInvokeGeneric.kt: run: Execution result: RuntimeError(UncaughtException)
 inlineClasses/whenWithSubject.kt: unsupported: overriding FUN …
 inlineClasses/whenWithSubjectGeneric.kt: unsupported: overriding FUN …
 inlineEvaluationOrder/propertyAccessWithSideEffect.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
@@ -1450,7 +913,6 @@ innerNested/considerPropertyInitValueFromNestedClass.kt: unsupported: the annota
 intrinsics/kt8666.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 intrinsics/nullPlusString.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 ir/anonymousClassLeak.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-ir/kt25405.kt: unsupported: a value of type kotlin.Unit
 ir/kt52677.kt: unsupported: the annotation class MySerializable
 ir/recursiveGeneric.kt: unsupported: a call to CONSTRUCTOR …
 ir/recursiveGeneric2.kt: unsupported: a call to CONSTRUCTOR …
@@ -1470,7 +932,6 @@ jdk/kt1397.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it
 kclass/kclass1.kt: unsupported: the annotation class MyDsl
 klib/kt33411.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'getK'.
 labels/nestedLabelsInlinedClashingAtFunctionsWithClosure.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
-lambda/lambda_kt49360_withFlow.kt: unsupported: a suspend lambda
 lateinit/globalIsInitialized.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isInitialized' on receiver of type 'KMutableProperty0<String>'.
 lateinit/innerIsInitialized.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isInitialized' on receiver of type 'KMutableProperty0<String>'.
 lateinit/isInitialized.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isInitialized' on receiver of type 'KMutableProperty0<String>'.
@@ -1491,10 +952,9 @@ multiplatform/k2/basic/interfaceMethodFromSuperTypeIsImplementedInOtherExpectSup
 multiplatform/k2/basic/removeExpectDeclarationsFromMetadata.kt: unsupported: the annotation class WithoutActual
 multiplatform/k2/commonFakeOverridePropertyRef.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 multiplatform/k2/commonInternal.kt: unsupported: the annotation class AnnInFriend
-multiplatform/k2/complexMatchings/expectCtorlessFinalToActualUnit.kt: unsupported: a value of type kotlin.Unit
+multiplatform/k2/complexMatchings/expectCtorlessFinalToActualUnit.kt: run: Execution result: RuntimeError(UncaughtException)
 multiplatform/k2/defaultArguments/kt67488.kt: unsupported: the annotation class A
 multiplatform/k2/defaultArguments/superCall.kt: IllegalStateException: SUPER_CALL_WITH_DEFAULT_PARAMETERS: Super-calls with default arguments are prohibited. Specify all arguments of 'super.foo' explicitly.
-multiplatform/k2/defaultArguments/suspend.kt: unsupported: a suspend lambda
 multiplatform/k2/defaultArguments/typeAlias.kt: unsupported: the annotation class Foo2
 multiplatform/k2/defaultArguments/typeAlias2.kt: unsupported: the annotation class Foo2
 multiplatform/k2/expectRefinement.kt: IllegalStateException: EXPECT_REFINEMENT_ANNOTATION_MISSING: 'expect' declaration refinement is an experimental feature. Mark the declaration with the '@ExpectR
@@ -1518,7 +978,6 @@ multiplatform/k2/migratedOldTests/mpp_optional_expectation.kt: unsupported: the 
 multiplatform/k2/migratedOldTests/remap_expect_property_ref.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 nameBasedDestructuring/fullFormExtraPropType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
 nameBasedDestructuring/shortFormExtraPropType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
-nonLocalReturns/suspendConversion.kt: unsupported: a suspend lambda
 nothingValue/nothingValueException.kt: unsupported: a call to CONSTRUCTOR …
 nothingValue/toStringOnNothing.kt: IllegalStateException: Boxing a value of the non-primitive kotlin.Nothing
 objects/companionObjectAccess/companionObjectInitOrderWithSuperinterface.kt: wrong result
@@ -1533,7 +992,6 @@ objects/throwingInitializersObjects.kt: unsupported: a Unit field
 objects/useAnonymousObjectAsIterator.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 operatorConventions/annotatedAssignment.kt: unsupported: the annotation class Annotation
 operatorConventions/kt14227.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
-operatorConventions/suspendOperators.kt: unsupported: a suspend lambda
 operatorConventions/untilOperator.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
 package/initializationOrder.kt: unsupported: a Unit property
 package/jsExportNameClash.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsExport'.
@@ -1558,7 +1016,6 @@ primitiveTypes/numberToChar/superCallToInterface.kt: unsupported: overriding FUN
 primitiveTypes/numberToChar/superCallToNumber.kt: unsupported: overriding FUN …
 primitiveTypes/virtualCallToCustomNumber.kt: unsupported: overriding FUN …
 properties/augmentedAssignmentsAndIncrements.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-properties/complexPropertyInitializer.kt: unsupported: a suspend lambda
 properties/const/intermoduleInlineConst.kt: unsupported: a Unit field
 properties/eagerInitializationGlobal1.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
 properties/eagerInitializationGlobal2.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
@@ -1624,7 +1081,6 @@ regressions/kt2210.kt: link: Failed to link: UnresolvedImport { module: "kotlin-
 regressions/kt2246.kt: IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
 regressions/kt344Runnable.kt: unsupported: the supertype Runnable outside the VM modules
 regressions/kt47279.kt: unsupported: a value of type kotlin.Nothing
-regressions/kt5953.kt: unsupported: a value of type kotlin.Unit
 regressions/kt71119.kt: unsupported: a call to CONSTRUCTOR …
 regressions/objectCaptureOuterConstructorProperty.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 regressions/objectInsideDelegation.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -1643,9 +1099,8 @@ reified/varargs.kt: link: Failed to link: UnresolvedImport { module: "kotlin-std
 safeCall/genericNull.kt: unsupported: overriding FUN …
 sam/constructors/sameWrapperClass.kt: unsupported: a call to getClass
 sam/constructors/sameWrapperClass2.kt: unsupported: the expression GET_CLASS …
-sam/constructors/suspendSamConstructorAdaptation.kt: unsupported: a suspend lambda
-sam/funInterfaceExtendsSuspendFunction.kt: unsupported: a suspend lambda
-sam/funInterfaceExtendsSuspendFunction2.kt: unsupported: a suspend lambda
+sam/funInterfaceExtendsSuspendFunction.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.coroutines.SuspendFunction1::invoke_c8aa6c1c865f31a1" }
+sam/funInterfaceExtendsSuspendFunction2.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.coroutines.SuspendFunction1::invoke_c8aa6c1c865f31a1" }
 sam/kt17765.kt: unsupported: a call to foo
 sam/kt63564.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 sameFileInSourceAndDependencies/differingNumberOfGenericTypeParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE_WRONG_RECEIVER: Candidate 'fun B<*>.foo(): Unit' is inapplicable because of a receiver type mismatch. Actual receive
@@ -1700,21 +1155,8 @@ strings/twoArgumentNullableStringPlus.kt: link: Failed to link: UnresolvedImport
 super/basicmethodSuperClass.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 super/interfaceHashCode.kt: unsupported: calling FUN …
 suppressions/suppressInvisible.kt: unsupported: a call to CONSTRUCTOR …
-suspendConversion/basicSuspendConversion.kt: unsupported: a suspend lambda
-suspendConversion/basicSuspendConversionDefault.kt: unsupported: a suspend lambda
-suspendConversion/basicSuspendConversionForCallableReference.kt: unsupported: a suspend lambda
-suspendConversion/chainedFunSuspendConversionForSimpleExpression.kt: unsupported: a suspend lambda
-suspendConversion/conversionOfInterfaceInheritingFunctionN.kt: unsupported: a suspend lambda
-suspendConversion/kt50949_suspendConversionForExtensionFunction.kt: unsupported: a suspend lambda
-suspendConversion/overloadResolutionBySuspendModifier.kt: unsupported: a suspend lambda
-suspendConversion/severalConversionsInOneCall.kt: unsupported: a suspend lambda
-suspendConversion/suspendAndFunConversionInDisabledMode.kt: unsupported: a suspend lambda
-suspendConversion/suspendConversionCompatibility.kt: unsupported: a suspend lambda
-suspendConversion/suspendConversionNullableCCE.kt: unsupported: a suspend lambda
-suspendConversion/suspendConversionOfAliasedType.kt: unsupported: a suspend lambda
-suspendConversion/suspendConversionOnVarargElements.kt: unsupported: a suspend lambda
-suspendConversion/suspendConversionWithFunInterfaces.kt: unsupported: a suspend lambda
-suspendConversion/suspendConversionWithReferenceAdaptation.kt: unsupported: a suspend lambda
+suspendConversion/conversionOfInterfaceInheritingFunctionN.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Function0::invoke_bf495f239bf769f7" }
+suspendConversion/suspendConversionCompatibility.kt: run: Execution result: RuntimeError(UncaughtException)
 syntheticAccessors/accessorForPrivatePropertyReference.kt: IllegalStateException: DELEGATE_SPECIAL_FUNCTION_MISSING: Type 'KProperty1<A, String>' has no method 'getValue(A.B, KProperty1<*, *>)', so it cannot serve as a 
 syntheticAccessors/accessorForProtectedPropertyReference.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 syntheticAccessors/functionsWithDefaultValues/extensionFunctionCrossModuleCase.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'bar'.
@@ -1746,18 +1188,14 @@ typeMapping/kt3976.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 typeMapping/nothing.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Nothing" }
 typeMapping/nullNothing.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Nothing" }
 typeMapping/nullableNothing.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Nothing" }
-typealias/incorrectTypeOfTypealiasForSuspendFTMM.kt: unsupported: a suspend lambda
 typealias/typeAliasOnTypeAlias.kt: unsupported: the annotation class Ann
 unaryOp/call.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
 unaryOp/callNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
 unit/kt3634.kt: unsupported: a Unit property
 unit/kt56723.kt: run: Execution result: RuntimeError(UncaughtException)
 unit/sillyThings.kt: unsupported: a Unit field
-unit/unitClassObject.kt: unsupported: a value of type kotlin.Unit
-unit/unitCoercionWithElvis.kt: unsupported: a value of type kotlin.Unit
 unitConversion/unitConversionForSubtype.kt: unsupported: implementing the function type Function0
 unitConversion/unitConversionWithSamSubtype.kt: unsupported: implementing the function type Function0
-unitConversion/unitConversionWithSuspend.kt: unsupported: a suspend lambda
 unsignedTypes/implicitIntegerCoercionNamedArg.kt: unsupported: the annotation class ImplicitIntegerCoercion
 unsignedTypes/implicitIntegerCoercionOverloadResolutionAmbiguity.kt: unsupported: the annotation class ImplicitIntegerCoercion
 unsignedTypes/kt25784.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -1768,7 +1206,6 @@ unsignedTypes/unsignedTypeValuesInsideStringTemplates.kt: wrong result
 unsignedTypes/varargsOfUnsignedTypes.kt: unsupported: the annotation class AnnoUByte
 vararg/emptyVarArg.kt: IllegalStateException: kotlin.UIntArray is no array type
 vararg/inlineClassArraysAsNamedArgumentInVararg.kt: run: Execution result: RuntimeError(UncaughtException)
-vararg/useSuspendFunResultAsVararg.kt: unsupported: a suspend lambda
 vararg/varargInFunParam.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
 versionOverloads/basicWrappers.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 versionOverloads/callableRefDefault.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
@@ -1829,5 +1266,4 @@ volatile/volatileShort.kt: IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_
 volatile/volatileString.kt: IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE: Declaration annotated with '@OptionalExpectation' can only be used in common module sour
 when/NoWhenBranchMatchedExceptionAfterAnonymous.kt: wrong result
 when/integralWhenWithNoInlinedConstants.kt: IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
-when/noElseExhaustiveUnitExpected.kt: unsupported: a value of type kotlin.Unit
 when/nothingTyped.kt: unsupported: a value of type kotlin.Nothing

@@ -37,7 +37,8 @@ import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.inline.FunctionInlining
-import org.jetbrains.kotlin.ir.inline.InlineFunctionResolver
+import org.jetbrains.kotlin.ir.inline.InlineFunctionResolverReplacingCoroutineIntrinsics
+import org.jetbrains.kotlin.ir.inline.InlineMode
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.inlineClassRepresentation
 import org.jetbrains.kotlin.ir.functionSymbolAssociatedBy
@@ -54,7 +55,12 @@ import org.jetbrains.kotlin.ir.types.isPrimitiveType
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.ir.util.resolveFakeOverrideOrSelf
+import org.jetbrains.kotlin.ir.getterSymbol
+import org.jetbrains.kotlin.ir.functionSymbol
+import org.jetbrains.kotlin.name.FqName
+
+/** The package of the VM standard library's own declarations, `platform-src/kotlin/vm/internal`. */
+private val VM_INTERNAL_FQ_NAME = FqName("kotlin.vm.internal")
 
 /**
  * What the lowerings see of the compilation. Only what the ones [lowerForVm] runs use is provided; the rest fails loudly,
@@ -104,9 +110,15 @@ private class VmSymbols(irBuiltIns: IrBuiltIns) : BackendSymbols(irBuiltIns) {
     override val throwUninitializedPropertyAccessException: IrSimpleFunctionSymbol get() = unused()
     override val throwUnsupportedOperationException: IrSimpleFunctionSymbol get() = unused()
     override val syntheticConstructorMarker: IrClassSymbol get() = unused()
-    override val coroutineContextGetter: IrSimpleFunctionSymbol get() = unused()
-    override val suspendCoroutineUninterceptedOrReturn: IrSimpleFunctionSymbol get() = unused()
-    override val coroutineGetContext: IrSimpleFunctionSymbol get() = unused()
+    override val coroutineContextGetter: IrSimpleFunctionSymbol by CallableId(
+        StandardNames.COROUTINES_PACKAGE_FQ_NAME, Name.identifier("coroutineContext")
+    ).getterSymbol()
+    override val suspendCoroutineUninterceptedOrReturn: IrSimpleFunctionSymbol by CallableId(
+        VM_INTERNAL_FQ_NAME, Name.identifier("suspendCoroutineUninterceptedOrReturn")
+    ).functionSymbol()
+    override val coroutineGetContext: IrSimpleFunctionSymbol by CallableId(
+        VM_INTERNAL_FQ_NAME, Name.identifier("getCoroutineContext")
+    ).functionSymbol()
 
     private fun unused(): Nothing = error("The VM backend declares no such lowering symbol yet")
 }
@@ -131,21 +143,22 @@ private class SharedVariableSymbols(irBuiltIns: IrBuiltIns) : PreSerializationKl
 
 /**
  * Every inline function with a body to copy: the module's own, and those the klibs it depends on carry. One from a jar
- * has none, and its call is left for code generation to report.
+ * has none, and its call is left for code generation to report. `suspendCoroutineUninterceptedOrReturn` and
+ * `coroutineContext`, which the common library leaves to the backend, are the VM standard library's versions.
  *
  * A jklib holds IR as the frontend produced it, so before its body is copied, a function from one gets the lowerings
  * the module's own code got ahead of inlining: the [upgrade], since the inliner only inlines a lambda upgraded to a rich
  * function reference, and the [arrayConstructors].
  */
 private class VmInlineFunctionResolver(
+    context: VmLoweringContext,
     private val upgrade: UpgradeCallableReferences,
     private val arrayConstructors: ArrayConstructorLowering,
-) : InlineFunctionResolver() {
+) : InlineFunctionResolverReplacingCoroutineIntrinsics<VmLoweringContext>(context, InlineMode.ALL_INLINE_FUNCTIONS) {
     private val lowered = hashSetOf<IrFunction>()
 
     override fun getFunctionDeclaration(symbol: IrFunctionSymbol): IrFunction? {
-        if (!symbol.isBound) return null
-        val function = symbol.owner.resolveFakeOverrideOrSelf().takeIf { it.isInline } ?: return null
+        val function = super.getFunctionDeclaration(symbol) ?: return null
         if (lowered.add(function)) {
             upgrade.lower(function)
             function.body?.let { arrayConstructors.lower(it, function) }
@@ -159,7 +172,7 @@ fun lowerForVm(context: VmLoweringContext, module: IrModuleFragment) {
     val upgrade = UpgradeCallableReferences(context, upgradeSamConversions = false)
     // `Array(size) { … }` and the like become a loop, ahead of inlining: the constructor is inline, but has no body.
     val arrayConstructors = ArrayConstructorLowering(context)
-    val resolver = VmInlineFunctionResolver(upgrade, arrayConstructors)
+    val resolver = VmInlineFunctionResolver(context, upgrade, arrayConstructors)
     // Substituted, so a primitive type argument stays unboxed in the copy.
     val inlining = object : FunctionInlining(context, resolver, substituteNonReifiedTypeParameters = true) {}
     module.files.forEach(upgrade::lower)

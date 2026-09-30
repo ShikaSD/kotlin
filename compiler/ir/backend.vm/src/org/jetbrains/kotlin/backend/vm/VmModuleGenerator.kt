@@ -48,11 +48,15 @@ const val VM_RUNTIME_MODULE = "vm.runtime"
  * reaches the VM.
  */
 private val RUNTIME_TYPES = mapOf(
+    "kotlin.vm.internal.VmContinuation" to "vm.builtin.Continuation",
     "kotlin.Number" to "vm.runtime.Number",
     "kotlin.Comparable" to "vm.runtime.Comparable",
     "kotlin.CharSequence" to "vm.runtime.CharSequence",
     "java.lang.StringBuilder" to "vm.runtime.StringBuilder",
 )
+
+/** Whether [this] is a function type, suspending or not: every function value is the same runtime object. */
+internal fun IrType.isFunctionValueType(): Boolean = isFunctionOrKFunction() || isSuspendFunctionOrKFunction()
 
 /**
  * The JVM's throwables the runtime implements, by the runtime class standing for each. The Kotlin names are the
@@ -588,6 +592,18 @@ class VmModuleGenerator(
     /** The runtime's float built-in [name], taking and answering a [type]. */
     internal fun floatBuiltin(name: String, type: VmType): VmFunctionSymbol = runtimeFunction(name, listOf(type), type)
 
+    private val functionType: VmType get() = VmType.Ref(runtimeClass("vm.builtin.Function"))
+    private val continuationType: VmType get() = VmType.Ref(runtimeClass("vm.builtin.Continuation"))
+
+    /** The runtime's coroutine built-in [name]; see wip/COROUTINES_DESIGN.md. */
+    internal fun coroutineBuiltin(name: String): VmFunctionSymbol = when (name) {
+        "vm.builtin.coroutine.new" -> runtimeFunction(name, listOf(functionType, anyType), continuationType)
+        "vm.builtin.coroutine.resume", "vm.builtin.coroutine.resume_throw" -> runtimeFunction(name, listOf(continuationType, anyType), anyType)
+        "vm.builtin.coroutine.suspend" -> runtimeFunction(name, listOf(anyType), anyType)
+        "vm.builtin.coroutine.current" -> runtimeFunction(name, emptyList(), anyType)
+        else -> error("The runtime declares no coroutine built-in $name")
+    }
+
     /** The runtime's `vm.builtin.io.print`, which the VM stdlib's `kotlin.io.printString` is. */
     internal val print: VmFunctionSymbol by lazy { runtimeFunction("vm.builtin.io.print", listOf(stringType), null) }
 
@@ -682,7 +698,7 @@ class VmModuleGenerator(
             isSharedVariableBox(declaration) -> sharedVariableBoxClass
             declaration.defaultType.isPrimitiveType() -> boxClass(declaration.defaultType.getPrimitiveType()!!)
             // Every function value is an instance of `vm.builtin.Function`, whatever its arity; see wip/FUNCTION_VALUES_DESIGN.md.
-            fqName == "kotlin.Function" || declaration.defaultType.isFunctionOrKFunction() -> runtimeClass("vm.builtin.Function")
+            fqName == "kotlin.Function" || declaration.defaultType.isFunctionValueType() -> runtimeClass("vm.builtin.Function")
             else -> RUNTIME_TYPES[fqName]?.let(::runtimeClass) ?: runtimeThrowable(declaration)
         }
     }
@@ -842,8 +858,8 @@ class VmModuleGenerator(
             // A function type stands for `vm.builtin.Function`, the class every function value has, which an interface cannot
             // extend and a class gains nothing by naming: a value is a function value only when the VM made it one.
             // A class calling itself one is what the VM cannot express.
-            val isFunctionType = it.fqNameWhenAvailable?.asString() == "kotlin.Function" || it.defaultType.isFunctionOrKFunction()
-            if (isFunctionType && (declaration.isInterface || !it.defaultType.isFunctionOrKFunction())) return@mapNotNull null
+            val isFunctionType = it.fqNameWhenAvailable?.asString() == "kotlin.Function" || it.defaultType.isFunctionValueType()
+            if (isFunctionType && (declaration.isInterface || !it.defaultType.isFunctionValueType())) return@mapNotNull null
             if (isFunctionType) unsupported("implementing the function type ${it.name}")
             classIndex(it) ?: unsupported("the supertype ${it.name} outside the VM modules")
         }
