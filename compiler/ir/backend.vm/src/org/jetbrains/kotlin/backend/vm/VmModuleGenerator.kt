@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.ir.InternalSymbolFinderAPI
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.InlineClassRepresentation
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrBuiltIns
@@ -49,7 +50,6 @@ const val VM_RUNTIME_MODULE = "vm.runtime"
 private val RUNTIME_TYPES = mapOf(
     "kotlin.Number" to "vm.runtime.Number",
     "kotlin.Comparable" to "vm.runtime.Comparable",
-    "java.util.Comparator" to "vm.runtime.Comparator",
     "kotlin.CharSequence" to "vm.runtime.CharSequence",
     "java.lang.StringBuilder" to "vm.runtime.StringBuilder",
 )
@@ -212,7 +212,7 @@ class VmModuleGenerator(
         return try {
             generate()
         } catch (e: VmCodegenException) {
-            reportStub("${declaration.render()}: ${e.message}")
+            reportStub("${declaration.fileOrNull?.name}: ${declaration.render()}: ${e.message}")
             null
         }
     }
@@ -396,12 +396,14 @@ class VmModuleGenerator(
         when {
             declaration.kind == ClassKind.ANNOTATION_CLASS ->
                 unsupported("the ${declaration.kind.codeRepresentation ?: declaration.kind.name} ${declaration.name}")
-            declaration.isValue -> unsupported("the value class ${declaration.name}")
+            declaration.isValue && declaration.valueClassRepresentation !is InlineClassRepresentation ->
+                unsupported("the multi-field value class ${declaration.name}")
         }
         classes += declaration
         for (member in declaration.declarations) {
             when (member) {
-                is IrConstructor -> functions += member
+                // A value class held unboxed is boxed by storing its field, so nothing calls the box's constructor.
+                is IrConstructor -> if (!declaration.isInlinedValueClass()) functions += member
                 is IrSimpleFunction -> if (member.isGenerated()) functions += member
                 is IrProperty -> {
                     listOfNotNull(member.getter, member.setter).filterTo(functions) { it.isGenerated() }
@@ -417,10 +419,12 @@ class VmModuleGenerator(
     }
 
     /**
-     * Every call to an inline function is inlined — [lowerForVm] inlines the module's own and a klib's alike — so its
-     * body is never called, and one with a reified type parameter could not even be generated.
+     * Every call to an inline function in the source is inlined — [lowerForVm] inlines the module's own and a klib's
+     * alike — and one with a reified type parameter could not even be generated. The standard library generates the
+     * rest all the same: a lowering running after inlining calls some, as a loop over unsigned values calls `Int.toUInt`
+     * and `UInt.toInt`, and another module imports them from it.
      */
-    private fun IrSimpleFunction.isOnlyInlined(): Boolean = isInline
+    private fun IrSimpleFunction.isOnlyInlined(): Boolean = isInline && (!isStdlib || typeParameters.any { it.isReified })
 
     /**
      * Whether the function gets code of its own: not a fake override, nor inlined everywhere, nor one of an enum's
@@ -485,7 +489,6 @@ class VmModuleGenerator(
             "message" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.Throwable"), emptyList(), stringType)
             "cause" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.Throwable"), emptyList(), anyType)
             "compareTo" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.Comparable"), listOf(anyType), VmType.I64)
-            "compare" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.Comparator"), listOf(anyType, anyType), VmType.I64)
             "length" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.CharSequence"), emptyList(), VmType.I64)
             "get" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.CharSequence"), listOf(VmType.I64), VmType.I64)
             else -> error("The runtime declares no selector $name on Any")
@@ -494,6 +497,9 @@ class VmModuleGenerator(
     }
 
     internal val equalsSelector: Int get() = runtimeSelector("equals")
+
+    /** The runtime's `CharSequence` selector [name], `length` or `get`. */
+    internal fun charSequenceSelector(name: String): Int = runtimeSelector(name)
 
     internal val hashCodeSelector: Int get() = runtimeSelector("hashCode")
 
@@ -510,6 +516,31 @@ class VmModuleGenerator(
     }
 
     private val arrayIterators = hashMapOf<IrClassSymbol, IrSimpleFunction>()
+
+    /**
+     * The `kotlin.collections` extension [name] on a nullable [arrayClass], `contentToString` or `contentHashCode`: what a
+     * data or value class's generated member calls for an array property.
+     */
+    @OptIn(InternalSymbolFinderAPI::class)
+    internal fun arrayContentFunction(name: String, arrayClass: IrClassSymbol): IrSimpleFunction =
+        irBuiltIns.symbolFinder.findFunctions(CallableId(StandardNames.COLLECTIONS_PACKAGE_FQ_NAME, Name.identifier(name)))
+            .map { it.owner }
+            .singleOrNull { function ->
+                val receiver = function.parameters.singleOrNull()?.takeIf { it.kind == IrParameterKind.ExtensionReceiver }
+                receiver != null && receiver.type.isMarkedNullable() && receiver.type.classOrNull == arrayClass
+            }
+            ?: unsupported("$name of a ${arrayClass.owner.name}")
+
+    /** The standard library's `until` from a [from] to a [to], which a primitive's `rangeUntil` computes too. */
+    @OptIn(InternalSymbolFinderAPI::class)
+    internal fun rangeUntil(from: IrType, to: IrType): IrSimpleFunction =
+        irBuiltIns.symbolFinder.findFunctions(CallableId(StandardNames.RANGES_PACKAGE_FQ_NAME, Name.identifier("until")))
+            .map { it.owner }
+            .singleOrNull { until ->
+                until.parameters.size == 2 && until.parameters[0].type.classOrNull == from.classOrNull &&
+                        until.parameters[1].type.classOrNull == to.classOrNull
+            }
+            ?: unsupported("${from.render()}.rangeUntil(${to.render()}) without the standard library's until")
 
     /** The runtime's `vm.builtin.array.copy`, which the VM stdlib's `kotlin.collections.copyArray` is. */
     internal val arrayCopy: VmFunctionSymbol by lazy {
@@ -578,10 +609,18 @@ class VmModuleGenerator(
         PrimitiveType.INT, PrimitiveType.LONG -> VmType.I64
     }
 
+    /** The value class [type] is, where a value of it is held unboxed: see [isInlinedValueClass]. Null for any other type. */
+    internal fun inlinedValueClassOf(type: IrType): IrClass? =
+        type.takeUnless { it.isMarkedNullable() }?.classOrNull?.owner?.takeIf { it.isInlinedValueClass() }
+
+    /** The one field of [valueClass], which its box holds the value in. */
+    internal fun valueClassField(valueClass: IrClass): IrField = getInlineClassBackingField(valueClass)
+
     /** How a value of [type] is held, or null for a type with no values to hold: `Unit` and `Nothing`. */
     internal fun vmType(type: IrType): VmType? {
         if (type.isUnit() || type.isNothing()) return null
         if (type.isPrimitiveType()) return primitiveVmType(type.getPrimitiveType()!!)
+        inlinedValueClassOf(type)?.let { return vmType(valueClassField(it).type) }
         if (type.isString() || type.isNullableString()) return stringType
         return anyType
     }
@@ -665,6 +704,8 @@ class VmModuleGenerator(
 
     /** The class a type test or cast against [type] names, or null for `Any`, which every object is. */
     internal fun testedClass(type: IrType): Int? {
+        // Only a cast names a type parameter, and it checks what the JVM's does: the class its bound erases to.
+        (type.classifierOrNull as? IrTypeParameterSymbol)?.let { return testedClass(it.owner.erasedUpperBound.defaultType) }
         if (type.isAny() || type.isNullableAny()) return null
         return testedClassOrNull(type) ?: unsupported("a type test against ${type.render()} outside the VM modules")
     }
@@ -911,7 +952,7 @@ class VmModuleGenerator(
 
     /** The runtime's selector for [root], a member of one of the classes [RUNTIME_TYPES] lists. */
     private fun runtimeTypeSelector(root: IrSimpleFunction): Int = when (val name = root.name.asString()) {
-        "compareTo", "compare", "get" -> runtimeSelector(name)
+        "compareTo", "get" -> runtimeSelector(name)
         "<get-length>" -> runtimeSelector("length")
         else -> unsupported("overriding ${root.render()}")
     }
@@ -946,6 +987,11 @@ class VmModuleGenerator(
         if (implementation.parentClassOrNull?.isAny() == true) {
             if (isSuperCall) unsupported("calling ${implementation.render()} through super")
             return CallTarget(VmCallee.Virtual(runtimeSelector(implementation.name.asString())), functionSymbol(implementation))
+        }
+        // A class the runtime implements answers only through the selectors it declares, such as `String.length` through
+        // `CharSequence`'s.
+        if (!isSuperCall && root != implementation && implementation.parentClassOrNull?.let(::isRuntimeImplemented) == true) {
+            return CallTarget(VmCallee.Virtual(selectorOf(root) ?: unsupported("calling ${root.render()}")), functionSymbol(root))
         }
         return staticTarget(implementation)
     }
@@ -999,7 +1045,7 @@ class VmModuleGenerator(
         val owner = function.parentClassOrNull
         val base = if (owner != null) "${owner.vmName}::${function.name.asString()}"
         else function.fqNameWhenAvailable?.asString() ?: function.name.asString()
-        val hash = signatureHash(function.symbol.signature)
+        val hash = signatureHash(function.symbol.signature) ?: inlineClassImplHash(function)
         val name = sanitized(if (hash == null) base else "${base}_${java.lang.Long.toHexString(hash)}")
         // Another module's function is named as that module names it, which only a public signature makes stable.
         if (vmModuleOf(function) != null) return if (hash == null) unsupported("naming ${function.render()} of another module") else name
@@ -1008,6 +1054,21 @@ class VmModuleGenerator(
     }
 
     private val usedFunctionNames = hashSetOf<String>()
+
+    /**
+     * The hash naming a function the value-class lowering made from a member of a value class held unboxed, which takes
+     * the value in place of the receiver; null for any other function. It has no signature, and every module calling the
+     * member makes it again, so it is hashed by what it is in each: its name, and the classes its types erase to.
+     */
+    private fun inlineClassImplHash(function: IrFunction): Long? {
+        if (function.dispatchReceiverParameter != null) return null
+        if (function.parentClassOrNull?.isInlinedValueClass() != true) return null
+        fun erased(type: IrType) = (type.classifierOrNull as? IrTypeParameterSymbol)?.owner?.erasedUpperBound?.fqNameWhenAvailable
+            ?: type.classFqName
+        val key = (listOf(function.name.asString()) + function.parameters.map { erased(it.type) } + erased(function.returnType))
+            .joinToString(",")
+        return key.fold(-0x340d631b7bdddcdbL) { hash, c -> (hash xor c.code.toLong()) * 0x100000001b3L }
+    }
 
     /** An accessor's hash is its own; its property's would be the same for the getter and the setter. */
     private fun signatureHash(signature: IdSignature?): Long? = when (signature) {

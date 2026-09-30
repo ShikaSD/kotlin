@@ -2579,4 +2579,173 @@ class JKlibVmBackendTest {
         """
         assertTrue(runBox(tempDir, source))
     }
+
+    /** The loops lowering checks a `step` it cannot see is positive, throwing what `step` itself would. */
+    @Test
+    fun testNonPositiveStepThrowsIllegalArgument(@TempDir tempDir: File) {
+        val source = """
+            fun sum(step: Int): Int {
+                var sum = 0
+                for (i in 0..10 step step) sum += i
+                return sum
+            }
+
+            fun box(): String {
+                try {
+                    sum(0)
+                } catch (e: IllegalArgumentException) {
+                    return "OK"
+                }
+                return "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `String`'s members are the runtime's, which answers them through the selectors they override. */
+    @Test
+    fun testStringLengthOfAStringValue(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val s: String = "abc"
+                return if (s.length == 3) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testRangeUntilExcludesItsEnd(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val range = 0..<3
+                return if (range.last == 2) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `equals` on a `Double` is its box's, which compares bits, so NaN equals itself. */
+    @Test
+    fun testDoubleEqualsHoldsForNaN(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if (Double.NaN.equals(Double.NaN)) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A value class over a primitive is held as the primitive, its members taking the value itself. */
+    @Test
+    fun testValueClassMemberReadsItsValue(@TempDir tempDir: File) {
+        val source = """
+            @JvmInline
+            value class Meters(val value: Int) {
+                operator fun plus(other: Meters) = Meters(value + other.value)
+            }
+
+            fun box(): String = if ((Meters(1) + Meters(2)).value == 3) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** Where a reference is expected, a value class held unboxed is boxed in its class, which a type test sees. */
+    @Test
+    fun testBoxedValueClassIsAnInstanceOfItsClass(@TempDir tempDir: File) {
+        val source = """
+            @JvmInline
+            value class Meters(val value: Int)
+
+            fun box(): String {
+                val boxed: Any = Meters(1)
+                return if (boxed is Meters && boxed.value == 1) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A value class of the standard library's, whose members another module names by the member they were made from. */
+    @Test
+    fun testUIntArithmeticWrapsUnsigned(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if ((0u - 1u).toString() == "4294967295") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testListOfValueClassesHoldsBoxes(@TempDir tempDir: File) {
+        val source = """
+            @JvmInline
+            value class Meters(val value: Int)
+
+            fun box(): String = if (listOf(Meters(4), Meters(2)).sumOf { it.value } == 6) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `as T` checks T's erasure, as the JVM's does; T's bound is nullable, so null passes. */
+    @Test
+    fun testCastToATypeParameterLetsNullThrough(@TempDir tempDir: File) {
+        val source = """
+            @Suppress("UNCHECKED_CAST")
+            fun <T> cast(value: Any?): T = value as T
+
+            fun box(): String = if (cast<String?>(null) == null) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testCastToABoundedTypeParameterChecksTheBound(@TempDir tempDir: File) {
+        val source = """
+            @Suppress("UNCHECKED_CAST")
+            fun <T : Number> cast(value: Any): T = value as T
+
+            fun box(): String {
+                try {
+                    cast<Int>("not a number")
+                } catch (e: ClassCastException) {
+                    return "OK"
+                }
+                return "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testToStringOfNullIsNull(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val value: Any? = null
+                return if (value.toString() == "null") "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A data class hashes an array property by its content, through the standard library's `contentHashCode`. */
+    @Test
+    fun testDataClassHashesAnArraysContent(@TempDir tempDir: File) {
+        val source = """
+            data class Data(val values: IntArray)
+
+            fun box(): String =
+                if (Data(intArrayOf(1, 2)).hashCode() == Data(intArrayOf(1, 2)).hashCode()) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** The loop over unsigned values calls `UInt.toInt`, inline only, after inlining: the standard library has its body. */
+    @Test
+    fun testForOverAnUnsignedRangeVisitsEachValue(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                var sum = 0u
+                for (i in 1u..3u) sum += i
+                return if (sum == 6u) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
 }

@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.backend.common.ir.KlibSharedVariablesManager
 import org.jetbrains.kotlin.backend.common.ir.PreSerializationKlibSymbols
 import org.jetbrains.kotlin.backend.common.ir.SharedVariablesManager
 import org.jetbrains.kotlin.backend.common.lower.ArrayConstructorLowering
+import org.jetbrains.kotlin.backend.common.lower.InlineClassDeclarationLowering
+import org.jetbrains.kotlin.backend.common.lower.InlineClassUsageLowering
 import org.jetbrains.kotlin.backend.common.lower.InnerClassConstructorCallsLowering
 import org.jetbrains.kotlin.backend.common.lower.InnerClassesLowering
 import org.jetbrains.kotlin.backend.common.lower.InnerClassesMemberBodyLowering
@@ -26,6 +28,7 @@ import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineLamb
 import org.jetbrains.kotlin.backend.vm.vmir.VmModule
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.descriptors.ValueClassBackendAgnosticApi
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrDiagnosticReporter
 import org.jetbrains.kotlin.ir.InternalSymbolFinderAPI
@@ -36,6 +39,7 @@ import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.inline.FunctionInlining
 import org.jetbrains.kotlin.ir.inline.InlineFunctionResolver
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.inlineClassRepresentation
 import org.jetbrains.kotlin.ir.functionSymbolAssociatedBy
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
@@ -43,7 +47,10 @@ import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
+import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.classifierOrFail
+import org.jetbrains.kotlin.ir.types.isMarkedNullable
+import org.jetbrains.kotlin.ir.types.isPrimitiveType
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
@@ -65,9 +72,8 @@ class VmLoweringContext(
 
     override val typeSystem: IrTypeSystemContext = IrTypeSystemContextImpl(irBuiltIns)
 
-    /** The VM backend compiles no value classes yet, so none is treated as one. */
     override val inlineClassesUtils: InlineClassesUtils = object : InlineClassesUtils {
-        override fun isClassInlineLike(klass: IrClass): Boolean = false
+        override fun isClassInlineLike(klass: IrClass): Boolean = klass.isInlinedValueClass()
     }
 
     override val innerClassesSupport: InnerClassesSupport = VmInnerClassesSupport(irFactory)
@@ -188,6 +194,25 @@ fun lowerForVm(context: VmLoweringContext, module: IrModuleFragment) {
     module.files.forEach { innerClasses.lower(it) }
     module.files.forEach { innerClassBodies.lower(it) }
     module.files.forEach { innerClassConstructorCalls.lower(it) }
+    // A value class held as its underlying value has each member as a function of that value, which a call of the member
+    // becomes; the class itself remains as the box, whose members delegate to those functions. See [isInlinedValueClass].
+    val inlineClassDeclarations = InlineClassDeclarationLowering(context)
+    val inlineClassUsages = InlineClassUsageLowering(context)
+    module.files.forEach { inlineClassDeclarations.lower(it) }
+    module.files.forEach { inlineClassUsages.lower(it) }
+}
+
+/**
+ * Whether values of this class are held as its underlying value, and boxed only where a reference is expected: a value
+ * class whose underlying value is a primitive, or another such class. Boxing it is then decided by the registers' types
+ * as a primitive's is; a value class over a reference stays an ordinary class, which only its identity tells apart.
+ */
+@OptIn(ValueClassBackendAgnosticApi::class)
+internal fun IrClass.isInlinedValueClass(): Boolean {
+    if (!isValue) return false
+    val underlying = inlineClassRepresentation(treatCompatibleFullValueClassesAsInline = false)?.underlyingType ?: return false
+    if (underlying.isMarkedNullable()) return false
+    return underlying.isPrimitiveType() || underlying.classOrNull?.owner?.isInlinedValueClass() == true
 }
 
 /**

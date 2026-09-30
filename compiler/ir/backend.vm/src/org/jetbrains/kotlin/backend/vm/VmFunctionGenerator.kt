@@ -12,9 +12,11 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
+import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrReturnTargetSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.ir.util.constructedClass
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.isFunctionOrKFunction
@@ -374,6 +376,12 @@ internal class VmFunctionGenerator private constructor(
     }
 
     private fun box(value: VmValue, type: IrType): VmValue {
+        gen.inlinedValueClassOf(type)?.let { valueClass ->
+            val boxClass = gen.testedClass(valueClass.defaultType) ?: unsupported("boxing ${valueClass.name}")
+            val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.NewObject(it, boxClass)) }
+            emit(VmInstruction.StoreField(box, gen.fieldIndex(gen.valueClassField(valueClass)), value))
+            return box
+        }
         val kind = type.getPrimitiveType() ?: error("Boxing a value of the non-primitive ${type.render()}")
         val valueOf = gen.valueOf(kind)
         return newValue(valueOf.returnType!!).also { emit(VmInstruction.Call(it, VmCallee.Static(valueOf), listOf(value))) }
@@ -381,6 +389,12 @@ internal class VmFunctionGenerator private constructor(
 
     /** A box's value: the cast fails for a box of another class, and the load for null. */
     private fun unbox(value: VmValue, type: IrType): VmValue {
+        gen.inlinedValueClassOf(type.makeNotNull())?.let { valueClass ->
+            val boxClass = gen.testedClass(valueClass.defaultType) ?: unsupported("unboxing ${valueClass.name}")
+            val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.RefCast(it, value, boxClass)) }
+            val field = gen.valueClassField(valueClass)
+            return newValue(vmType(field.type)).also { emit(VmInstruction.LoadField(it, box, gen.fieldIndex(field))) }
+        }
         val kind = type.getPrimitiveType() ?: error("Unboxing into the non-primitive ${type.render()}")
         val boxClass = gen.boxClass(kind)
         val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.RefCast(it, value, boxClass)) }
@@ -439,7 +453,13 @@ internal class VmFunctionGenerator private constructor(
         }
         is IrGetEnumValue -> newValue(gen.anyType).also { emit(VmInstruction.LoadGlobal(it, gen.enumEntryGlobal(expression.symbol.owner))) }
         is IrInstanceInitializerCall -> {
-            instanceInitializers(expression.classSymbol.owner)
+            val declaration = expression.classSymbol.owner
+            if (constructed != null) {
+                instanceInitializers(declaration)
+            } else if (declaration.declarations.any { it is IrAnonymousInitializer }) {
+                // Only the function making a value class held unboxed initializes without an object to construct.
+                unsupported("an init block of the value class ${declaration.name}")
+            }
             null
         }
         is IrGetField -> {
@@ -448,6 +468,9 @@ internal class VmFunctionGenerator private constructor(
             val dst = newValue(vmType(field.type))
             if (receiver == null) {
                 emit(VmInstruction.LoadGlobal(dst, gen.globalOf(field)))
+            } else if (field.parentClassOrNull?.isInlinedValueClass() == true && gen.vmType(receiver.type) !is VmType.Ref) {
+                // The field of a value class held unboxed is the value itself.
+                return operand(receiver)
             } else {
                 emit(VmInstruction.LoadField(dst, operand(receiver), gen.fieldIndex(field)))
             }
@@ -479,7 +502,10 @@ internal class VmFunctionGenerator private constructor(
 
     private fun ret(expression: IrReturn) {
         val target = expression.returnTargetSymbol
-        if (target == irFunction?.symbol) {
+        // A return to another function is one from this function's body, which a lowering moved here from that function,
+        // as the value-class lowering moves a member's: a lambda that is not inlined cannot return from its enclosing one.
+        if (target is IrFunctionSymbol) {
+            val irFunction = irFunction!!
             val returnType = function.symbol.returnType
             val value = when {
                 returnType == null -> {
@@ -720,6 +746,8 @@ internal class VmFunctionGenerator private constructor(
         IrTypeOperator.NOT_INSTANCEOF -> not(instanceOf(reference(expression.argument), expression.typeOperand))
         IrTypeOperator.CAST -> cast(reference(expression.argument), expression.typeOperand)
         IrTypeOperator.SAFE_CAST -> safeCast(reference(expression.argument), expression.typeOperand)
+        // Between a value class held unboxed and its underlying value, which are held alike.
+        IrTypeOperator.REINTERPRET_CAST -> operand(expression.argument)
         else -> unsupported("the type operator ${expression.operator}")
     }
 
@@ -740,7 +768,7 @@ internal class VmFunctionGenerator private constructor(
     /** `as`: the VM's cast lets null through, so a cast to a non-null type checks for it first. */
     private fun cast(value: VmValue, type: IrType): VmValue {
         val tested = gen.testedClass(type)
-        if (!type.isMarkedNullable()) throwIfNull(value)
+        if (!type.isNullable()) throwIfNull(value)
         if (tested == null) return value
         return newValue(VmType.Ref(tested)).also { emit(VmInstruction.RefCast(it, value, tested)) }
     }
@@ -1165,6 +1193,17 @@ internal class VmFunctionGenerator private constructor(
                 throwNew("kotlin.NoWhenBranchMatchedException", message = null)
                 return Intrinsic(null)
             }
+            builtIns.dataClassArrayMemberToStringSymbol, builtIns.dataClassArrayMemberHashCodeSymbol -> {
+                val name = if (callee.symbol == builtIns.dataClassArrayMemberToStringSymbol) "contentToString" else "contentHashCode"
+                val array = args[0].type.classOrNull ?: unsupported("${callee.name} of ${args[0].type.render()}")
+                val target = gen.staticTarget(gen.arrayContentFunction(name, array))
+                newValue(target.symbol.returnType!!).also { emit(VmInstruction.Call(it, target.callee, listOf(operand(args[0])))) }
+            }
+            // What the loops lowering calls when a `step` is not positive.
+            builtIns.illegalArgumentExceptionSymbol -> {
+                throwNew("vm.runtime.IllegalArgumentException", operand(args[0]))
+                return Intrinsic(null)
+            }
             in builtIns.ieee754equalsFunByOperandType.values -> compare(Comparison.EQ, callee, args)
             in builtIns.lessFunByOperandType.values -> compare(Comparison.LT, callee, args)
             in builtIns.lessOrEqualFunByOperandType.values -> compare(Comparison.LE, callee, args)
@@ -1186,6 +1225,10 @@ internal class VmFunctionGenerator private constructor(
                         return Intrinsic(null)
                     }
                     "kotlin.String.plus" -> return Intrinsic(plus(operand(args[0]), args[1]))
+                    // `Any?.toString()`, which the JVM's builtins declare without a body.
+                    "kotlin.toString" -> if (callee.parameters.singleOrNull()?.kind == IrParameterKind.ExtensionReceiver) {
+                        return Intrinsic(text(args[0]))
+                    }
                     // Externals of the VM's standard library, which the VM implements; see its `platform-src`.
                     "kotlin.toRawBits" -> {
                         val bits = newValue(VmType.I64).also { emit(VmInstruction.Copy(it, operand(args[0]))) }
@@ -1272,12 +1315,12 @@ internal class VmFunctionGenerator private constructor(
                 null
             }
             "toString" -> newValue(gen.stringType).also { emit(VmInstruction.Call(it, VmCallee.Virtual(gen.toStringSelector), listOf(builder))) }
+            // The runtime's builder answers these as the `CharSequence` it is.
             "length", "<get-length>" -> newValue(VmType.I64).also {
-                emit(VmInstruction.Call(it, VmCallee.Static(gen.stringBuilderFunction("length", emptyList(), VmType.I64)), listOf(builder)))
+                emit(VmInstruction.Call(it, VmCallee.Virtual(gen.charSequenceSelector("length")), listOf(builder)))
             }
             "get", "charAt" -> newValue(VmType.I64).also {
-                val get = gen.stringBuilderFunction("get", listOf(VmType.I64), VmType.I64)
-                emit(VmInstruction.Call(it, VmCallee.Static(get), listOf(builder, operand(args[1]))))
+                emit(VmInstruction.Call(it, VmCallee.Virtual(gen.charSequenceSelector("get")), listOf(builder, operand(args[1]))))
             }
             else -> unsupported("StringBuilder.$name")
         }
@@ -1515,6 +1558,11 @@ internal class VmFunctionGenerator private constructor(
             "toByte", "toShort", "toInt", "toLong", "toChar", "toFloat", "toDouble" -> convert(receiver, receiverType, resultType())
             // As the JVM's box answers them, which the runtime's implements; the receiver is boxed already where
             // `Any`'s member is what the call names.
+            "equals" -> {
+                val boxed = if (receiver.vmType() is VmType.Ref) receiver else box(receiver, args[0].type)
+                val other = operandAs(args[1], gen.irBuiltIns.anyNType)
+                newValue(VmType.I64).also { emit(VmInstruction.Call(it, VmCallee.Virtual(gen.equalsSelector), listOf(boxed, other))) }
+            }
             "hashCode", "toString" -> {
                 val boxed = if (receiver.vmType() is VmType.Ref) receiver else box(receiver, args[0].type)
                 val selector = if (name == "hashCode") gen.hashCodeSelector else gen.toStringSelector
@@ -1525,6 +1573,14 @@ internal class VmFunctionGenerator private constructor(
             "rangeTo" -> {
                 val range = callee.returnType.classOrNull?.owner?.primaryConstructor ?: unsupported("${receiverType.typeName}.$name")
                 construct(range, listOf(receiver, operandAs(args[1], range.parameters[1].type)))
+            }
+            // `..<`, which the standard library's `until` of the same operands computes.
+            "rangeUntil" -> {
+                val until = gen.rangeUntil(callee.parameters[0].type, callee.parameters[1].type)
+                val target = gen.staticTarget(until)
+                newValue(gen.anyType).also {
+                    emit(VmInstruction.Call(it, target.callee, listOf(receiver, operandAs(args[1], until.parameters[1].type))))
+                }
             }
             else -> unsupported("${receiverType.typeName}.$name")
         }

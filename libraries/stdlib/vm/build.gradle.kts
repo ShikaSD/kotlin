@@ -208,7 +208,6 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
         include(
             "runtime/kotlin/NoWhenBranchMatchedException.kt",
             "runtime/kotlin/UninitializedPropertyAccessException.kt",
-            "runtime/kotlin/TypeAliases.kt",
             "runtime/kotlin/text/TypeAliases.kt",
             "src/kotlin/ArrayIntrinsics.kt",
             "src/kotlin/Unit.kt",
@@ -245,7 +244,7 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
         into("src/jvm/native")
     }
     from(stdlibProjectDir.resolve("wasm/src")) {
-        include("kotlin/Lazy.kt", "kotlin/Sequences.kt", "kotlin/coroutines/Coroutines.kt")
+        include("kotlin/Comparator.kt", "kotlin/Lazy.kt", "kotlin/Sequences.kt", "kotlin/coroutines/Coroutines.kt")
         into("src/jvm/wasm")
     }
     from(file("platform-src")) {
