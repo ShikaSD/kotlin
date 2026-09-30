@@ -37,10 +37,10 @@ class JKlibVmBoxRunner(testServices: TestServices) : BinaryArtifactHandler<JKlib
         val runtime = File(repository, "runtime/src/runtime.ir").path
         val kotlinTest = JKlibVmSourceRootConfigurator.kotlinTestVir.path
         val stdlib = JKlibVmSourceRootConfigurator.vmStdlibVir.path
-        val link = exec(File(repository, "target/debug/link_ir"), container, *virs.toTypedArray(), kotlinTest, stdlib, runtime)
+        val link = exec(File(repository, "target/box_tests/link_ir"), container, *virs.toTypedArray(), kotlinTest, stdlib, runtime)
             ?: throw AssertionError("timeout: link")
         if (link.first != 0) throw AssertionError("link: ${lastMessage(link.second)}")
-        val execute = exec(File(repository, "target/debug/execute"), container)
+        val execute = exec(File(repository, "target/box_tests/execute"), container)
             ?: throw AssertionError("timeout: execute")
         when {
             execute.second.lines().any { it == "r0 = 1" } -> {}
@@ -58,7 +58,7 @@ class JKlibVmBoxRunner(testServices: TestServices) : BinaryArtifactHandler<JKlib
 
     /** Runs [binary], answering its exit code and output, or null when it runs past a time limit. */
     private fun exec(binary: File, vararg args: String): Pair<Int, String>? {
-        check(binary.canExecute()) { "$binary is missing: build the VM checkout with `cargo build`" }
+        check(binary.canExecute()) { "$binary is missing: build the VM checkout with `cargo build --profile box_tests`" }
         // Into a file, since reading a pipe would wait for a program that never ends before the limit could apply.
         val log = File.createTempFile("vm-exec", ".log", testServices.temporaryDirectoryManager.getOrCreateTempDirectory("vm-output"))
         val process = ProcessBuilder(binary.path, *args).redirectErrorStream(true).redirectOutput(log).start()

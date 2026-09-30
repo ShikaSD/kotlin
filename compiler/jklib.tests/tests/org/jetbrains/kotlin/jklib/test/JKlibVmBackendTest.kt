@@ -77,12 +77,12 @@ class JKlibVmBackendTest {
         // The VM starts from the first module's first function: `main`'s entry.
         val virs = names.asReversed().map { File(tempDir, "$it.vir").path }
         val stdlib = JKlibVmSourceRootConfigurator.vmStdlibVir.path
-        run(File(repo, "target/debug/link_ir"), container, *virs.toTypedArray(), stdlib, runtime)
-        return run(File(repo, "target/debug/execute"), container)
+        run(File(repo, "target/box_tests/link_ir"), container, *virs.toTypedArray(), stdlib, runtime)
+        return run(File(repo, "target/box_tests/execute"), container)
     }
 
     private fun run(binary: File, vararg args: String): String {
-        assertTrue(binary.canExecute()) { "$binary is missing: build the VM repository with `cargo build`" }
+        assertTrue(binary.canExecute()) { "$binary is missing: build the VM repository with `cargo build --profile box_tests`" }
         val process = ProcessBuilder(binary.path, *args).redirectErrorStream(true).start()
         val output = process.inputStream.bufferedReader().readText()
         assertTrue(process.waitFor(1, TimeUnit.MINUTES)) { "$binary timed out" }

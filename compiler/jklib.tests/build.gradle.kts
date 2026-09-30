@@ -68,7 +68,7 @@ projectTests {
         val vmRepository = providers.environmentVariable("KOTLIN_VM_REPO").orNull
         if (vmRepository != null) {
             systemProperty("kotlin.vm.repo", vmRepository)
-            inputs.files("$vmRepository/target/debug/link_ir", "$vmRepository/target/debug/execute", "$vmRepository/runtime/src/runtime.ir")
+            inputs.files("$vmRepository/target/box_tests/link_ir", "$vmRepository/target/box_tests/execute", "$vmRepository/runtime/src/runtime.ir")
                 .withPropertyName("vmRepository")
         }
         if (providers.environmentVariable("KOTLIN_VM_BOX_UPDATE").orNull == "1") {
