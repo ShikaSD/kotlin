@@ -1,7 +1,6 @@
 # Box tests under compiler/testData/codegen/box expected to fail on the VM; see JKlibVmExpectedFailures.
 # 1215 failures; the most common reasons:
 #     261  unsupported: the expression RICH_PROPERTY_REFERENCE …
-#      63  run: Execution result: RuntimeError(UncaughtException)
 #      49  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 #      47  unsupported: a bridge from FUN …
 #      41  unsupported: a call to CONSTRUCTOR …
@@ -13,11 +12,13 @@
 #      19  IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 #      16  IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 #      15  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty<*>'.
+#      15  run: Uncaught exception: vm.builtin.NullReference
 #      14  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 #      14  unsupported: implementing the function type Function1
 #      13  IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
 #      13  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::spliterator_8a56e74d22ceafe7" }
 #      13  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
+#      13  run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
 #      13  unsupported: the expression CLASS_REFERENCE …
 #      11  unsupported: implementing the function type Function0
 #      10  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
@@ -25,6 +26,7 @@
 #       9  IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE: Declaration annotated with '@OptionalExpectation' can only be used in common module sour
 #       9  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 #       8  IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
+#       8  run: Uncaught exception: vm.builtin.ClassCast
 #       8  unsupported: a Unit field
 #       8  unsupported: the annotation class Ann
 #       7  unsupported: naming CONSTRUCTOR …
@@ -48,8 +50,6 @@
 #       4  unsupported: implementing the function type SuspendFunction0
 #       4  unsupported: the annotation class Foo
 #       4  unsupported: the supertype Runnable outside the VM modules
-#       3  IllegalStateException: Boxing a value of the non-primitive T of <root>.Z
-#       3  IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 
 annotations/annotationWithDefaultArgInDifferentModule.kt: unsupported: the annotation class MyConfig
 annotations/annotations0.kt: unsupported: the annotation class Foo
@@ -128,20 +128,20 @@ basics/unchecked_cast13.kt: wrong result
 basics/unchecked_cast2.kt: unsupported: a call to CONSTRUCTOR …
 basics/unchecked_cast4.kt: unsupported: a call to CONSTRUCTOR …
 basics/unchecked_cast7.kt: unsupported: a call to CONSTRUCTOR …
-basics/unchecked_cast8.kt: run: Execution result: RuntimeError(UncaughtException)
+basics/unchecked_cast8.kt: run: Uncaught exception: vm.builtin.InvalidType
 basics/unchecked_cast9.kt: unsupported: a call to CONSTRUCTOR …
-basics/unit1.kt: run: Execution result: RuntimeError(UncaughtException)
-basics/unit2.kt: run: Execution result: RuntimeError(UncaughtException)
-basics/unit3.kt: run: Execution result: RuntimeError(UncaughtException)
+basics/unit1.kt: run: Uncaught exception: vm.builtin.NullReference
+basics/unit2.kt: run: Uncaught exception: vm.builtin.NullReference
+basics/unit3.kt: run: Uncaught exception: vm.builtin.NullReference
 binaryOp/call.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
 binaryOp/callNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
 binaryOp/eqNullableToPrimitiveWithSideEffects.kt: wrong result
 binaryOp/intrinsic.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
 binaryOp/intrinsicNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
 boxing/boxing12.kt: unsupported: overriding FUN …
-boxing/kt84727.kt: run: Execution result: RuntimeError(UncaughtException)
-boxing/kt84727_if.kt: run: Execution result: RuntimeError(UncaughtException)
-boxing/kt84727_inline.kt: run: Execution result: RuntimeError(UncaughtException)
+boxing/kt84727.kt: run: Uncaught exception: vm.builtin.NullReference
+boxing/kt84727_if.kt: run: Uncaught exception: vm.builtin.NullReference
+boxing/kt84727_inline.kt: run: Uncaught exception: vm.builtin.NullReference
 boxing/missingValueClassUnboxing.kt: IllegalStateException: VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION: Value classes without '@JvmInline' annotation are not yet supported.
 boxingOptimization/checkcastAndInstanceOf.kt: unsupported: a type test against java.lang.Object outside the VM modules
 boxingOptimization/kt5493.kt: unsupported: a value of type kotlin.Nothing
@@ -180,9 +180,9 @@ bridges/test10.kt: unsupported: a bridge from FUN …
 bridges/test11.kt: unsupported: a bridge from FUN …
 bridges/test14.kt: unsupported: a bridge from FUN …
 bridges/test15.kt: unsupported: a bridge from FUN …
-bridges/test19.kt: run: Execution result: RuntimeError(UncaughtException)
+bridges/test19.kt: run: Uncaught exception: vm.builtin.NoSuchMethod
 bridges/test20.kt: unsupported: a bridge from FUN …
-bridges/test21.kt: run: Execution result: RuntimeError(UncaughtException)
+bridges/test21.kt: run: Uncaught exception: vm.builtin.NoSuchMethod
 bridges/test23.kt: unsupported: a call to CONSTRUCTOR …
 bridges/test24.kt: wrong result
 bridges/test3.kt: unsupported: a bridge from FUN …
@@ -232,31 +232,31 @@ callableReference/callableReferenceOfCompanionConst.kt: unsupported: the express
 callableReference/callableReferenceOfCompanionProperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/callableReferenceOfKotlinNestedClass.kt: unsupported: a call to CONSTRUCTOR …
 callableReference/callableReferencetoInnerAndLocal.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-callableReference/equality/capturedDefaults.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/equality/capturedVararg.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/equality/coercionToUnit.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/equality/coercionToUnitWithDefaults.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/equality/coercionToUnitWithVararg.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/equality/conversionCombinations.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/equality/extensionFunctionEquality.kt: run: Execution result: RuntimeError(UncaughtException)
+callableReference/equality/capturedDefaults.kt: run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
+callableReference/equality/capturedVararg.kt: run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
+callableReference/equality/coercionToUnit.kt: run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
+callableReference/equality/coercionToUnitWithDefaults.kt: run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
+callableReference/equality/coercionToUnitWithVararg.kt: run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
+callableReference/equality/conversionCombinations.kt: run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
+callableReference/equality/extensionFunctionEquality.kt: run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
 callableReference/equality/kproperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/equality/kpropertyWithCapturingEquality.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/equality/kpropertyWithCapturingInequality.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-callableReference/equality/noCoercionToUnitIfFunctionAlreadyReturnsUnit.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/equality/overloadedFunctionEquality.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/equality/simpleEquality.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/equality/suspendConversion.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/equality/suspendFunctionEquality.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/equality/varargWithDefaults.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/funInterfaceConstructor/funInterfaceConstructedObjectsEquality.kt: run: Execution result: RuntimeError(UncaughtException)
-callableReference/funInterfaceConstructor/funInterfaceConstructorEquality.kt: run: Execution result: RuntimeError(UncaughtException)
+callableReference/equality/noCoercionToUnitIfFunctionAlreadyReturnsUnit.kt: run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
+callableReference/equality/overloadedFunctionEquality.kt: run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
+callableReference/equality/simpleEquality.kt: run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
+callableReference/equality/suspendConversion.kt: run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
+callableReference/equality/suspendFunctionEquality.kt: run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
+callableReference/equality/varargWithDefaults.kt: run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
+callableReference/funInterfaceConstructor/funInterfaceConstructedObjectsEquality.kt: run: Uncaught exception: vm.runtime.Exception: ks11Foo == ks12Foo (same ctor, different source files): equals: sam$KSupplier$0_1@2 != sam$KSupplier$0_1@e
+callableReference/funInterfaceConstructor/funInterfaceConstructorEquality.kt: run: Uncaught exception: vm.runtime.Exception: ks1 == ks2 (same file, same SAM type): equals: vm.builtin.Function != vm.builtin.Function
 callableReference/function/classMemberFromCompanionObject.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<C, Unit>'.
 callableReference/function/extensionFunctionAsASuperTypePassToSAMInterface.kt: unsupported: implementing the function type Function1
 callableReference/function/genericCallableReferenceArgumentsNonJVM.kt: IllegalStateException: TYPE_INTERSECTION_AS_REIFIED_ERROR: Type argument for reified type parameter 'R' was inferred to the intersection of ['Comparable<*>' & '
 callableReference/function/local/equalsHashCode.kt: wrong result
 callableReference/function/local/localFunctionName.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction0<Unit>'.
 callableReference/function/overloadedFunVsVal.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-callableReference/function/referenceToCompanionMember.kt: run: Execution result: RuntimeError(UncaughtException)
+callableReference/function/referenceToCompanionMember.kt: run: Uncaught exception: vm.builtin.ClassCast
 callableReference/functionAndKFunctionSharedClassSplit.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<String, Int>'.
 callableReference/kt21014.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/kt21092a.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -303,20 +303,20 @@ casts/asToNothing.kt: link: Failed to link: UnresolvedImport { module: "kotlin-s
 casts/asUnit.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Unit" }
 casts/functions/asFunKBig.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
 casts/functions/asFunKSmall.kt: unsupported: implementing the function type Function
-casts/functions/isFunKBig.kt: run: Execution result: RuntimeError(UncaughtException)
+casts/functions/isFunKBig.kt: run: Uncaught exception: vm.runtime.IllegalArgumentException: x !is Function1<*, *>: failed for vm.builtin.Function
 casts/functions/reifiedAsFunKBig.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
-casts/functions/reifiedAsFunKSmall.kt: run: Execution result: RuntimeError(UncaughtException)
-casts/functions/reifiedIsFunKBig.kt: run: Execution result: RuntimeError(UncaughtException)
-casts/functions/reifiedIsFunKSmall.kt: run: Execution result: RuntimeError(UncaughtException)
-casts/functions/reifiedSafeAsFunKBig.kt: run: Execution result: RuntimeError(UncaughtException)
-casts/functions/reifiedSafeAsFunKSmall.kt: run: Execution result: RuntimeError(UncaughtException)
-casts/functions/safeAsFunKBig.kt: run: Execution result: RuntimeError(UncaughtException)
-casts/functions/safeAsFunKSmall.kt: run: Execution result: RuntimeError(UncaughtException)
+casts/functions/reifiedAsFunKSmall.kt: run: Uncaught exception: vm.runtime.AssertionError: f0 as Function1<*, *>: should fail with CCE, no exception thrown
+casts/functions/reifiedIsFunKBig.kt: run: Uncaught exception: vm.runtime.IllegalArgumentException: vm.builtin.Function !is Function1<*, *>: failed
+casts/functions/reifiedIsFunKSmall.kt: run: Uncaught exception: vm.runtime.IllegalArgumentException: vm.builtin.Function !is Function0<*>: failed
+casts/functions/reifiedSafeAsFunKBig.kt: run: Uncaught exception: vm.runtime.AssertionError: x as? Function1<*, *>: should return null, got vm.builtin.Function
+casts/functions/reifiedSafeAsFunKSmall.kt: run: Uncaught exception: vm.runtime.AssertionError: f0 as Function1<*, *>: should return null, got vm.builtin.Function
+casts/functions/safeAsFunKBig.kt: run: Uncaught exception: vm.runtime.AssertionError: x as? Function1<*, *>: should not throw exceptions, got java.lang.IllegalArgumentException: x as? Function1<*, *>: should return null, got vm.builti
+casts/functions/safeAsFunKSmall.kt: run: Uncaught exception: vm.runtime.AssertionError: f0 as? Function1<*, *>: should not throw exceptions, got java.lang.IllegalArgumentException: f0 as? Function1<*, *>: should return null, got vm.buil
 casts/intersectionTypeMultipleBounds.kt: unsupported: a bridge from FUN …
 casts/intersectionTypeSmartcast.kt: unsupported: a bridge from FUN …
 casts/is.kt: unsupported: a type test against java.lang.Runnable outside the VM modules
-casts/kt53677.kt: run: Execution result: RuntimeError(UncaughtException)
-casts/kt65197.kt: run: Execution result: RuntimeError(UncaughtException)
+casts/kt53677.kt: run: Uncaught exception: vm.builtin.NullReference
+casts/kt65197.kt: run: Uncaught exception: vm.builtin.InvalidType
 casts/mutableCollections/asWithMutable.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 casts/mutableCollections/isWithMutable.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 casts/mutableCollections/reifiedAsWithMutable.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
@@ -325,9 +325,9 @@ casts/mutableCollections/reifiedSafeAsWithMutable.kt: link: Failed to link: Unre
 casts/mutableCollections/safeAsWithMutable.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 casts/mutableCollections/weirdMutableCasts.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 casts/notIs.kt: unsupported: a type test against java.lang.Runnable outside the VM modules
-casts/objectToPrimitiveWithAssertion.kt: run: Execution result: RuntimeError(UncaughtException)
+casts/objectToPrimitiveWithAssertion.kt: run: Uncaught exception: vm.builtin.ClassCast
 casts/parallelHierarchy.kt: unsupported: a call to CONSTRUCTOR …
-casts/unitAsAny.kt: run: Execution result: RuntimeError(UncaughtException)
+casts/unitAsAny.kt: run: Uncaught exception: vm.builtin.NullReference
 checkcastOptimization/kt47851.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'getMethod' on receiver of type 'Any'.
 classDelegation/withBridge.kt: unsupported: a bridge from FUN …
 classLiteral/bareArray.kt: unsupported: a call to CONSTRUCTOR …
@@ -404,7 +404,7 @@ companionBlocksAndExtensions/staticInitializerSyntheticNameCollisionInheritance.
 companionBlocksAndExtensions/throwingInitializers.kt: unsupported: the static property never
 companionBlocksAndExtensions/topLevelInitTriggersCompanionBlock.kt: unsupported: the static property bar
 companionBlocksAndExtensions/visibility.kt: unsupported: the static property privateProp
-compileKotlinAgainstKotlin/clashingFakeOverrideSignatures.kt: run: Execution result: RuntimeError(UncaughtException)
+compileKotlinAgainstKotlin/clashingFakeOverrideSignatures.kt: run: Uncaught exception: vm.runtime.Exception: test2: x:Ox:K
 compileKotlinAgainstKotlin/inlineClasses/internalWithInlineClass.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'a'.
 compileKotlinAgainstKotlin/innerClassConstructor.kt: unsupported: naming CONSTRUCTOR …
 compileKotlinAgainstKotlin/internalSetterOverridden.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Derived'.
@@ -416,7 +416,7 @@ compileKotlinAgainstKotlin/specialBridgesInDependencies.kt: IllegalStateExceptio
 constants/numberLiteralCoercionToInferredType.kt: IllegalStateException: TYPE_INTERSECTION_AS_REIFIED_ERROR: Type argument for reified type parameter 'T' was inferred to the intersection of ['Comparable<*>?' & 
 contextParameters/contextualCallableReference.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<Int, String>'.
 contextParameters/contextualCallableReferenceEquality.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-contextParameters/kt53551.kt: run: Execution result: RuntimeError(UncaughtException)
+contextParameters/kt53551.kt: run: Uncaught exception: vm.builtin.NullReference
 contextParameters/suspendContextParemetersWithExtension.kt: wrong result
 contextParameters/withExtensionReceiverInSupertype.kt: unsupported: implementing the function type Function3
 controlStructures/breakContinueInExpressions/breakInLoopConditions.kt: unsupported: a value of type kotlin.Nothing
@@ -444,23 +444,23 @@ coroutines/bridges/mapSuspendClear.kt: link: Failed to link: UnresolvedImport { 
 coroutines/builderInferenceAndGenericArrayAcessCall.kt: unsupported: a call to CONSTRUCTOR …
 coroutines/captureInfixFun.kt: unsupported: a call to CONSTRUCTOR …
 coroutines/captureUnaryOperator.kt: unsupported: a call to CONSTRUCTOR …
-coroutines/createCoroutinesOnManualInstances.kt: run: Execution result: RuntimeError(UncaughtException)
+coroutines/createCoroutinesOnManualInstances.kt: run: Uncaught exception: vm.builtin.ClassCast
 coroutines/doubleColonExpressionsGenerationInBuilderInference.kt: unsupported: the expression CLASS_REFERENCE …
 coroutines/featureIntersection/callableReference/function/local/equalsHashCode.kt: wrong result
 coroutines/featureIntersection/defaultExpect.kt: IllegalStateException: EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE: withLimit: 'expect' and corresponding 'actual' are declared in the same module.
 coroutines/featureIntersection/delegate.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
 coroutines/featureIntersection/funInterface/kt49294.kt: unsupported: a call to CONSTRUCTOR …
 coroutines/featureIntersection/suspendFunctionAsSupertypeIsCheckWithArity.kt: unsupported: implementing the function type SuspendFunction0
-coroutines/featureIntersection/suspendFunctionIsAs.kt: run: Execution result: RuntimeError(UncaughtException)
+coroutines/featureIntersection/suspendFunctionIsAs.kt: run: Uncaught exception: vm.runtime.AssertionError: null
 coroutines/featureIntersection/tailrec/controlFlowIf.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 coroutines/featureIntersection/tailrec/controlFlowWhen.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 coroutines/functionReference_eqeq_name.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KSuspendFunction1<Int, Int>'.
-coroutines/functionReference_invokeAsFunction.kt: run: Execution result: RuntimeError(UncaughtException)
+coroutines/functionReference_invokeAsFunction.kt: run: Uncaught exception: vm.builtin.ClassCast
 coroutines/generate.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 coroutines/illegalStateOnInvalidLabel.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'javaClass' on receiver of type 'suspend () -> Unit'.
-coroutines/intrinsicSemantics/intercepted.kt: run: Execution result: RuntimeError(UncaughtException)
-coroutines/intrinsicSemantics/startCoroutineUninterceptedOrReturn.kt: run: Execution result: RuntimeError(UncaughtException)
-coroutines/intrinsicSemantics/suspendCoroutineUninterceptedOrReturn.kt: run: Execution result: RuntimeError(UncaughtException)
+coroutines/intrinsicSemantics/intercepted.kt: run: Uncaught exception: vm.builtin.NullReference
+coroutines/intrinsicSemantics/startCoroutineUninterceptedOrReturn.kt: run: Uncaught exception: vm.runtime.RuntimeException: fail 1
+coroutines/intrinsicSemantics/suspendCoroutineUninterceptedOrReturn.kt: run: Uncaught exception: vm.runtime.RuntimeException: fail 1
 coroutines/kt51530.kt: unsupported: defaults for more than 64 parameters
 coroutines/localDelegate.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 coroutines/multiModule/inlineMultiModuleOverride.kt: run: Load error: Some(ConcreteClassMissingMethod { type_id: 13, selector_id: 0 })
@@ -650,9 +650,9 @@ elvis/genericNull.kt: unsupported: overriding FUN …
 enum/constructorWithReordering.kt: unsupported: the enum entry A without a constructor call
 enum/enumCompanionInitJs.kt: wrong result
 enum/enumEntriesNameClashes.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-enum/enumEntryReferenceFromInnerClassConstructor1.kt: run: Execution result: RuntimeError(UncaughtException)
-enum/enumEntryReferenceFromInnerClassConstructor2.kt: run: Execution result: RuntimeError(UncaughtException)
-enum/enumEntryReferenceFromInnerClassConstructor3.kt: run: Execution result: RuntimeError(UncaughtException)
+enum/enumEntryReferenceFromInnerClassConstructor1.kt: run: Uncaught exception: vm.builtin.NullReference
+enum/enumEntryReferenceFromInnerClassConstructor2.kt: run: Uncaught exception: vm.builtin.NullReference
+enum/enumEntryReferenceFromInnerClassConstructor3.kt: run: Uncaught exception: vm.builtin.NullReference
 enum/enumValueOf.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'assertContains'.
 enum/initEntriesInCompanionObject2.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.enumValueOf_494a7f06ff1f1ac6" }
 enum/initEnumAfterObjectAccessJs.kt: wrong result
@@ -734,10 +734,10 @@ fullValueClasses/recursive.kt: unsupported: the multi-field value class B
 fullValueClasses/reservedNames.kt: unsupported: the multi-field value class OverridesHashCode
 fullValueClasses/valueObject.kt: unsupported: the multi-field value class Foo
 fullValueClasses/vararg.kt: unsupported: the multi-field value class Point
-funInterface/equality/functionReferencesBound.kt: run: Execution result: RuntimeError(UncaughtException)
-funInterface/equality/functionReferencesUnbound.kt: run: Execution result: RuntimeError(UncaughtException)
-funInterface/equality/lambdaRuntimeConversion.kt: run: Execution result: RuntimeError(UncaughtException)
-funInterface/equality/localFunctionReferences.kt: run: Execution result: RuntimeError(UncaughtException)
+funInterface/equality/functionReferencesBound.kt: run: Uncaught exception: vm.runtime.AssertionError: sam$FunInterface$0_3@2 and sam$FunInterface$0_3@4 should be equal
+funInterface/equality/functionReferencesUnbound.kt: run: Uncaught exception: vm.runtime.AssertionError: sam$FunInterface$0_3@3 and sam$FunInterface$0_3@5 should be equal
+funInterface/equality/lambdaRuntimeConversion.kt: run: Uncaught exception: vm.runtime.AssertionError: sam$FunInterface$0_1@3 and sam$FunInterface$0_1@2 should be equal
+funInterface/equality/localFunctionReferences.kt: run: Uncaught exception: vm.runtime.AssertionError: sam$FunInterface$0@3 and sam$FunInterface$0@5 should be equal
 funInterface/intersectionTypeToFunInterfaceConversion.kt: unsupported: implementing the function type Function0
 funInterface/kt46908_functionSupertype.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Function0::invoke_bf495f239bf769f7" }
 funInterface/kt77685-sam.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.coroutines.SuspendFunction0::invoke_bf495f239bf769f7" }
@@ -844,12 +844,12 @@ inlineClasses/checkBoxingUnboxingForInheritedTypeSpecializedFunctions.kt: unsupp
 inlineClasses/checkCallingMembersInsideInlineClassGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Foo
 inlineClasses/constructorCallableReference.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inlineClasses/constructorCallableReferenceGeneric.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-inlineClasses/contextsAndAccessors/kt26858Generic.kt: run: Execution result: RuntimeError(UncaughtException)
+inlineClasses/contextsAndAccessors/kt26858Generic.kt: run: Uncaught exception: vm.builtin.ArrayIndexOutOfBounds
 inlineClasses/createInlineClassInArgumentPositionGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.AsInt
 inlineClasses/customIterator.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 inlineClasses/defaultParameterValues/defaultParameterValuesOfInlineClassTypeBoxingGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Z
 inlineClasses/defaultParameterValues/defaultValueOfInlineClassTypeInInlineFunInInlineClassGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Host
-inlineClasses/defaultWithInlineClassArgumentGeneric.kt: run: Execution result: RuntimeError(UncaughtException)
+inlineClasses/defaultWithInlineClassArgumentGeneric.kt: run: Uncaught exception: vm.builtin.ArrayIndexOutOfBounds
 inlineClasses/functionNameMangling/reflectionForFunctionWithMangledName.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<S, S>'.
 inlineClasses/functionNameMangling/reflectionForFunctionWithMangledNameGeneric.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<S<String>, S<String>>'.
 inlineClasses/functionNameMangling/reflectionForPropertyOfInlineClassType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KMutableProperty0<S>'.
@@ -861,7 +861,7 @@ inlineClasses/inlineClassCollection/inlineListOfInlineClassGeneric.kt: link: Fai
 inlineClasses/inlineClassCollection/inlineMapOfInlineClass.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
 inlineClasses/inlineClassCollection/inlineMapOfInlineClassGeneric.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
 inlineClasses/inlineClassCollection/inlineMutableCollectionBulkAdd.kt: link: Failed to link: DuplicateSymbol { namespace: Function, symbol: 104 }
-inlineClasses/inlineClassEqualityShouldUseTotalOrderForFloatingPointData.kt: run: Execution result: RuntimeError(UncaughtException)
+inlineClasses/inlineClassEqualityShouldUseTotalOrderForFloatingPointData.kt: run: Uncaught exception: vm.runtime.AssertionError
 inlineClasses/inlineClassPropertyReferenceGetAndSet.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inlineClasses/inlineClassPropertyReferenceGetAndSetGeneric.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inlineClasses/interfaceDelegation/kt38337.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
@@ -899,8 +899,8 @@ inlineClasses/propertyDelegation/kt42933Generic.kt: unsupported: the expression 
 inlineClasses/referToPropertyInCompanionObjectOfInlineClassGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Foo
 inlineClasses/removeInInlineCollectionOfInlineClassAsInt.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.MutableCollection::removeIf_d9e28e2d3e2433a7" }
 inlineClasses/secondaryConstructorsWithBody.kt: unsupported: an init block of the value class VC
-inlineClasses/unboxParameterOfSuspendLambdaBeforeInvoke.kt: run: Execution result: RuntimeError(UncaughtException)
-inlineClasses/unboxParameterOfSuspendLambdaBeforeInvokeGeneric.kt: run: Execution result: RuntimeError(UncaughtException)
+inlineClasses/unboxParameterOfSuspendLambdaBeforeInvoke.kt: run: Uncaught exception: vm.builtin.ClassCast
+inlineClasses/unboxParameterOfSuspendLambdaBeforeInvokeGeneric.kt: run: Uncaught exception: vm.builtin.ClassCast
 inlineClasses/whenWithSubject.kt: unsupported: overriding FUN …
 inlineClasses/whenWithSubjectGeneric.kt: unsupported: overriding FUN …
 inlineEvaluationOrder/propertyAccessWithSideEffect.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
@@ -952,7 +952,7 @@ multiplatform/k2/basic/interfaceMethodFromSuperTypeIsImplementedInOtherExpectSup
 multiplatform/k2/basic/removeExpectDeclarationsFromMetadata.kt: unsupported: the annotation class WithoutActual
 multiplatform/k2/commonFakeOverridePropertyRef.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 multiplatform/k2/commonInternal.kt: unsupported: the annotation class AnnInFriend
-multiplatform/k2/complexMatchings/expectCtorlessFinalToActualUnit.kt: run: Execution result: RuntimeError(UncaughtException)
+multiplatform/k2/complexMatchings/expectCtorlessFinalToActualUnit.kt: run: Uncaught exception: vm.builtin.NullReference
 multiplatform/k2/defaultArguments/kt67488.kt: unsupported: the annotation class A
 multiplatform/k2/defaultArguments/superCall.kt: IllegalStateException: SUPER_CALL_WITH_DEFAULT_PARAMETERS: Super-calls with default arguments are prohibited. Specify all arguments of 'super.foo' explicitly.
 multiplatform/k2/defaultArguments/typeAlias.kt: unsupported: the annotation class Foo2
@@ -1046,7 +1046,7 @@ propertyCallableReference/varExtension.kt: unsupported: the expression RICH_PROP
 propertyCallableReference/varModule.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 publishedApi/inlineFromFriendModule.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'published'.
 ranges/contains/generated/arrayIndices.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
-ranges/contains/smartCastOnBothEndsGeneric.kt: run: Execution result: RuntimeError(UncaughtException)
+ranges/contains/smartCastOnBothEndsGeneric.kt: run: Uncaught exception: vm.builtin.ClassCast
 ranges/forInCharSequenceWithCustomIterator.kt: unsupported: overriding FUN …
 ranges/forInCharSequenceWithMultipleGetFunctions.kt: unsupported: overriding FUN …
 ranges/forInCustomCharSequence.kt: unsupported: overriding FUN …
@@ -1140,7 +1140,7 @@ strictEquals/nullableLhs.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION
 strictEquals/referenceEqualityGuard.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
 strictEquals/simple.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
 strictEquals/typealiasInBound.kt: IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
-stringTrim/stringTrim.kt: run: Execution result: RuntimeError(UncaughtException)
+stringTrim/stringTrim.kt: run: Uncaught exception: vm.runtime.AssertionError: Expected value to be true.
 strings/charSequenceGet.kt: unsupported: overriding FUN …
 strings/charSequenceSubSequence.kt: unsupported: overriding FUN …
 strings/concatGenericWithStringUpperBound.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
@@ -1155,7 +1155,7 @@ super/basicmethodSuperClass.kt: IllegalStateException: FINAL_SUPERTYPE: This typ
 super/interfaceHashCode.kt: unsupported: calling FUN …
 suppressions/suppressInvisible.kt: unsupported: a call to CONSTRUCTOR …
 suspendConversion/conversionOfInterfaceInheritingFunctionN.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Function0::invoke_bf495f239bf769f7" }
-suspendConversion/suspendConversionCompatibility.kt: run: Execution result: RuntimeError(UncaughtException)
+suspendConversion/suspendConversionCompatibility.kt: run: Uncaught exception: vm.builtin.ClassCast
 syntheticAccessors/accessorForPrivatePropertyReference.kt: IllegalStateException: DELEGATE_SPECIAL_FUNCTION_MISSING: Type 'KProperty1<A, String>' has no method 'getValue(A.B, KProperty1<*, *>)', so it cannot serve as a 
 syntheticAccessors/accessorForProtectedPropertyReference.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 syntheticAccessors/functionsWithDefaultValues/extensionFunctionCrossModuleCase.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'bar'.
@@ -1191,7 +1191,7 @@ typealias/typeAliasOnTypeAlias.kt: unsupported: the annotation class Ann
 unaryOp/call.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
 unaryOp/callNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
 unit/kt3634.kt: unsupported: a Unit property
-unit/kt56723.kt: run: Execution result: RuntimeError(UncaughtException)
+unit/kt56723.kt: run: Uncaught exception: vm.builtin.NullReference
 unit/sillyThings.kt: unsupported: a Unit field
 unitConversion/unitConversionForSubtype.kt: unsupported: implementing the function type Function0
 unitConversion/unitConversionWithSamSubtype.kt: unsupported: implementing the function type Function0
@@ -1204,7 +1204,7 @@ unsignedTypes/unsignedInStringInterpolation.kt: wrong result
 unsignedTypes/unsignedTypeValuesInsideStringTemplates.kt: wrong result
 unsignedTypes/varargsOfUnsignedTypes.kt: unsupported: the annotation class AnnoUByte
 vararg/emptyVarArg.kt: IllegalStateException: kotlin.UIntArray is no array type
-vararg/inlineClassArraysAsNamedArgumentInVararg.kt: run: Execution result: RuntimeError(UncaughtException)
+vararg/inlineClassArraysAsNamedArgumentInVararg.kt: run: Uncaught exception: vm.builtin.InvalidType
 vararg/varargInFunParam.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
 versionOverloads/basicWrappers.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 versionOverloads/callableRefDefault.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
