@@ -263,7 +263,7 @@ class VmModuleGenerator(
                 field.initializer == null -> VmGlobalStart.Zero
                 else -> VmGlobalStart.Owned(owner!!)
             }
-            globals[field.symbol] = declareGlobal(definedGlobalName(field), vmType(field.type) ?: unsupported("a Unit property"), start)
+            globals[field.symbol] = declareGlobal(definedGlobalName(field), heldType(field.type), start)
         }
         if (owner == null) return null
         members.functions.forEach { functionOwners[it.symbol] = owner }
@@ -364,7 +364,7 @@ class VmModuleGenerator(
     }
 
     internal fun globalOf(field: IrField): Int = globals.getOrPut(field.symbol) {
-        importGlobal(field, globalName(field), vmType(field.type) ?: unsupported("a Unit property"))
+        importGlobal(field, globalName(field), heldType(field.type))
             ?: unsupported("the static field ${field.name} outside the VM modules")
     }
 
@@ -375,6 +375,9 @@ class VmModuleGenerator(
     internal fun objectInstance(declaration: IrClass): Int = objectInstances.getOrPut(declaration.symbol) {
         importGlobal(declaration, instanceName(declaration), anyType) ?: unsupported("the object ${declaration.name} outside the VM modules")
     }
+
+    /** The global holding the standard library's `Unit` object. */
+    internal fun unitInstance(): Int = objectInstance(irBuiltIns.unitClass.owner)
 
     /** The global [name] of the VM module declaring [declaration], or null when no VM module does. */
     private fun importGlobal(declaration: IrDeclaration, name: String, type: VmType): Int? =
@@ -645,7 +648,10 @@ class VmModuleGenerator(
     /** The one field of [valueClass], which its box holds the value in. */
     internal fun valueClassField(valueClass: IrClass): IrField = getInlineClassBackingField(valueClass)
 
-    /** How a value of [type] is held, or null for a type with no values to hold: `Unit` and `Nothing`. */
+    /**
+     * How a value of [type] is held, or null for a type whose expressions produce no register: `Unit`, whose one value is
+     * loaded where something needs it, and `Nothing`.
+     */
     internal fun vmType(type: IrType): VmType? {
         if (type.isUnit() || type.isNothing()) return null
         if (type.isPrimitiveType()) return primitiveVmType(type.getPrimitiveType()!!)
@@ -653,6 +659,10 @@ class VmModuleGenerator(
         if (type.isString() || type.isNullableString()) return stringType
         return anyType
     }
+
+    /** How a register, field or global holds a value of [type]: as [vmType], and `Unit` as the reference it is. */
+    internal fun heldType(type: IrType): VmType =
+        vmType(type) ?: if (type.isUnit()) anyType else unsupported("a value of type ${type.render()}")
 
     /**
      * How a built-in of the runtime mirror declares [type]: as the class a reference has, which the linker checks the
@@ -689,11 +699,11 @@ class VmModuleGenerator(
 
     /**
      * Whether the standard library's [declaration] needs no class of its own in the VM: the runtime implements it, or it
-     * is one the backend compiles to something else — an array, `Unit` and `Nothing`.
+     * is one the backend compiles to something else — an array and `Nothing`.
      */
     private fun isRuntimeImplemented(declaration: IrClass): Boolean =
         runtimeClassOf(declaration) != null || arrayClassOf(declaration.defaultType) != null ||
-                declaration.symbol == irBuiltIns.unitClass || declaration.symbol == irBuiltIns.nothingClass
+                declaration.symbol == irBuiltIns.nothingClass
 
     /** The class standing for [declaration]: the runtime's, this module's, or one imported from the VM module declaring it. */
     internal fun classIndex(declaration: IrClass): Int? = runtimeClassOf(declaration) ?: classIndices[declaration.symbol] ?: vmModuleOf(declaration)?.let { owner ->
@@ -798,7 +808,7 @@ class VmModuleGenerator(
                 is IrField -> it
                 else -> null
             } ?: return@mapNotNull null
-            LayoutField(field.name.asString(), vmType(field.type) ?: unsupported("a Unit field"), field)
+            LayoutField(field.name.asString(), heldType(field.type), field)
         }
     }
 

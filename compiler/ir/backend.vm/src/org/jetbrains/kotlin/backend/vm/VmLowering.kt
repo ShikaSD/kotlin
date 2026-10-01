@@ -191,6 +191,9 @@ fun lowerForVm(context: VmLoweringContext, module: IrModuleFragment) {
     // calling an iterator; after inlining, so a loop an inlined body holds is counted too.
     val forLoops = ForLoopsLowering(context)
     module.files.forEach { forLoops.lower(it) }
+    // Before the local declarations, which then capture the `this` an entry's reference becomes.
+    val enumEntryReferences = VmEnumEntryReferencesLowering()
+    module.files.forEach { enumEntryReferences.lower(it) }
     // A local function becomes a function of its enclosing class or file taking what it captures as parameters, and a
     // local class keeps what it captures in fields; boxing what is also assigned first lets every copy reach it.
     val shared = SharedVariablesLowering(context)

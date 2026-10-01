@@ -2542,6 +2542,169 @@ class JKlibVmBackendTest {
         assertTrue(runBox(tempDir, source))
     }
 
+    /** A variable of type `Unit` holds the standard library's object, which a call returning nothing leaves to be loaded. */
+    @Test
+    fun testUnitVariableHoldsTheUnitObject(@TempDir tempDir: File) {
+        val source = """
+            fun nothing() {}
+
+            fun box(): String {
+                val unit = nothing()
+                val value: Any? = unit
+                return if (value is Unit) "OK" else "fail: " + value
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testUnitValueIsAUnit(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val value: Any = Unit
+                return if (value is Unit) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testUnitEqualsTheResultOfACall(@TempDir tempDir: File) {
+        val source = """
+            fun nothing() {}
+
+            fun sameValue(a: Any?, b: Any?) = a != null && a == b
+
+            fun box(): String = if (sameValue(nothing(), Unit)) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testUnitInAStringTemplate(@TempDir tempDir: File) {
+        val source = """
+            fun nothing() {}
+
+            fun box(): String = if ("[${'$'}{nothing()}]" == "[kotlin.Unit]") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testCastToUnitRejectsAnotherValue(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val value: Any = "text"
+                try {
+                    value as Unit
+                } catch (e: ClassCastException) {
+                    return "OK"
+                }
+                return "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** As on the JVM, whose `invoke` is erased, a function value returning Unit answers the `Unit` object to a generic caller. */
+    @Test
+    fun testFunctionValueReturningUnitAnswersTheUnitObject(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val noop: () -> Unit = {}
+                @Suppress("UNCHECKED_CAST")
+                val result = (noop as () -> Any?)()
+                return if (result is Unit) "OK" else "fail: " + result
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A Unit function overriding a generic one answers the `Unit` object, which the generic caller reads as a value. */
+    @Test
+    fun testUnitOverrideOfAGenericFunctionAnswersTheUnitObject(@TempDir tempDir: File) {
+        val source = """
+            interface Source<T> {
+                fun next(): T
+            }
+
+            class Quiet : Source<Unit> {
+                override fun next() {}
+            }
+
+            fun <T> take(source: Source<T>): Any? = source.next()
+
+            fun box(): String = if (take(Quiet()) === Unit) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testFieldOfTypeUnit(@TempDir tempDir: File) {
+        val source = """
+            class Holder {
+                val unit: Unit = Unit
+            }
+
+            fun box(): String = if (Holder().unit === Unit) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testTopLevelPropertyOfTypeUnit(@TempDir tempDir: File) {
+        val source = """
+            val unit: Unit = Unit
+
+            fun box(): String = if (unit === Unit) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A generic call answering null, typed as a primitive, is only unboxed where a primitive's slot takes it. */
+    @Test
+    fun testNullFromAGenericCallIsStoredToANullablePrimitive(@TempDir tempDir: File) {
+        val source = """
+            @Suppress("UNCHECKED_CAST")
+            fun <T> nothing(): T = null as T
+
+            fun box(): String {
+                val value: Int? = nothing<Int>()
+                return if (value == null) "OK" else "fail: " + value
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testNullFromAGenericCallInABranchIsStoredToANullablePrimitive(@TempDir tempDir: File) {
+        val source = """
+            @Suppress("UNCHECKED_CAST")
+            fun <T> nothing(): T = null as T
+
+            var flag = true
+
+            fun box(): String {
+                val value: Int? = if (flag) nothing<Int>() else 0
+                return if (value == null) "OK" else "fail: " + value
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testNullFromAGenericCallIsReturnedFromAnInlineFunctionAsANullablePrimitive(@TempDir tempDir: File) {
+        val source = """
+            @Suppress("UNCHECKED_CAST")
+            fun <T> nothing(): T = null as T
+
+            inline fun nullableInt(): Int? = nothing<Int>()
+
+            fun box(): String = if (nullableInt() == null) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
     /** An array's `iterator()` is the VM standard library's `arrayIterator`, the builtin class having no body. */
     @Test
     fun testArrayIteratorWalksTheArray(@TempDir tempDir: File) {
@@ -2869,6 +3032,29 @@ class JKlibVmBackendTest {
         assertTrue(runBox(tempDir, source))
     }
 
+    /** The entry being constructed is not stored yet, so its body reaches itself through `this`, from an inner class too. */
+    @Test
+    fun testEnumEntryReachesItselfFromAnInnerClassWhileConstructed(@TempDir tempDir: File) {
+        val source = """
+            enum class Test {
+                FOO {
+                    inner class Inner {
+                        val entry = FOO
+                    }
+
+                    val inner = Inner()
+
+                    override fun reachesItself() = inner.entry === this
+                };
+
+                abstract fun reachesItself(): Boolean
+            }
+
+            fun box(): String = if (Test.FOO.reachesItself()) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
     /** `String.Companion` has no state, so an extension of it takes nothing for it. */
     @Test
     fun testExtensionOfStringsCompanionSortsIgnoringCase(@TempDir tempDir: File) {
@@ -3024,6 +3210,74 @@ class JKlibVmBackendTest {
                 val block: suspend () -> Unit = { throw IllegalStateException("boom") }
                 block.startCoroutine(Continuation(EmptyCoroutineContext) { failure = it.exceptionOrNull() })
                 return if (failure?.message == "boom") "OK" else "fail: " + failure
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A block that resumes the coroutine and then answers `COROUTINE_SUSPENDED` suspends the one starting it, as a state machine does. */
+    @Test
+    fun testStartingACoroutineWhoseBlockResumedItSuspendsTheStarter(@TempDir tempDir: File) {
+        val source = """
+            import kotlin.coroutines.*
+            import kotlin.coroutines.intrinsics.*
+
+            suspend fun resumedHere(): String = suspendCoroutineUninterceptedOrReturn { continuation ->
+                continuation.resume("OK")
+                COROUTINE_SUSPENDED
+            }
+
+            fun box(): String {
+                val block: suspend () -> String = { resumedHere() }
+                val result = block.startCoroutineUninterceptedOrReturn(Continuation(EmptyCoroutineContext) { })
+                return if (result === COROUTINE_SUSPENDED) "OK" else "fail: " + result
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testCompletionReceivesTheResultOfACoroutineWhoseBlockResumedItEarly(@TempDir tempDir: File) {
+        val source = """
+            import kotlin.coroutines.*
+            import kotlin.coroutines.intrinsics.*
+
+            suspend fun resumedHere(): String = suspendCoroutineUninterceptedOrReturn { continuation ->
+                continuation.resume("OK")
+                COROUTINE_SUSPENDED
+            }
+
+            fun box(): String {
+                var completed: String? = null
+                val block: suspend () -> String = { resumedHere() }
+                block.startCoroutineUninterceptedOrReturn(Continuation(EmptyCoroutineContext) { completed = it.getOrThrow() })
+                return completed ?: "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testResumedCoroutineContinuesPastABlockThatResumedItEarly(@TempDir tempDir: File) {
+        val source = """
+            import kotlin.coroutines.*
+            import kotlin.coroutines.intrinsics.*
+
+            suspend fun resumedHere(): String = suspendCoroutineUninterceptedOrReturn { continuation ->
+                continuation.resume("OK")
+                COROUTINE_SUSPENDED
+            }
+
+            fun box(): String {
+                var parked: Continuation<Unit>? = null
+                var completed: String? = null
+                val block: suspend () -> String = {
+                    suspendCoroutine<Unit> { parked = it }
+                    resumedHere()
+                }
+                block.startCoroutine(Continuation(EmptyCoroutineContext) { completed = it.getOrThrow() })
+                parked!!.resume(Unit)
+                return completed ?: "fail"
             }
         """
         assertTrue(runBox(tempDir, source))

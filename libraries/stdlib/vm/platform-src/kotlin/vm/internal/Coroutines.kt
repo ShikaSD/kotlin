@@ -35,7 +35,7 @@ internal fun <T> suspendCoroutineUninterceptedOrReturnImpl(block: (Continuation<
     val blockResult = block(blockContinuation)
     if (blockResult !== COROUTINE_SUSPENDED) return blockResult as T
 
-    checkNotPendingSuspend(blockContinuation)
+    suspendAfterBlock(blockContinuation)
 
     return getBlockKotlinContinuationResult(blockContinuation)
 }
@@ -43,7 +43,7 @@ internal fun <T> suspendCoroutineUninterceptedOrReturnImpl(block: (Continuation<
 /** The continuation `block` resumes, which continues the running coroutine; see `CoroutineImplVm.pendingSuspend`. */
 private fun <T> getBlockKotlinContinuation(): CoroutineImplVm<T, T> {
     val owner = currentCoroutine<T>()
-    val blockContinuation = CoroutineImplVm<T, T>(owner.resultContinuation, owner.continuation)
+    val blockContinuation = CoroutineImplVm<T, T>(owner.resultContinuation, owner.continuation, owner)
     blockContinuation.pendingSuspend = true
     return blockContinuation
 }
@@ -55,11 +55,17 @@ private fun <T> getBlockKotlinContinuationResult(blockContinuation: CoroutineImp
     return blockContinuation.result as T
 }
 
-private fun <T> checkNotPendingSuspend(blockContinuation: CoroutineImplVm<T, T>) {
+/**
+ * Suspends for a block that answered `COROUTINE_SUSPENDED`, as a state machine does. A block that has resumed already
+ * leaves the resumption to whoever ran the coroutine; see `CoroutineImplVm.resumedBeforeSuspending`.
+ */
+private fun <T> suspendAfterBlock(blockContinuation: CoroutineImplVm<T, T>) {
     if (blockContinuation.pendingSuspend) {
         blockContinuation.pendingSuspend = false
-        vm.builtin.coroutine.suspend(COROUTINE_SUSPENDED)
+    } else {
+        currentCoroutine<T>().resumedBeforeSuspending = true
     }
+    vm.builtin.coroutine.suspend(COROUTINE_SUSPENDED)
 }
 
 @PublishedApi
@@ -94,6 +100,15 @@ private fun <T> startedBy(function: () -> Any?, completion: Continuation<T>): Co
     return coroutine
 }
 
-/** Runs [coroutine] until it suspends, answering `COROUTINE_SUSPENDED`, or returns, answering its result. */
+/**
+ * Runs [coroutine] until it suspends, answering `COROUTINE_SUSPENDED`, or returns, answering its result. One that
+ * suspended after its block had resumed it continues to its next suspension or its end, as a resumption does.
+ */
 @PublishedApi
-internal fun startCoroutineVm(coroutine: CoroutineImplVm<*, *>): Any? = vm.builtin.coroutine.resume(coroutine.continuation!!, null)
+internal fun startCoroutineVm(coroutine: CoroutineImplVm<Unit, *>): Any? {
+    val outcome = vm.builtin.coroutine.resume(coroutine.continuation!!, null)
+    if (outcome !== COROUTINE_SUSPENDED || !coroutine.resumedBeforeSuspending) return outcome
+    coroutine.resumedBeforeSuspending = false
+    coroutine.resumeWith(Result.success(Unit))
+    return COROUTINE_SUSPENDED
+}

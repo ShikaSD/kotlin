@@ -7,11 +7,13 @@ package kotlin.coroutines
 
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
 
-// Wasm's `CoroutineImplStackSwitching` over the VM's continuations.
+// Wasm's `CoroutineImplStackSwitching` over the VM's continuations. The continuation a `suspendCoroutineUninterceptedOrReturn`
+// block resumes names the coroutine it continues as its [owner].
 @SinceKotlin("1.3")
 internal class CoroutineImplVm<T, R>(
     internal val resultContinuation: Continuation<R>,
     internal var continuation: vm.builtin.Continuation? = null,
+    private val owner: CoroutineImplVm<*, R>? = null,
 ) : Continuation<T> {
 
     internal var result: Any? = null
@@ -66,10 +68,22 @@ internal class CoroutineImplVm<T, R>(
         this.intercepted_ = CompletedContinuation // just in case
     }
 
+    /**
+     * Whether the coroutine suspended for a `suspendCoroutineUninterceptedOrReturn` block that had resumed it before
+     * answering `COROUTINE_SUSPENDED`; whoever ran the coroutine then continues it. Held by the coroutine itself.
+     */
+    internal var resumedBeforeSuspending = false
+
     /** Continues the coroutine, throwing the failure at its suspension point. */
     fun doResume(): Any? {
         val e = exception
-        return if (e != null) vm.builtin.coroutine.resume_throw(continuation!!, e) else vm.builtin.coroutine.resume(continuation!!, null)
+        var outcome = if (e != null) vm.builtin.coroutine.resume_throw(continuation!!, e) else vm.builtin.coroutine.resume(continuation!!, null)
+        val coroutine = owner ?: this
+        while (outcome === COROUTINE_SUSPENDED && coroutine.resumedBeforeSuspending) {
+            coroutine.resumedBeforeSuspending = false
+            outcome = vm.builtin.coroutine.resume(continuation!!, null)
+        }
+        return outcome
     }
 }
 

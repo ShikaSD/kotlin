@@ -157,7 +157,9 @@ internal class VmFunctionGenerator private constructor(
             else -> unsupported("the body of ${irFunction.render()}")
         }
         // Only a Unit function falls off its end; any other open block here is unreachable.
-        if (current != null) terminate(VmTerminator.Return(function.symbol.returnType?.let { constant(it, 0) }))
+        if (current != null) terminate(VmTerminator.Return(function.symbol.returnType?.let { type ->
+            if (irFunction.returnType.isUnit()) unitInstance() else constant(type, 0)
+        }))
         return finish()
     }
 
@@ -329,7 +331,7 @@ internal class VmFunctionGenerator private constructor(
     private fun statement(statement: IrStatement) {
         when (statement) {
             is IrVariable -> {
-                val value = newValue(vmType(statement.type))
+                val value = newValue(gen.heldType(statement.type))
                 values[statement.symbol] = value
                 statement.initializer?.let { initializer -> emit(VmInstruction.Copy(value, operandAs(initializer, statement.type))) }
             }
@@ -338,20 +340,20 @@ internal class VmFunctionGenerator private constructor(
         }
     }
 
-    /** How a register holds [type]; `Unit` is null there, a value only where something stores it, as the variable of a generic `T`. */
-    private fun vmType(type: IrType): VmType =
-        gen.vmType(type) ?: if (type.isUnit()) gen.anyType else unsupported("a value of type ${type.render()}")
+    /** The `Unit` object, which an expression of type `Unit` leaves unloaded until something needs its value. */
+    private fun unitInstance(): VmValue = newValue(gen.anyType).also { emit(VmInstruction.LoadGlobal(it, gen.unitInstance())) }
 
-    /** The value of [expression], which must have one: a zero placeholder when the expression never completes. */
-    private fun operand(expression: IrExpression): VmValue = expression(expression) ?: constant(vmType(expression.type), 0)
+    /** The value of an [expression] that produced none: the `Unit` object, or a zero placeholder when it never completes. */
+    private fun absentValue(expression: IrExpression, held: VmType): VmValue =
+        if (expression.type.isUnit()) unitInstance() else constant(held, 0)
 
-    /**
-     * The value of [expression] as a slot of [type] holds it, boxed or unboxed as the two differ; a zero of the slot's
-     * type when the expression has no value, being `Unit` or never completing.
-     */
+    /** The value of [expression], which must have one. */
+    private fun operand(expression: IrExpression): VmValue = expression(expression) ?: absentValue(expression, gen.heldType(expression.type))
+
+    /** The value of [expression] as a slot of [type] holds it, boxed or unboxed as the two differ. */
     private fun operandAs(expression: IrExpression, type: IrType, slot: VmType? = gen.vmType(type)): VmValue {
-        val held = slot ?: vmType(type)
-        val value = expression(expression) ?: return constant(held, 0)
+        val held = slot ?: gen.heldType(type)
+        val value = rawExpression(expression) ?: return absentValue(expression, held)
         return coerce(value, expression.type, held, type)
     }
 
@@ -398,7 +400,7 @@ internal class VmFunctionGenerator private constructor(
             val boxClass = gen.testedClass(valueClass.defaultType) ?: unsupported("unboxing ${valueClass.name}")
             val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.RefCast(it, value, boxClass)) }
             val field = gen.valueClassField(valueClass)
-            return newValue(vmType(field.type)).also { emit(VmInstruction.LoadField(it, box, gen.fieldIndex(field))) }
+            return newValue(gen.heldType(field.type)).also { emit(VmInstruction.LoadField(it, box, gen.fieldIndex(field))) }
         }
         val kind = type.getPrimitiveType() ?: error("Unboxing into the non-primitive ${type.render()}")
         val boxClass = gen.boxClass(kind)
@@ -470,7 +472,7 @@ internal class VmFunctionGenerator private constructor(
         is IrGetField -> {
             val field = expression.symbol.owner
             val receiver = expression.receiver
-            val dst = newValue(vmType(field.type))
+            val dst = newValue(gen.heldType(field.type))
             if (receiver == null) {
                 emit(VmInstruction.LoadGlobal(dst, gen.globalOf(field)))
             } else if (field.parentClassOrNull?.isInlinedValueClass() == true && gen.vmType(receiver.type) !is VmType.Ref) {
@@ -519,11 +521,6 @@ internal class VmFunctionGenerator private constructor(
                 returnType == null -> {
                     expression(expression.value)
                     null
-                }
-                // A lambda returning Unit still answers a value, null; see [functionValue].
-                gen.vmType(irFunction.returnType) == null -> {
-                    expression(expression.value)
-                    constant(returnType, 0)
                 }
                 else -> operandAs(expression.value, irFunction.returnType, returnType)
             }
@@ -654,7 +651,7 @@ internal class VmFunctionGenerator private constructor(
         if (expression.kind == IrConstKind.String) {
             return newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, expression.value as String)) }
         }
-        val type = vmType(expression.type)
+        val type = gen.heldType(expression.type)
         val bits = when (expression.kind) {
             IrConstKind.Null -> 0L
             IrConstKind.Boolean -> if (expression.value as Boolean) 1L else 0L
@@ -713,7 +710,7 @@ internal class VmFunctionGenerator private constructor(
         if (result == null) {
             expression(expression)
         } else {
-            expression(expression)?.let { emit(VmInstruction.Copy(result, coerce(it, expression.type, result.vmType(), type))) }
+            rawExpression(expression)?.let { emit(VmInstruction.Copy(result, coerce(it, expression.type, result.vmType(), type))) }
         }
     }
 
@@ -775,8 +772,6 @@ internal class VmFunctionGenerator private constructor(
 
     /** `as`: the VM's cast lets null through, so a cast to a non-null type checks for it first. */
     private fun cast(value: VmValue, type: IrType): VmValue {
-        // A `Unit` value is null, so nothing tells one from another.
-        if (type.makeNotNull().isUnit()) return value
         val tested = gen.testedClass(type)
         if (!type.isNullable()) throwIfNull(value)
         if (tested == null) return value
@@ -930,7 +925,7 @@ internal class VmFunctionGenerator private constructor(
      * A lambda or a function reference as a function value: its `invoke` becomes a function of its own, taking the
      * variables it captures, then the values bound at creation, which the value holds, then the arguments, which a
      * call passes. As on the JVM, whose `invoke` is erased, the arguments and the result are references, so a generic
-     * caller and one knowing the types pass the same; a lambda returning Unit answers null.
+     * caller and one knowing the types pass the same; a lambda returning Unit answers the `Unit` object.
      */
     private fun functionValue(reference: IrRichFunctionReference): VmValue {
         val invoke = reference.invokeFunction
@@ -939,7 +934,7 @@ internal class VmFunctionGenerator private constructor(
         val boundCount = reference.boundValues.size
         val bound = reference.boundValues.mapIndexed { index, value -> operandAs(value, invoke.parameters[index].type) }
         val paramTypes = captures.map { it.vmType() } + invoke.parameters.mapIndexed { index, parameter ->
-            if (index < boundCount) vmType(parameter.type) else gen.anyType
+            if (index < boundCount) gen.heldType(parameter.type) else gen.anyType
         }
         val symbol = VmFunctionSymbol(gen.uniqueFunctionName("${function.symbol.name}\$lambda"), paramTypes, gen.anyType)
         gen.addFunction(VmFunctionGenerator(gen, invoke, symbol, owner = null).generateLambda(captured))
@@ -1278,7 +1273,7 @@ internal class VmFunctionGenerator private constructor(
         return when (callee.name.asString()) {
             "get" -> {
                 val array = operand(args[0])
-                Intrinsic(newValue(vmType(callee.returnType)).also { emit(VmInstruction.ArrayGet(it, array, operand(args[1]))) })
+                Intrinsic(newValue(gen.heldType(callee.returnType)).also { emit(VmInstruction.ArrayGet(it, array, operand(args[1]))) })
             }
             "set" -> {
                 val array = operand(args[0])
