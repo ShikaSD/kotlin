@@ -1,5 +1,5 @@
 # Box tests under compiler/testData/codegen/box expected to fail on the VM; see JKlibVmExpectedFailures.
-# 1216 failures; the most common reasons:
+# 1215 failures; the most common reasons:
 #     261  unsupported: the expression RICH_PROPERTY_REFERENCE …
 #      63  run: Execution result: RuntimeError(UncaughtException)
 #      49  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
@@ -1056,7 +1056,6 @@ ranges/forInFloatRangeWithCustomIterator.kt: link: Failed to link: UnresolvedImp
 ranges/forInIndices/kt13241_Array.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
 ranges/forInIndices/kt43159_ArrayUpperBound.kt: IllegalStateException: UPPER_BOUND_CANNOT_BE_ARRAY: Upper bound of type parameter cannot be an array.
 ranges/safeCallRangeTo.kt: unsupported: the expression CLASS_REFERENCE …
-ranges/unsigned/kt67383.kt: timeout: execute
 reflection/classLiterals/lambdaClass.kt: unsupported: the expression GET_CLASS …
 reflection/classes/localClassSimpleName.kt: unsupported: the expression CLASS_REFERENCE …
 reflection/classes/qualifiedName.kt: unsupported: the annotation class MyAnnotation

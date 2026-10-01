@@ -73,7 +73,7 @@ public actual fun String(chars: CharArray): String =
 public actual fun String(chars: CharArray, offset: Int, length: Int): String {
     if (offset < 0 || length < 0 || offset + length > chars.size)
         throw IndexOutOfBoundsException()
-    return stringFromChars(chars, offset, offset + length)
+    return vm.builtin.string.from_chars(chars, offset, offset + length)
 }
 
 /**
@@ -81,7 +81,7 @@ public actual fun String(chars: CharArray, offset: Int, length: Int): String {
  */
 @SinceKotlin("1.4")
 public actual fun CharArray.concatToString(): String {
-    return stringFromChars(this, 0, size)
+    return vm.builtin.string.from_chars(this, 0, size)
 }
 
 /**
@@ -97,7 +97,7 @@ public actual fun CharArray.concatToString(): String {
 @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
 public actual fun CharArray.concatToString(startIndex: Int = 0, endIndex: Int = this.size): String {
     AbstractList.checkBoundsIndexes(startIndex, endIndex, this.size)
-    return stringFromChars(this, startIndex, endIndex)
+    return vm.builtin.string.from_chars(this, startIndex, endIndex)
 }
 
 /**
@@ -106,7 +106,7 @@ public actual fun CharArray.concatToString(startIndex: Int = 0, endIndex: Int = 
 @SinceKotlin("1.4")
 public actual fun String.toCharArray(): CharArray {
     val newArray = CharArray(length)
-    stringGetChars(this, 0, length, newArray, 0)
+    vm.builtin.string.get_chars(this, 0, length, newArray, 0)
     return newArray
 }
 
@@ -124,7 +124,7 @@ public actual fun String.toCharArray(): CharArray {
 public actual fun String.toCharArray(startIndex: Int = 0, endIndex: Int = this.length): CharArray {
     AbstractList.checkBoundsIndexes(startIndex, endIndex, length)
     val newArray = CharArray(endIndex - startIndex)
-    stringGetChars(this, startIndex, endIndex, newArray, 0)
+    vm.builtin.string.get_chars(this, startIndex, endIndex, newArray, 0)
     return newArray
 }
 
@@ -152,7 +152,7 @@ public actual fun String.toCharArray(
     AbstractList.checkBoundsIndexes(startIndex, endIndex, length)
     val rangeSize = endIndex - startIndex
     AbstractList.checkBoundsIndexes(destinationOffset, destinationOffset + rangeSize, destination.size)
-    stringGetChars(this, startIndex, endIndex, destination, destinationOffset)
+    vm.builtin.string.get_chars(this, startIndex, endIndex, destination, destinationOffset)
     return destination
 }
 

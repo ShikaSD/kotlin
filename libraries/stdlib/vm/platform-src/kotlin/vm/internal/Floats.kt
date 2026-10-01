@@ -5,18 +5,26 @@
 
 package kotlin.vm.internal
 
-// The float operations Wasm's `kotlin.math` takes from Wasm instructions, which the build points here instead: the
-// externals are the VM's `vm.builtin.f64.*` and `vm.builtin.f32.*` built-ins, and the rest follow the Wasm instructions.
+// The float operations Wasm's `kotlin.math` takes from Wasm instructions, which the build points here instead: the VM's
+// `vm.builtin.f64.*` and `vm.builtin.f32.*` built-ins, and the Wasm instructions' semantics for the rest.
 
-internal external fun f64_sqrt(x: Double): Double
-internal external fun f64_ceil(x: Double): Double
-internal external fun f64_floor(x: Double): Double
-internal external fun f64_truncate(x: Double): Double
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun f64_sqrt(x: Double): Double = vm.builtin.f64.sqrt(x)
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun f64_ceil(x: Double): Double = vm.builtin.f64.ceil(x)
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun f64_floor(x: Double): Double = vm.builtin.f64.floor(x)
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun f64_truncate(x: Double): Double = vm.builtin.f64.trunc(x)
 
-internal external fun f32_sqrt(x: Float): Float
-internal external fun f32_ceil(x: Float): Float
-internal external fun f32_floor(x: Float): Float
-internal external fun f32_truncate(x: Float): Float
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun f32_sqrt(x: Float): Float = vm.builtin.f32.sqrt(x)
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun f32_ceil(x: Float): Float = vm.builtin.f32.ceil(x)
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun f32_floor(x: Float): Float = vm.builtin.f32.floor(x)
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun f32_truncate(x: Float): Float = vm.builtin.f32.trunc(x)
 
 internal fun f64_abs(x: Double): Double = Double.fromBits(x.toRawBits() and Long.MAX_VALUE)
 

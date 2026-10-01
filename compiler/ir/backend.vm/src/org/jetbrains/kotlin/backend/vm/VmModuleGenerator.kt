@@ -48,12 +48,19 @@ const val VM_RUNTIME_MODULE = "vm.runtime"
  * reaches the VM.
  */
 private val RUNTIME_TYPES = mapOf(
-    "kotlin.vm.internal.VmContinuation" to "vm.builtin.Continuation",
     "kotlin.Number" to "vm.runtime.Number",
     "kotlin.Comparable" to "vm.runtime.Comparable",
     "kotlin.CharSequence" to "vm.runtime.CharSequence",
     "java.lang.StringBuilder" to "vm.runtime.StringBuilder",
 )
+
+/**
+ * Whether [declaration] is part of the VM standard library's mirror of the runtime, `platform-src/vm`: an external
+ * declaration in a `vm` package, which is the runtime's declaration of the same qualified name.
+ */
+internal fun isRuntimeMirror(declaration: IrDeclarationWithName): Boolean =
+    (declaration as? IrPossiblyExternalDeclaration)?.isExternal == true &&
+            declaration.fqNameWhenAvailable?.pathSegments()?.firstOrNull()?.asString() == "vm"
 
 /** Whether [this] is a function type, suspending or not: every function value is the same runtime object. */
 internal fun IrType.isFunctionValueType(): Boolean = isFunctionOrKFunction() || isSuspendFunctionOrKFunction()
@@ -150,10 +157,13 @@ class VmModuleGenerator(
             }
             functions += members.functions
         }
+        // Imported whether called or not, so every link checks the whole mirror against the runtime's signatures.
+        functions.filter(::isRuntimeMirror).forEach(::staticTarget)
         functions.retainAll { function ->
             val isAbstract = function is IrSimpleFunction && function.modality == Modality.ABSTRACT
             when {
                 function.body != null || isAbstract -> true
+                isRuntimeMirror(function) -> false
                 isStdlib -> false
                 else -> unsupported("the declaration ${function.render()}")
             }
@@ -525,9 +535,6 @@ class VmModuleGenerator(
 
     internal val hashCodeSelector: Int get() = runtimeSelector("hashCode")
 
-    /** The runtime's `vm.builtin.random.seed`, which the VM stdlib's `kotlin.random.randomSeed` is. */
-    internal val randomSeed: VmFunctionSymbol by lazy { runtimeFunction("vm.builtin.random.seed", emptyList(), VmType.I64) }
-
     /** The standard library's `arrayIterator` overload for arrays of [arrayClass], which an array's `iterator()` calls. */
     @OptIn(InternalSymbolFinderAPI::class)
     internal fun arrayIterator(arrayClass: IrClassSymbol): IrSimpleFunction = arrayIterators.getOrPut(arrayClass) {
@@ -571,41 +578,6 @@ class VmModuleGenerator(
                         until.parameters[1].type.classOrNull == to.classOrNull
             }
             ?: unsupported("${from.render()}.rangeUntil(${to.render()}) without the standard library's until")
-
-    /** The runtime's `vm.builtin.array.copy`, which the VM stdlib's `kotlin.collections.copyArray` is. */
-    internal val arrayCopy: VmFunctionSymbol by lazy {
-        runtimeFunction("vm.builtin.array.copy", listOf(anyType, VmType.I64, anyType, VmType.I64, VmType.I64), null)
-    }
-
-    /** The runtime's `vm.builtin.string.from_chars`, which the VM stdlib's `kotlin.text.stringFromChars` is. */
-    internal val stringFromChars: VmFunctionSymbol by lazy {
-        runtimeFunction("vm.builtin.string.from_chars", listOf(charArrayType, VmType.I64, VmType.I64), stringType)
-    }
-
-    /** The runtime's `vm.builtin.string.get_chars`, which the VM stdlib's `kotlin.text.stringGetChars` is. */
-    internal val stringGetChars: VmFunctionSymbol by lazy {
-        runtimeFunction("vm.builtin.string.get_chars", listOf(stringType, VmType.I64, VmType.I64, charArrayType, VmType.I64), null)
-    }
-
-    private val charArrayType: VmType get() = VmType.Ref(arrayClass(VmType.U16))
-
-    /** The runtime's float built-in [name], taking and answering a [type]. */
-    internal fun floatBuiltin(name: String, type: VmType): VmFunctionSymbol = runtimeFunction(name, listOf(type), type)
-
-    private val functionType: VmType get() = VmType.Ref(runtimeClass("vm.builtin.Function"))
-    private val continuationType: VmType get() = VmType.Ref(runtimeClass("vm.builtin.Continuation"))
-
-    /** The runtime's coroutine built-in [name]; see wip/COROUTINES_DESIGN.md. */
-    internal fun coroutineBuiltin(name: String): VmFunctionSymbol = when (name) {
-        "vm.builtin.coroutine.new" -> runtimeFunction(name, listOf(functionType, anyType), continuationType)
-        "vm.builtin.coroutine.resume", "vm.builtin.coroutine.resume_throw" -> runtimeFunction(name, listOf(continuationType, anyType), anyType)
-        "vm.builtin.coroutine.suspend" -> runtimeFunction(name, listOf(anyType), anyType)
-        "vm.builtin.coroutine.current" -> runtimeFunction(name, emptyList(), anyType)
-        else -> error("The runtime declares no coroutine built-in $name")
-    }
-
-    /** The runtime's `vm.builtin.io.print`, which the VM stdlib's `kotlin.io.printString` is. */
-    internal val print: VmFunctionSymbol by lazy { runtimeFunction("vm.builtin.io.print", listOf(stringType), null) }
 
     /** A function of the runtime's `java.lang.StringBuilder`, which Kotlin's `StringBuilder` is an alias of. */
     internal fun stringBuilderFunction(name: String, params: List<VmType>, returnType: VmType?): VmFunctionSymbol =
@@ -682,12 +654,23 @@ class VmModuleGenerator(
         return anyType
     }
 
+    /**
+     * How a built-in of the runtime mirror declares [type]: as the class a reference has, which the linker checks the
+     * import against, where a register holds any reference as `Any`.
+     */
+    private fun mirrorType(type: IrType): VmType? {
+        val vmType = vmType(type)
+        if (vmType != anyType) return vmType
+        val index = arrayClassOf(type) ?: type.classOrNull?.owner?.let(::classIndex) ?: return vmType
+        return VmType.Ref(index)
+    }
+
     // Classes.
 
     /**
      * The runtime class implementing [declaration], a class of the standard library the runtime declares in its stead:
-     * `Any`, `String`, a primitive's box, and the classes [RUNTIME_TYPES] and [RUNTIME_THROWABLES] list. Null for any
-     * other class.
+     * `Any`, `String`, a primitive's box, the classes [RUNTIME_TYPES] and [RUNTIME_THROWABLES] list, and those of the
+     * runtime mirror; see [isRuntimeMirror]. Null for any other class.
      */
     private fun runtimeClassOf(declaration: IrClass): Int? {
         val fqName = declaration.fqNameWhenAvailable?.asString()
@@ -699,6 +682,7 @@ class VmModuleGenerator(
             declaration.defaultType.isPrimitiveType() -> boxClass(declaration.defaultType.getPrimitiveType()!!)
             // Every function value is an instance of `vm.builtin.Function`, whatever its arity; see wip/FUNCTION_VALUES_DESIGN.md.
             fqName == "kotlin.Function" || declaration.defaultType.isFunctionValueType() -> runtimeClass("vm.builtin.Function")
+            isRuntimeMirror(declaration) -> runtimeClass(fqName!!)
             else -> RUNTIME_TYPES[fqName]?.let(::runtimeClass) ?: runtimeThrowable(declaration)
         }
     }
@@ -1054,7 +1038,9 @@ class VmModuleGenerator(
     }
 
     internal fun staticTarget(callee: IrFunction): CallTarget {
-        val symbol = if (callee.symbol in definedFunctions) {
+        val symbol = if (isRuntimeMirror(callee)) {
+            runtimeFunction(callee.fqNameWhenAvailable!!.asString(), callee.parameters.map { mirrorType(it.type)!! }, mirrorType(callee.returnType))
+        } else if (callee.symbol in definedFunctions) {
             functionSymbol(callee)
         } else {
             importFunction(callee) ?: unsupported("a call to ${callee.render()} outside the VM modules")

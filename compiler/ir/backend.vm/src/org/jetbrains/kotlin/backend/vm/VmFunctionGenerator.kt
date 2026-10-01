@@ -30,18 +30,6 @@ import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-/** The externals of the VM's `kotlin.vm.internal` that are its coroutine built-ins, by the built-in's name. */
-private val COROUTINE_BUILTINS = listOf("new", "resume", "resume_throw", "suspend", "current").associate { name ->
-    "kotlin.vm.internal.coroutine_$name" to "vm.builtin.coroutine.$name"
-}
-
-/** The externals of the VM's `kotlin.vm.internal` that are its float built-ins, by the built-in's name. */
-private val FLOAT_BUILTINS = listOf("f64", "f32").flatMap { type ->
-    listOf("sqrt" to "sqrt", "ceil" to "ceil", "floor" to "floor", "truncate" to "trunc").map { names ->
-        "kotlin.vm.internal.${type}_${names.first}" to "vm.builtin.$type.${names.second}"
-    }
-}.toMap()
-
 /**
  * Generates one function's body. A Kotlin variable is one VM value assigned as often as the variable is, since VM values
  * are registers rather than SSA values.
@@ -1262,35 +1250,6 @@ internal class VmFunctionGenerator private constructor(
                     "kotlin.fromBits" -> {
                         val type = if (call.type.isFloat()) VmType.F32 else VmType.F64
                         return Intrinsic(newValue(type).also { emit(VmInstruction.Copy(it, operand(args[1]))) })
-                    }
-                    "kotlin.random.randomSeed" -> return Intrinsic(newValue(VmType.I64).also {
-                        emit(VmInstruction.Call(it, VmCallee.Static(gen.randomSeed), emptyList()))
-                    })
-                    in FLOAT_BUILTINS -> {
-                        val type = if (callee.returnType.isFloat()) VmType.F32 else VmType.F64
-                        val builtin = gen.floatBuiltin(FLOAT_BUILTINS.getValue(callee.fqNameWhenAvailable!!.asString()), type)
-                        return Intrinsic(newValue(type).also { emit(VmInstruction.Call(it, VmCallee.Static(builtin), listOf(operand(args[0])))) })
-                    }
-                    "kotlin.text.stringFromChars" -> return Intrinsic(newValue(gen.stringType).also {
-                        emit(VmInstruction.Call(it, VmCallee.Static(gen.stringFromChars), args.map(::operand)))
-                    })
-                    "kotlin.text.stringGetChars" -> {
-                        emit(VmInstruction.Call(null, VmCallee.Static(gen.stringGetChars), args.map(::operand)))
-                        return Intrinsic(null)
-                    }
-                    "kotlin.collections.copyArray" -> {
-                        emit(VmInstruction.Call(null, VmCallee.Static(gen.arrayCopy), args.map(::operand)))
-                        return Intrinsic(null)
-                    }
-                    in COROUTINE_BUILTINS -> {
-                        val builtin = gen.coroutineBuiltin(COROUTINE_BUILTINS.getValue(callee.fqNameWhenAvailable!!.asString()))
-                        return Intrinsic(newValue(builtin.returnType!!).also {
-                            emit(VmInstruction.Call(it, VmCallee.Static(builtin), args.map(::operand)))
-                        })
-                    }
-                    "kotlin.io.printString" -> {
-                        emit(VmInstruction.Call(null, VmCallee.Static(gen.print), listOf(operand(args[0]))))
-                        return Intrinsic(null)
                     }
                 }
                 val owner = callee.parentClassOrNull?.defaultType

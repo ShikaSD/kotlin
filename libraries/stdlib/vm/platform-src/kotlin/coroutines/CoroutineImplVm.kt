@@ -6,15 +6,12 @@
 package kotlin.coroutines
 
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
-import kotlin.vm.internal.VmContinuation
-import kotlin.vm.internal.coroutine_resume
-import kotlin.vm.internal.coroutine_resume_throw
 
 // Wasm's `CoroutineImplStackSwitching` over the VM's continuations.
 @SinceKotlin("1.3")
 internal class CoroutineImplVm<T, R>(
     internal val resultContinuation: Continuation<R>,
-    internal var continuation: VmContinuation? = null,
+    internal var continuation: vm.builtin.Continuation? = null,
 ) : Continuation<T> {
 
     internal var result: Any? = null
@@ -72,7 +69,7 @@ internal class CoroutineImplVm<T, R>(
     /** Continues the coroutine, throwing the failure at its suspension point. */
     fun doResume(): Any? {
         val e = exception
-        return if (e != null) coroutine_resume_throw(continuation!!, e) else coroutine_resume(continuation!!, null)
+        return if (e != null) vm.builtin.coroutine.resume_throw(continuation!!, e) else vm.builtin.coroutine.resume(continuation!!, null)
     }
 }
 

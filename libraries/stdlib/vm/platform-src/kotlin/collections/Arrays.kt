@@ -25,8 +25,7 @@ internal actual fun <E> Array<E>.resetAt(index: Int) {
     (this as Array<Any?>)[index] = null
 }
 
-/**
- * Copies [count] elements of the array [from], from [fromIndex] on, into the array [to] at [toIndex], as
- * `System.arraycopy` does. The VM backend compiles it to the runtime's `vm.builtin.array.copy`.
- */
-internal external fun copyArray(from: Any, fromIndex: Int, to: Any, toIndex: Int, count: Int)
+/** Copies [count] elements of the array [from], from [fromIndex] on, into the array [to] at [toIndex]. */
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun copyArray(from: Any, fromIndex: Int, to: Any, toIndex: Int, count: Int) =
+    vm.builtin.array.copy(from, fromIndex, to, toIndex, count)

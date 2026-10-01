@@ -6,15 +6,15 @@
 package kotlin.io
 
 public actual fun println() {
-    printString("\n")
+    vm.builtin.io.print("\n")
 }
 
 public actual fun println(message: Any?) {
-    printString("$message\n")
+    vm.builtin.io.print("$message\n")
 }
 
 public actual fun print(message: Any?) {
-    printString("$message")
+    vm.builtin.io.print("$message")
 }
 
 /** The VM has no input to read from yet. */
@@ -24,6 +24,3 @@ public actual fun readln(): String = throw ReadAfterEOFException("EOF has alread
 /** The VM has no input to read from yet. */
 @SinceKotlin("1.6")
 public actual fun readlnOrNull(): String? = null
-
-/** Writes [message] to the VM's output, which the VM backend compiles to the runtime's `vm.builtin.io.print`. */
-private external fun printString(message: String)

@@ -13,19 +13,9 @@ import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
 // Wasm's stack-switching coroutine library over the VM's `vm.builtin.coroutine.*` built-ins. A suspend function takes no
 // continuation; the running coroutine's completion is reached through the owner the VM holds for it, a `CoroutineImplVm`.
 
-/** The VM's `vm.builtin.Continuation`: a coroutine's execution. */
-@Suppress("WRONG_MODIFIER_TARGET")
-internal external class VmContinuation
-
-internal external fun coroutine_new(f: () -> Any?, owner: Any): VmContinuation
-internal external fun coroutine_resume(continuation: VmContinuation, value: Any?): Any?
-internal external fun coroutine_resume_throw(continuation: VmContinuation, exception: Throwable): Any?
-internal external fun coroutine_suspend(value: Any?): Any?
-internal external fun coroutine_current(): Any?
-
 /** The coroutine the innermost running continuation belongs to. */
 @Suppress("UNCHECKED_CAST")
-internal fun <T> currentCoroutine(): CoroutineImplVm<*, T> = coroutine_current() as CoroutineImplVm<*, T>
+internal fun <T> currentCoroutine(): CoroutineImplVm<*, T> = vm.builtin.coroutine.current() as CoroutineImplVm<*, T>
 
 @PublishedApi
 internal inline fun <T> suspendCoroutineUninterceptedOrReturn(noinline block: (Continuation<T>) -> Any?): T =
@@ -68,7 +58,7 @@ private fun <T> getBlockKotlinContinuationResult(blockContinuation: CoroutineImp
 private fun <T> checkNotPendingSuspend(blockContinuation: CoroutineImplVm<T, T>) {
     if (blockContinuation.pendingSuspend) {
         blockContinuation.pendingSuspend = false
-        coroutine_suspend(COROUTINE_SUSPENDED)
+        vm.builtin.coroutine.suspend(COROUTINE_SUSPENDED)
     }
 }
 
@@ -100,10 +90,10 @@ internal fun <R, P, T> createCoroutineVm2(
 
 private fun <T> startedBy(function: () -> Any?, completion: Continuation<T>): CoroutineImplVm<Unit, T> {
     val coroutine = CoroutineImplVm<Unit, T>(completion)
-    coroutine.continuation = coroutine_new(function, coroutine)
+    coroutine.continuation = vm.builtin.coroutine.new(function, coroutine)
     return coroutine
 }
 
 /** Runs [coroutine] until it suspends, answering `COROUTINE_SUSPENDED`, or returns, answering its result. */
 @PublishedApi
-internal fun startCoroutineVm(coroutine: CoroutineImplVm<*, *>): Any? = coroutine_resume(coroutine.continuation!!, null)
+internal fun startCoroutineVm(coroutine: CoroutineImplVm<*, *>): Any? = vm.builtin.coroutine.resume(coroutine.continuation!!, null)
