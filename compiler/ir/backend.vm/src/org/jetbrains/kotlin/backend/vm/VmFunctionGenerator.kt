@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.backend.vm
 
 import org.jetbrains.kotlin.backend.vm.vmir.*
 import org.jetbrains.kotlin.builtins.PrimitiveType
+import org.jetbrains.kotlin.builtins.UnsignedType
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
@@ -785,14 +786,14 @@ internal class VmFunctionGenerator private constructor(
     private fun concatenation(expression: IrStringConcatenation): VmValue {
         // Only constants: one literal, which is interned, as the JVM's compilers fold such a concatenation.
         if (expression.arguments.all { it is IrConst }) {
-            val text = expression.arguments.joinToString("") { (it as IrConst).value.toString() }
+            val text = expression.arguments.joinToString("") { text(it as IrConst) }
             return newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, text)) }
         }
         var result: VmValue? = null
         for (argument in expression.arguments) {
             if (argument is IrConst && argument.kind != IrConstKind.Null) {
                 val text = newValue(gen.stringType)
-                emit(VmInstruction.StringConstant(text, argument.value.toString()))
+                emit(VmInstruction.StringConstant(text, text(argument)))
                 result = result?.let { plus(it, text) } ?: text
                 continue
             }
@@ -800,6 +801,18 @@ internal class VmFunctionGenerator private constructor(
             result = plus(start, reference(argument))
         }
         return result ?: newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, "")) }
+    }
+
+    /** A constant's text: an unsigned literal is held as a signed value of the same width, and reads as its unsigned one. */
+    private fun text(constant: IrConst): String {
+        val bits = (constant.value as? Number)?.toLong() ?: return constant.value.toString()
+        return when (constant.type.getUnsignedType()) {
+            UnsignedType.UBYTE -> (bits and 0xFF).toString()
+            UnsignedType.USHORT -> (bits and 0xFFFF).toString()
+            UnsignedType.UINT -> (bits and 0xFFFF_FFFFL).toString()
+            UnsignedType.ULONG -> bits.toULong().toString()
+            null -> constant.value.toString()
+        }
     }
 
     private fun plus(string: VmValue, other: VmValue): VmValue =
@@ -1345,7 +1358,7 @@ internal class VmFunctionGenerator private constructor(
         val slot = gen.arrayElementSlot(arrayType)
         val elements = expression.elements.map { element ->
             when (element) {
-                is IrSpreadElement -> VarargElement(operand(element.expression), isSpread = true)
+                is IrSpreadElement -> VarargElement(spreadArray(element.expression, valueClass), isSpread = true)
                 is IrExpression -> VarargElement(operandAs(element, expression.varargElementType, slot), isSpread = false)
                 else -> unsupported("the vararg element ${element.render()}")
             }
@@ -1367,6 +1380,16 @@ internal class VmFunctionGenerator private constructor(
             }
         }
         return if (valueClass == null || valueClass.isInlinedValueClass()) array else valueClassBox(valueClass, array)
+    }
+
+    /** The array a spread [expression] copies from: itself, or the storage of the [valueClass] box it is. */
+    private fun spreadArray(expression: IrExpression, valueClass: IrClass?): VmValue {
+        val value = operand(expression)
+        if (valueClass == null || valueClass.isInlinedValueClass()) return value
+        val boxClass = gen.testedClass(valueClass.defaultType) ?: unsupported("spreading ${valueClass.name}")
+        val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.RefCast(it, value, boxClass)) }
+        val field = gen.valueClassField(valueClass)
+        return newValue(gen.heldType(field.type)).also { emit(VmInstruction.LoadField(it, box, gen.fieldIndex(field))) }
     }
 
     /** A vararg element's value: the element, or the array a spread element copies from. */
@@ -1430,7 +1453,17 @@ internal class VmFunctionGenerator private constructor(
         val implementation = callee.resolveFakeOverride() ?: return null
         if (with(gen) { implementation.parentClassOrNull?.isEnumBase() } != true) return null
         return when (implementation.name.asString()) {
-            "<get-name>" -> newValue(gen.stringType).also { emit(VmInstruction.LoadField(it, operand(args[0]), ENUM_NAME_FIELD)) }
+            "<get-name>" -> {
+                // The name of a literal entry is a constant, as the JVM folds it: reading it does not initialize the enum.
+                val entry = (args[0] as? IrGetEnumValue)?.symbol?.owner
+                newValue(gen.stringType).also {
+                    if (entry != null) {
+                        emit(VmInstruction.StringConstant(it, entry.name.asString()))
+                    } else {
+                        emit(VmInstruction.LoadField(it, operand(args[0]), ENUM_NAME_FIELD))
+                    }
+                }
+            }
             "<get-ordinal>" -> newValue(VmType.I64).also { emit(VmInstruction.LoadField(it, operand(args[0]), ENUM_ORDINAL_FIELD)) }
             "compareTo" -> {
                 val lhs = operand(args[0])
@@ -1508,16 +1541,19 @@ internal class VmFunctionGenerator private constructor(
         return type.getPrimitiveType()!!
     }
 
-    /** `==`: the values' equality for primitives, and `equals` behind a null check for references. */
+    /**
+     * `==`: the values' equality for primitives, and `equals` behind a null check for references. A floating value
+     * equals as `Double.equals` says, by bits: NaN equals itself, and `0.0` is not `-0.0`.
+     */
     private fun equals(lhsExpression: IrExpression, rhsExpression: IrExpression): VmValue {
         val lhsType = lhsExpression.type
         val rhsType = rhsExpression.type
-        // Two doubles, statically, are equal as IEEE 754 says, boxed or not; a box of `Any` type answers `equals`.
         if (lhsType.isPrimitiveType() && rhsType.isPrimitiveType()) {
-            return binary(VmBinaryOp.EQ, operand(lhsExpression), operand(rhsExpression))
-        }
-        if (lhsType.getPrimitiveType() == PrimitiveType.DOUBLE && rhsType.getPrimitiveType() == PrimitiveType.DOUBLE) {
-            return nullableIeeeEquals(reference(lhsExpression), reference(rhsExpression), lhsType)
+            val lhs = operand(lhsExpression)
+            val rhs = operand(rhsExpression)
+            val type = lhsType.getPrimitiveType()!!
+            if (!type.isFloating()) return binary(VmBinaryOp.EQ, lhs, rhs)
+            return binary(VmBinaryOp.EQ, canonicalBits(lhs, type), canonicalBits(rhs, type))
         }
         if (rhsExpression.isNullConstant()) return isNull(reference(lhsExpression))
         if (lhsExpression.isNullConstant()) return isNull(reference(rhsExpression))
@@ -1603,7 +1639,7 @@ internal class VmFunctionGenerator private constructor(
             // A new `IntRange`, `LongRange` or `CharRange` from its constructor.
             "rangeTo" -> {
                 val range = callee.returnType.classOrNull?.owner?.primaryConstructor ?: unsupported("${receiverType.typeName}.$name")
-                construct(range, listOf(receiver, operandAs(args[1], range.parameters[1].type)))
+                construct(range, listOf(receiver, operandAs(args[1], callee.parameters[1].type)))
             }
             // `..<`, which the standard library's `until` of the same operands computes.
             "rangeUntil" -> {

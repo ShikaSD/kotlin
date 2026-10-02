@@ -3310,4 +3310,144 @@ class JKlibVmBackendTest {
         """
         assertTrue(runBox(tempDir, source))
     }
+
+    /** A data class compares its `Double` components as `Double.equals` does, under which NaN equals itself. */
+    @Test
+    fun testDataClassOfDoublesEqualsNaN(@TempDir tempDir: File) {
+        val source = """
+            data class A(val x: Double)
+
+            fun box(): String {
+                val zero = 0.0
+                return if (A(zero / zero) == A(zero / zero)) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A data class compares its `Double` components as `Double.equals` does, under which `0.0` is not `-0.0`. */
+    @Test
+    fun testDataClassOfDoublesDistinguishesSignedZeros(@TempDir tempDir: File) {
+        val source = """
+            data class A(val x: Double)
+
+            fun box(): String = if (A(0.0) != A(-0.0)) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A data class compares its `Float` components as `Float.equals` does, under which NaN equals itself. */
+    @Test
+    fun testDataClassOfFloatsEqualsNaN(@TempDir tempDir: File) {
+        val source = """
+            data class A(val x: Float)
+
+            fun box(): String {
+                val zero = 0f
+                return if (A(zero / zero) == A(zero / zero)) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A data class compares its `Float` components as `Float.equals` does, under which `0.0f` is not `-0.0f`. */
+    @Test
+    fun testDataClassOfFloatsDistinguishesSignedZeros(@TempDir tempDir: File) {
+        val source = """
+            data class A(val x: Float)
+
+            fun box(): String = if (A(0f) != A(-0f)) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A data class compares its `Double?` components as `Double.equals` does, under which NaN equals itself. */
+    @Test
+    fun testDataClassOfNullableDoublesEqualsNaN(@TempDir tempDir: File) {
+        val source = """
+            data class A(val x: Double?)
+
+            fun box(): String {
+                val zero = 0.0
+                return if (A(zero / zero) == A(zero / zero)) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `..` on a `Byte` held boxed takes its bound as a `Byte`, not as the `Int` of the range it makes. */
+    @Test
+    fun testRangeToOnABoxedByte(@TempDir tempDir: File) {
+        val source = """
+            fun <T : Byte> outside(a: T?, b: T?, c: T): Boolean = a != null && b != null && c !in a..b
+
+            fun box(): String = if (outside(1.toByte(), 2.toByte(), 0.toByte())) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A spread `UIntArray` copies the elements of the array its box wraps. */
+    @Test
+    fun testSpreadOfAnUIntArrayIntoAVararg(@TempDir tempDir: File) {
+        val source = """
+            fun second(vararg values: UInt): UInt = values[1]
+
+            fun box(): String = if (second(*uintArrayOf(1u, 2u, 3u)) == 2u) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A string of constants only formats an unsigned literal as unsigned, though it is held as a signed `Long`. */
+    @Test
+    fun testUnsignedLongLiteralInAStringOfConstants(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if ("${'$'}{0xFEDCBA9876543210UL}" == "18364758544493064720") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A constant piece of a string with computed ones formats an unsigned literal as unsigned. */
+    @Test
+    fun testUnsignedLongLiteralInAStringWithAComputedPiece(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val n = 1
+                return if ("${'$'}n ${'$'}{0xFEDCBA9876543210UL}" == "1 18364758544493064720") "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** An unsigned constant narrower than `Long` formats without its sign extension. */
+    @Test
+    fun testUnsignedByteConstantInAString(@TempDir tempDir: File) {
+        val source = """
+            const val MAX: UByte = 0xFFu
+
+            fun box(): String = if ("${'$'}MAX" == "255") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** The name of a literal enum entry is a constant, so reading it does not run the enum's initializer. */
+    @Test
+    fun testEnumNameOfALiteralEntryDoesNotInitializeTheEnum(@TempDir tempDir: File) {
+        val source = """
+            var result = "OK"
+
+            enum class E {
+                A;
+
+                init {
+                    result = "fail"
+                }
+            }
+
+            fun box(): String {
+                if (E.A.name != "A") return "fail name"
+                return result
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
 }
