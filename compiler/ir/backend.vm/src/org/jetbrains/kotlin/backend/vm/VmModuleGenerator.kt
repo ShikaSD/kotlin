@@ -427,8 +427,6 @@ class VmModuleGenerator(
         // What only the compiler reads, and what the runtime implements in the standard library's stead.
         if (isStdlib && (declaration.kind == ClassKind.ANNOTATION_CLASS || isRuntimeImplemented(declaration))) return
         when {
-            declaration.kind == ClassKind.ANNOTATION_CLASS ->
-                unsupported("the ${declaration.kind.codeRepresentation ?: declaration.kind.name} ${declaration.name}")
             declaration.isValue && declaration.valueClassRepresentation !is InlineClassRepresentation ->
                 unsupported("the multi-field value class ${declaration.name}")
         }

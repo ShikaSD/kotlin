@@ -101,10 +101,10 @@ class JKlibVmBackendTest {
 
     @Test
     fun testUnsupportedDeclarationIsReported(@TempDir tempDir: File) {
-        val (output, exitCode) = compile(tempDir, "annotation class Marker")
+        val (output, exitCode) = compile(tempDir, "fun f(x: Any) = x::class")
 
         assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
-        assertTrue(output.contains("the VM backend does not support the annotation class Marker")) { output }
+        assertTrue(output.contains("the VM backend does not support the expression GET_CLASS")) { output }
     }
 
 
@@ -3450,4 +3450,192 @@ class JKlibVmBackendTest {
         """
         assertTrue(runBox(tempDir, source))
     }
+
+    @Test
+    fun testAnnotationClassCanBeDeclared(@TempDir tempDir: File) {
+        val source = """
+            annotation class Marker
+
+            fun box(): String = "OK"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testClassNestedInAnnotationClassCanBeUsed(@TempDir tempDir: File) {
+        val source = """
+            annotation class Anno {
+                class Inner {
+                    fun ok(): String = "OK"
+                }
+            }
+
+            fun box(): String = Anno.Inner().ok()
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testCompanionOfAnnotationClassCanBeUsed(@TempDir tempDir: File) {
+        val source = """
+            annotation class Anno {
+                companion object {
+                    fun ok(): String = "OK"
+                }
+            }
+
+            fun box(): String = Anno.ok()
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testInstantiatedAnnotationReadsItsMember(@TempDir tempDir: File) {
+        val source = """
+            annotation class A(val x: Int)
+
+            fun box(): String = if (A(42).x == 42) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testInstantiatedAnnotationReadsItsDefaultMember(@TempDir tempDir: File) {
+        val source = """
+            annotation class A(val x: Int = 7)
+
+            fun box(): String = if (A().x == 7) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testAnnotationInstancesWithEqualMembersAreEqual(@TempDir tempDir: File) {
+        val source = """
+            annotation class A(val x: Int, val s: String)
+
+            fun box(): String = if (A(1, "a") == A(1, "a")) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testAnnotationInstancesWithDifferentMembersAreNotEqual(@TempDir tempDir: File) {
+        val source = """
+            annotation class A(val x: Int)
+
+            fun box(): String = if (A(1) != A(2)) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testAnnotationInstanceIsNotEqualToAnotherAnnotation(@TempDir tempDir: File) {
+        val source = """
+            annotation class A(val x: Int)
+            annotation class B(val x: Int)
+
+            fun box(): String = if ((A(1) as Any) != (B(1) as Any)) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+
+    /** Array members are compared by content, not by identity. */
+    @Test
+    fun testAnnotationInstancesWithEqualArraysAreEqual(@TempDir tempDir: File) {
+        val source = """
+            annotation class A(val xs: IntArray)
+
+            fun box(): String = if (A(intArrayOf(1, 2)) == A(intArrayOf(1, 2))) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testAnnotationInstancesWithDifferentArraysAreNotEqual(@TempDir tempDir: File) {
+        val source = """
+            annotation class A(val xs: IntArray)
+
+            fun box(): String = if (A(intArrayOf(1, 2)) != A(intArrayOf(1, 3))) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testAnnotationInstancesWithEqualReferenceArraysAreEqual(@TempDir tempDir: File) {
+        val source = """
+            annotation class A(val xs: Array<String>)
+
+            fun box(): String = if (A(arrayOf("a", "b")) == A(arrayOf("a", "b"))) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testEqualAnnotationInstancesHaveEqualHashCodes(@TempDir tempDir: File) {
+        val source = """
+            annotation class A(val x: Int, val s: String)
+
+            fun box(): String = if (A(1, "a").hashCode() == A(1, "a").hashCode()) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testEqualAnnotationInstancesWithArraysHaveEqualHashCodes(@TempDir tempDir: File) {
+        val source = """
+            annotation class A(val xs: IntArray)
+
+            fun box(): String = if (A(intArrayOf(1, 2)).hashCode() == A(intArrayOf(1, 2)).hashCode()) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+
+    /** The `java.lang.annotation.Annotation` contract: the sum over the members of 127 times the name's hash code, xor the value's. */
+    @Test
+    fun testAnnotationHashCodeIsTheSumOfItsMembersHashCodes(@TempDir tempDir: File) {
+        val source = """
+            annotation class A(val x: Int, val s: String)
+
+            fun box(): String {
+                val expected = ((127 * "x".hashCode()) xor 5) + ((127 * "s".hashCode()) xor "a".hashCode())
+                return if (A(5, "a").hashCode() == expected) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testAnnotationToStringNamesItsMembers(@TempDir tempDir: File) {
+        val source = """
+            annotation class A(val x: Int, val s: String)
+
+            fun box(): String = if (A(1, "a").toString() == "@A(x=1, s=a)") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testAnnotationToStringShowsAnArrayMembersElements(@TempDir tempDir: File) {
+        val source = """
+            annotation class A(val xs: IntArray)
+
+            fun box(): String = if (A(intArrayOf(1, 2)).toString() == "@A(xs=[1, 2])") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testAnnotationToStringOfNestedAnnotation(@TempDir tempDir: File) {
+        val source = """
+            annotation class Inner(val x: Int)
+            annotation class Outer(val inner: Inner)
+
+            fun box(): String = if (Outer(Inner(1)).toString() == "@Outer(inner=@Inner(x=1))") "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
 }

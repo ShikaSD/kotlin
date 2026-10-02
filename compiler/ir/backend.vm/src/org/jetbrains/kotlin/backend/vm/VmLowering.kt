@@ -46,17 +46,21 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.isMarkedNullable
 import org.jetbrains.kotlin.ir.types.isPrimitiveType
+import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.ir.getterSymbol
 import org.jetbrains.kotlin.ir.functionSymbol
+import org.jetbrains.kotlin.ir.util.hasShape
+import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.name.FqName
 
 /** The package of the VM standard library's own declarations, `platform-src/kotlin/vm/internal`. */
@@ -74,7 +78,7 @@ class VmLoweringContext(
     override val irFactory: IrFactory = IrFactoryImpl
     override var inVerbosePhase: Boolean = false
 
-    override val symbols: BackendSymbols by lazy { VmSymbols(irBuiltIns) }
+    override val symbols: VmSymbols by lazy { VmSymbols(irBuiltIns) }
 
     override val typeSystem: IrTypeSystemContext = IrTypeSystemContextImpl(irBuiltIns)
 
@@ -90,12 +94,21 @@ class VmLoweringContext(
 
 /**
  * The symbols the lowerings [lowerForVm] runs read: the ranges and progressions `ForLoopsLowering` recognizes, which
- * [BackendSymbols] finds itself, and the function computing a progression's last element. The rest fail loudly.
+ * [BackendSymbols] finds itself, the function computing a progression's last element, and the functions comparing arrays'
+ * content. The rest fail loudly.
  */
-private class VmSymbols(irBuiltIns: IrBuiltIns) : BackendSymbols(irBuiltIns) {
+class VmSymbols(irBuiltIns: IrBuiltIns) : BackendSymbols(irBuiltIns) {
     override val getProgressionLastElementByReturnType: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> by CallableId(
         StandardNames.KOTLIN_INTERNAL_FQ_NAME, Name.identifier("getProgressionLastElement")
     ).functionSymbolAssociatedBy { it.returnType.classifierOrFail }
+
+    /** The standard library's `contentEquals` by the array type it compares, which an annotation's `equals` calls. */
+    val arraysContentEquals: Map<IrType, IrSimpleFunctionSymbol> by CallableId(
+        StandardNames.COLLECTIONS_PACKAGE_FQ_NAME, Name.identifier("contentEquals")
+    ).functionSymbolAssociatedBy(
+        condition = { it.hasShape(extensionReceiver = true, regularParameters = 1) && it.parameters[0].type.isNullable() },
+        getKey = { it.parameters[0].type.makeNotNull() },
+    )
 
     override val throwNullPointerException: IrSimpleFunctionSymbol get() = unused()
     override val throwTypeCastException: IrSimpleFunctionSymbol get() = unused()
@@ -169,6 +182,9 @@ private class VmInlineFunctionResolver(
 
 /** The lowerings between the linked IR and [VmModuleGenerator], in the order they run. */
 fun lowerForVm(context: VmLoweringContext, module: IrModuleFragment) {
+    // First, so the members it generates get every lowering that follows, such as an unsigned member's.
+    val annotations = VmAnnotationImplementationLowering(context)
+    module.files.forEach { annotations.lower(it) }
     val upgrade = UpgradeCallableReferences(context, upgradeSamConversions = false)
     // `Array(size) { … }` and the like become a loop, ahead of inlining: the constructor is inline, but has no body.
     val arrayConstructors = ArrayConstructorLowering(context)
