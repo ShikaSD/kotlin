@@ -3638,4 +3638,32 @@ class JKlibVmBackendTest {
         assertTrue(runBox(tempDir, source))
     }
 
+    /** `intArrayOf()` with no elements is an empty array. */
+    @Test
+    fun testIntArrayOfNothingIsEmpty(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if (intArrayOf().size == 0) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `arrayOf()` with no elements is an empty array. */
+    @Test
+    fun testArrayOfNothingIsEmpty(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String = if (arrayOf<String>().size == 0) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A call leaving out a vararg of an unsigned type passes an empty array of it. */
+    @Test
+    fun testLeftOutUnsignedVarargIsEmpty(@TempDir tempDir: File) {
+        val source = """
+            fun count(vararg xs: UInt): Int = xs.size
+
+            fun box(): String = if (count() == 0) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
 }

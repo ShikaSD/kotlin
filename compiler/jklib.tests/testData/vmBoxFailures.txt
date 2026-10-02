@@ -1,13 +1,13 @@
 # Box tests under compiler/testData/codegen/box expected to fail on the VM; see JKlibVmExpectedFailures.
-# 1174 failures; the most common reasons:
-#     262  unsupported: the expression RICH_PROPERTY_REFERENCE …
+# 1080 failures; the most common reasons:
+#     266  unsupported: the expression RICH_PROPERTY_REFERENCE …
 #      49  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 #      47  unsupported: a bridge from FUN …
 #      41  unsupported: a call to CONSTRUCTOR …
 #      35  unsupported: overriding FUN …
+#      27  unsupported: the expression CLASS_REFERENCE …
 #      26  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 #      22  unsupported: the expression GET_CLASS …
-#      21  unsupported: the annotation class A
 #      19  IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 #      16  IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 #      15  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty<*>'.
@@ -18,17 +18,12 @@
 #      13  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
 #      13  run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
 #      13  unsupported: a value of type kotlin.Nothing
-#      13  unsupported: the expression CLASS_REFERENCE …
 #      13  wrong result
 #      11  unsupported: implementing the function type Function0
-#      10  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
 #       9  IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE: Declaration annotated with '@OptionalExpectation' can only be used in common module sour
-#       9  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 #       8  IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
-#       8  unsupported: the annotation class Ann
 #       7  run: Uncaught exception: vm.builtin.ClassCast
 #       7  unsupported: naming CONSTRUCTOR …
-#       7  unsupported: the annotation class Anno
 #       6  IllegalStateException: EXPECT_REFINEMENT_ANNOTATION_MISSING: 'expect' declaration refinement is an experimental feature. Mark the declaration with the '@ExpectR
 #       6  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
 #       6  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
@@ -37,7 +32,6 @@
 #       6  unsupported: defaults for more than 64 parameters
 #       5  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
 #       5  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
-#       5  unsupported: the annotation class ImplicitIntegerCoercion
 #       4  AssertionFailedError: Java Compilation failed. Notice: This might be caused by a circular dependency between Java and Kotlin sources, which is not supported in 
 #       4  IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
 #       4  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isInitialized' on receiver of type 'KMutableProperty0<String>'.
@@ -45,69 +39,38 @@
 #       4  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.MutableList::replaceAll_b1df94db06c5d5be" }
 #       4  unsupported: a type test against java.lang.Runnable outside the VM modules
 #       4  unsupported: implementing the function type SuspendFunction0
-#       4  unsupported: the annotation class Foo
 #       4  unsupported: the supertype Runnable outside the VM modules
 #       3  IllegalStateException: Boxing a value of the non-primitive T of <root>.Z
 #       3  IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 #       3  IllegalStateException: DELEGATE_SPECIAL_FUNCTION_MISSING: Type 'KProperty0<String>' has no method 'getValue(Nothing?, KProperty0<*>)', so it cannot serve as a d
+#       3  IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
+#       3  IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
+#       3  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsExport'.
+#       3  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'a'.
+#       3  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'bar'.
+#       3  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'baz'.
+#       3  IllegalStateException: UNSUPPORTED: 'Array<Nothing?>' is not supported on the JVM.
 
-annotations/annotationWithDefaultArgInDifferentModule.kt: unsupported: the annotation class MyConfig
-annotations/annotations0.kt: unsupported: the annotation class Foo
-annotations/genericAnnotations.kt: unsupported: the annotation class Test1
-annotations/instances/AnnotationInstantiationWithArray.kt: unsupported: the annotation class Outer
-annotations/instances/annotationAnnotationParam.kt: unsupported: the annotation class A
-annotations/instances/annotationAnyDispatch.kt: unsupported: the annotation class Ann
-annotations/instances/annotationEqHc.kt: unsupported: the annotation class Bar
+annotations/instances/annotationEqHc.kt: unsupported: the expression CLASS_REFERENCE …
 annotations/instances/annotationFromStdlib.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.SinceKotlin" }
-annotations/instances/annotationInlineMultiModule.kt: unsupported: the annotation class LibAnn
-annotations/instances/annotationInstances.kt: unsupported: the annotation class Empty
-annotations/instances/annotationInstancesEmptyDefault.kt: unsupported: the annotation class A
-annotations/instances/annotationInstancesEmptyDefaultLowered.kt: unsupported: the annotation class A
-annotations/instances/annotationToString.kt: unsupported: the annotation class Empty
-annotations/instances/annotationToStringDefaultsAndEmptyArrays.kt: unsupported: the annotation class A
-annotations/instances/annotationWithTypeParameters.kt: unsupported: the annotation class One
-annotations/instances/annotationsUnsignedTypes.kt: unsupported: the annotation class AnnotationWithSignedArray
-annotations/instances/arrayContentEqAny.kt: unsupported: the annotation class A
-annotations/instances/arraysAndKClass.kt: unsupported: the annotation class KCls
-annotations/instances/differentAnnotationTypes.kt: unsupported: the annotation class A
-annotations/instances/differentOrder.kt: unsupported: the annotation class C
-annotations/instances/enumAndKClass.kt: unsupported: the annotation class AClass
-annotations/instances/enumArray.kt: unsupported: the annotation class WithEnum
-annotations/instances/inInlineFunction.kt: unsupported: the annotation class A
-annotations/instances/innerAnnotationInstantiation.kt: unsupported: the annotation class ExampleMapKey
-annotations/instances/instanceEquality.kt: unsupported: the annotation class A1
-annotations/instances/mixedArray.kt: unsupported: the annotation class C
-annotations/instances/multifileEqHc.kt: unsupported: the annotation class A
-annotations/instances/multimoduleTypeParams.kt: unsupported: the annotation class Two
+annotations/instances/annotationInstances.kt: unsupported: the expression CLASS_REFERENCE …
+annotations/instances/annotationInstancesEmptyDefault.kt: unsupported: the expression CLASS_REFERENCE …
+annotations/instances/annotationInstancesEmptyDefaultLowered.kt: unsupported: the expression CLASS_REFERENCE …
+annotations/instances/annotationToString.kt: unsupported: the expression CLASS_REFERENCE …
+annotations/instances/annotationWithTypeParameters.kt: unsupported: the expression CLASS_REFERENCE …
+annotations/instances/arraysAndKClass.kt: unsupported: the expression CLASS_REFERENCE …
+annotations/instances/enumAndKClass.kt: unsupported: the expression CLASS_REFERENCE …
+annotations/instances/mixedArray.kt: unsupported: the expression CLASS_REFERENCE …
+annotations/instances/multimoduleTypeParams.kt: unsupported: the expression CLASS_REFERENCE …
 annotations/instances/multiplatformInstantiation.kt: IllegalStateException: EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE: A: 'expect' and corresponding 'actual' are declared in the same module.
-annotations/instances/naNAndZero.kt: unsupported: the annotation class A
-annotations/instances/nested.kt: unsupported: the annotation class Inner
-annotations/instances/nestedAnnotationInstances.kt: unsupported: the annotation class NestedAnnotation
-annotations/instances/nestedDefaults.kt: unsupported: the annotation class Inner
-annotations/instances/rearrangedArgumentsInAnnotationCall.kt: unsupported: the annotation class A
-annotations/instances/repeatableInstantiation.kt: unsupported: the annotation class Rep
-annotations/instances/typeAliasesAndGenericsInterop.kt: unsupported: the annotation class AnnAlias
-annotations/instances/unsignedAndBooleanArrays.kt: unsupported: the annotation class AnnBool
-annotations/instances/varargInAnnotationParameterInstantiation.kt: unsupported: the annotation class KotlinAnn
-annotations/instances/withDefaults.kt: unsupported: the annotation class C
+annotations/instances/typeAliasesAndGenericsInterop.kt: unsupported: the expression CLASS_REFERENCE …
 annotations/intrinsicConstEvaluationInSources.kt: IllegalStateException: IrClassSymbolImpl is already bound. Signature: kotlin.internal/IntrinsicConstEvaluation|null[0]. Owner: CLASS ANNOTATION_CLASS name:Intri
-annotations/nestedAnnotation.kt: unsupported: the annotation class Foo
-annotations/nestedClassesInAnnotations.kt: unsupported: the annotation class Foo
-annotations/recursiveAnnotationWithVarargAndDefaultValue.kt: unsupported: the annotation class Ann
-annotations/recursiveAnnotationWithVarargAndWithoutDefaultValue.kt: unsupported: the annotation class Ann
-annotations/selfReferentialAnnotation.kt: unsupported: the annotation class Ann
-annotations/spreadOperatorInAnnotationArguments.kt: unsupported: the annotation class A
-annotations/spreadOperatorInArrayOf.kt: unsupported: the annotation class StringAnno
 arithmetic/division.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 arithmetic/divisionByZero.kt: unsupported: `rem` on doubles
-arrays/arrayInstanceOf.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
 arrays/arraysAreCloneable.kt: CompilationErrorException: There are still 9 unbound symbols Found unbound symbol:
 arrays/cloneArray.kt: CompilationErrorException: There is still an unbound symbol Found unbound symbol:
 arrays/clonePrimitiveArrays.kt: CompilationErrorException: There are still 8 unbound symbols Found unbound symbol:
 arrays/kt1291.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
-arrays/kt2997.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
-arrays/kt7288.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
-arrays/primitiveArrays.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.booleanArrayOf_c76cf6848634e571" }
 arrays/stdlib.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 assert/alwaysDisable.kt: IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
 assert/alwaysEnable.kt: IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
@@ -338,8 +301,6 @@ closures/captureInSuperConstructorCall/outerCapturedAsImplicitThisInBoundReferen
 closures/capturedVarsOptimization/closureBoxedVarOptimizations.kt: unsupported: a call to CONSTRUCTOR …
 closures/closureOnTopLevel1.kt: unsupported: implementing the function type Function0
 closures/closureOnTopLevel2.kt: unsupported: implementing the function type Function0
-collectionLiterals/array.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
-collectionLiterals/primitiveArrays.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
 collections/addCollectionStubWithCovariantOverride.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::spliterator_8a56e74d22ceafe7" }
 collections/clashWithInternalMapMethod.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
 collections/inheritFromAbstractMutableListInt.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.MutableCollection::removeIf_d9e28e2d3e2433a7" }
@@ -401,7 +362,7 @@ compileKotlinAgainstKotlin/innerClassConstructor.kt: unsupported: naming CONSTRU
 compileKotlinAgainstKotlin/internalSetterOverridden.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Derived'.
 compileKotlinAgainstKotlin/internalWithDefaultArgs.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'a'.
 compileKotlinAgainstKotlin/internalWithOtherModuleName.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'a'.
-compileKotlinAgainstKotlin/nestedClassInAnnotationArgument.kt: unsupported: the annotation class Anno
+compileKotlinAgainstKotlin/nestedClassInAnnotationArgument.kt: unsupported: the expression CLASS_REFERENCE …
 compileKotlinAgainstKotlin/propertyReference.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 compileKotlinAgainstKotlin/specialBridgesInDependencies.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 constants/numberLiteralCoercionToInferredType.kt: IllegalStateException: TYPE_INTERSECTION_AS_REIFIED_ERROR: Type argument for reified type parameter 'T' was inferred to the intersection of ['Comparable<*>?' & 
@@ -409,11 +370,8 @@ contextParameters/contextualCallableReference.kt: IllegalStateException: UNRESOL
 contextParameters/contextualCallableReferenceEquality.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 contextParameters/withExtensionReceiverInSupertype.kt: unsupported: implementing the function type Function3
 controlStructures/breakContinueInExpressions/breakInLoopConditions.kt: unsupported: a value of type kotlin.Nothing
-controlStructures/breakContinueInExpressions/inlinedBreakContinue/lambdaPassedToInlineFunction.kt: unsupported: the annotation class SomeAnnotation
 controlStructures/emptyFor.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 controlStructures/forInArray/forInDelegatedPropertyUpdatedInLoopBody.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-controlStructures/forInArray/forInFieldUpdatedInLoopBody.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
-controlStructures/forInArrayWithIndex/forInEmptyArrayWithIndex.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
 controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexCheckSideEffects.kt: unsupported: overriding FUN …
 controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexNoElementVarCheckSideEffects.kt: unsupported: overriding FUN …
 controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexNoIndexVarCheckSideEffects.kt: unsupported: overriding FUN …
@@ -424,10 +382,6 @@ controlStructures/forInSequenceWithIndex/forInSequenceWithIndexCheckSideEffects.
 controlStructures/forInSequenceWithIndex/forInSequenceWithIndexNoElementVarCheckSideEffects.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 controlStructures/forInSequenceWithIndex/forInSequenceWithIndexNoIndexVarCheckSideEffects.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 controlStructures/forUserType.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
-controlflow/for_loops_array_break_continue.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
-controlflow/for_loops_array_indices.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
-controlflow/for_loops_array_nested.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
-controlflow/for_loops_array_side_effects.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 coroutines/bridges/mapSuspendAbstractClear.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
 coroutines/bridges/mapSuspendClear.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
 coroutines/builderInferenceAndGenericArrayAcessCall.kt: unsupported: a call to CONSTRUCTOR …
@@ -459,8 +413,6 @@ coroutines/suspendFunctionAsSupertypeWithInlinedFunInKlib.kt: unsupported: imple
 coroutines/tailCallOptimizations/unit/override3.kt: unsupported: a bridge from FUN …
 coroutines/varSpilling/fakeInlinerVariables.kt: unsupported: the expression GET_CLASS …
 dataClasses/dataClassWithManyFields.kt: unsupported: defaults for more than 64 parameters
-defaultArguments/constructor/annotation.kt: unsupported: the annotation class A
-defaultArguments/constructor/annotationWithEmptyArray.kt: unsupported: the annotation class Anno
 defaultArguments/constructor/anonymousObjectAsDefaultParam.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 defaultArguments/function/extensionFunctionManyArgs.kt: unsupported: defaults for more than 64 parameters
 defaultArguments/function/innerExtentionFunctionManyArgs.kt: unsupported: defaults for more than 64 parameters
@@ -635,34 +587,20 @@ enum/enumEntriesNameClashes.kt: unsupported: the expression RICH_PROPERTY_REFERE
 enum/enumValueOf.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'assertContains'.
 enum/initEntriesInCompanionObject2.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.enumValueOf_494a7f06ff1f1ac6" }
 enum/initEnumAfterObjectAccessJs.kt: wrong result
-enum/k54079.kt: unsupported: the annotation class GradleOption
+enum/k54079.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 enum/kt7257_boundReference2.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 enum/kt7257_boundReferenceWithImplicitReceiver.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 enum/throwingEntryInitializer.kt: unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
 enum/valueOf2.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.enumValueOf_494a7f06ff1f1ac6" }
 enum/values.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.enumValues_b789507c0dd37d97" }
-evaluate/annotationClassWithInner.kt: unsupported: the annotation class Anno
 evaluate/inJavaLangPackage.kt: IllegalStateException: TYPE_CANT_BE_USED_FOR_CONST_VAL: Const 'val' has type 'Double'. Only primitive types and 'String' are allowed.
 evaluate/intrinsicConst/companions.kt: unsupported: the static property x
 evaluate/intrinsicConst/kCallableName.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty1<A, Int>'.
 evaluate/intrinsicConst/kCallableNameWithSideEffect.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty1<A, String>'.
 evaluate/intrinsicConst/kt58717.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction0<Unit>'.
-evaluate/kt55912.kt: unsupported: the annotation class Entity
-evaluate/objectConstValInAnnotationArgument.kt: unsupported: the annotation class Key
-evaluate/serialization/actualAnnotationOnFakeOverride.kt: unsupported: the annotation class A
-evaluate/serialization/annotationInArguments.kt: unsupported: the annotation class Annotation
-evaluate/serialization/annotationOnFakeOverride.kt: unsupported: the annotation class A
-evaluate/serialization/annotationOnFakeOverrideProperty.kt: unsupported: the annotation class A
-evaluate/serialization/annotationOnParameterOnFakeOverride.kt: unsupported: the annotation class A
-evaluate/serialization/annotationOnSecondParameterOnFakeOverride.kt: unsupported: the annotation class A
-evaluate/serialization/annotationOnTypeOnFakeOverride.kt: unsupported: the annotation class A
-evaluate/serialization/annotationSerialization.kt: unsupported: the annotation class BinaryAnnotation
-evaluate/serialization/annotationWithArray.kt: unsupported: the annotation class AnnotationWithVararg
-evaluate/serialization/annotationWithDefaultValueOnFakeOverride.kt: unsupported: the annotation class A
-evaluate/serialization/annotationWithDefaults.kt: unsupported: the annotation class IntegerNumberValid
-evaluate/serialization/intrinsicConst.kt: unsupported: the annotation class BinaryAnnotation
-evaluate/serialization/nestedTypeAnnotation.kt: unsupported: the annotation class TypeAnnotation
-evaluate/serialization/typeAnnotation.kt: unsupported: the annotation class TypeAnnotation
+evaluate/serialization/annotationSerialization.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
+evaluate/serialization/intrinsicConst.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
+evaluate/serialization/typeAnnotation.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 evaluate/stdlibConst.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_INITIALIZER: Const 'val' initializer must be a constant value.
 extensionFunctions/delegatedPropertyWithExtensionType.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 extensionFunctions/extensionFunctionAsASupertypeOfValueClass.kt: unsupported: implementing the function type Function1
@@ -683,7 +621,6 @@ fakeOverride/kt40180_2.kt: unsupported: the supertype Test outside the VM module
 fakeOverride/kt40180_3.kt: AssertionFailedError: Java Compilation failed. Notice: This might be caused by a circular dependency between Java and Kotlin sources, which is not supported in 
 fakeOverride/substitutionInLocal.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 fieldRename/delegates.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-fir/deserializedOptInDeprecated.kt: unsupported: the annotation class My
 fir/kt68806.kt: unsupported: a call to CONSTRUCTOR …
 fir/missingDependencyClassInTypeArguments.kt: CompilationErrorException: Module "lib2" has a reference to symbol /Some|null[0]. Neither the module itself nor its dependencies contain such declaration.
 fp/remainderMixedFpInfinitiesNans.kt: unsupported: `rem` on doubles
@@ -727,7 +664,6 @@ funInterface/subtypeOfFunctionalTypeToFunInterfaceConversion.kt: unsupported: im
 function/sum.kt: unsupported: `rem` on doubles
 functions/bigArity/instanceOfCallableReference.kt: wrong result
 functions/bigArity/subclass.kt: unsupported: implementing the function type Function42
-functions/functionExpression/functionExpression.kt: unsupported: the annotation class A
 functions/invoke/implicitInvokeInCompanionObjectWithFunctionalArgument.kt: unsupported: a value of type kotlin.Nothing
 functions/invoke/implicitInvokeWithFunctionLiteralArgument.kt: unsupported: a value of type kotlin.Nothing
 functions/invoke/kt3190.kt: unsupported: implementing the function type Function1
@@ -758,7 +694,6 @@ inline/fakeOverrideInliningCrossModule.kt: CompilationErrorException: Module "li
 inline/getClass.kt: unsupported: the expression GET_CLASS …
 inline/inline12.kt: unsupported: a call to CONSTRUCTOR …
 inline/inlineChainCrossModule.kt: CompilationErrorException: Module "mid" has a reference to symbol /baz|baz(){}[0]. Neither the module itself nor its dependencies contain such declaration.
-inline/inlineLambdaNoCapture.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 inline/innerInlineFunCapturesOuter.kt: unsupported: naming CONSTRUCTOR …
 inline/kt67866.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inline/localInlineExtensionFunction.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
@@ -775,8 +710,6 @@ inlineArgsInPlace/kt49370.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unres
 inlineArgsInPlace/kt49407.kt: IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 inlineClasses/UIntArraySortExample.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 inlineClasses/UIntArraySortExampleGeneric.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
-inlineClasses/annotatedMemberExtensionProperty.kt: unsupported: the annotation class Anno
-inlineClasses/annotatedMemberExtensionPropertyGeneric.kt: unsupported: the annotation class Anno
 inlineClasses/anonymousObjectAsDefaultParamFull.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 inlineClasses/anonymousObjectAsDefaultParamSingleFile.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 inlineClasses/anySuperCall.kt: unsupported: calling FUN …
@@ -873,17 +806,14 @@ inlineClasses/unboxParameterOfSuspendLambdaBeforeInvoke.kt: run: Uncaught except
 inlineClasses/unboxParameterOfSuspendLambdaBeforeInvokeGeneric.kt: run: Uncaught exception: vm.builtin.ClassCast
 inlineClasses/whenWithSubject.kt: unsupported: overriding FUN …
 inlineClasses/whenWithSubjectGeneric.kt: unsupported: overriding FUN …
-inlineEvaluationOrder/propertyAccessWithSideEffect.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 innerClass/inCallableReferenceLHSclassReference.kt: unsupported: the expression GET_CLASS …
 innerClass/inheritanceMultipleModules1.kt: unsupported: naming CONSTRUCTOR …
 innerClass/inheritanceMultipleModules2.kt: unsupported: naming CONSTRUCTOR …
 innerClass/inheritanceMultipleModules3.kt: unsupported: naming CONSTRUCTOR …
 innerClass/multipleModules.kt: unsupported: naming CONSTRUCTOR …
-innerNested/considerPropertyInitValueFromNestedClass.kt: unsupported: the annotation class Ann
 intrinsics/kt8666.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 intrinsics/nullPlusString.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 ir/anonymousClassLeak.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-ir/kt52677.kt: unsupported: the annotation class MySerializable
 ir/recursiveGeneric.kt: unsupported: a call to CONSTRUCTOR …
 ir/recursiveGeneric2.kt: unsupported: a call to CONSTRUCTOR …
 ir/serializationRegressions/dispatchReceiverValue.kt: IllegalStateException: EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE: C: 'expect' and corresponding 'actual' are declared in the same module.
@@ -899,7 +829,7 @@ javaInterop/objectMethods/cloneCallsSuper.kt: unsupported: a call to clone
 javaInterop/objectMethods/cloneCallsSuperAndModifies.kt: unsupported: a call to clone
 javaInterop/objectMethods/cloneableClassWithoutClone.kt: unsupported: a call to clone
 jdk/kt1397.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
-kclass/kclass1.kt: unsupported: the annotation class MyDsl
+kclass/kclass1.kt: unsupported: the expression CLASS_REFERENCE …
 klib/kt33411.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'getK'.
 labels/nestedLabelsInlinedClashingAtFunctionsWithClosure.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
 lateinit/globalIsInitialized.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isInitialized' on receiver of type 'KMutableProperty0<String>'.
@@ -910,22 +840,17 @@ lateinit/localNotInitialized.kt: link: : IR compile error: RegisterAllocation(Un
 localClasses/localGenericWithTypeParameters.kt: unsupported: the expression CLASS_REFERENCE …
 lower/localDelegatedProperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 mangling/internal.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'foo'.
-multiplatform/k2/annotations/expectAnnotationCallInLibrary.kt: unsupported: the annotation class Ann
-multiplatform/k2/annotations/optionalExpectation.kt: unsupported: the annotation class B
+multiplatform/k2/annotations/optionalExpectation.kt: unsupported: the declaration FUN …
 multiplatform/k2/basic/delegatedByExpectExtensionProperty.kt: IllegalStateException: DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE: Property delegate must have a 'getValue(B, KProperty1<*, *>)' method. None of the following fu
 multiplatform/k2/basic/expectActualFakeOverridesWithTypeParameters2.kt: NoSuchElementException: List contains no element matching the predicate.
 multiplatform/k2/basic/expectActualNullabilityBasedOverloads.kt: NoSuchElementException: List contains no element matching the predicate.
-multiplatform/k2/basic/expectActualTypealiasCoercion.kt: unsupported: the annotation class ImplicitIntegerCoercion
 multiplatform/k2/basic/extensionFunctionAsASupertype.kt: unsupported: implementing the function type Function1
 multiplatform/k2/basic/extensionFunctionAsASupertypeConversion.kt: unsupported: implementing the function type Function1
 multiplatform/k2/basic/interfaceMethodFromSuperTypeIsImplementedInOtherExpectSuperClass.kt: NoSuchElementException: List contains no element matching the predicate.
-multiplatform/k2/basic/removeExpectDeclarationsFromMetadata.kt: unsupported: the annotation class WithoutActual
+multiplatform/k2/basic/removeExpectDeclarationsFromMetadata.kt: unsupported: the declaration FUN …
 multiplatform/k2/commonFakeOverridePropertyRef.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-multiplatform/k2/commonInternal.kt: unsupported: the annotation class AnnInFriend
-multiplatform/k2/defaultArguments/kt67488.kt: unsupported: the annotation class A
+multiplatform/k2/commonInternal.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AnnInFriend'.
 multiplatform/k2/defaultArguments/superCall.kt: IllegalStateException: SUPER_CALL_WITH_DEFAULT_PARAMETERS: Super-calls with default arguments are prohibited. Specify all arguments of 'super.foo' explicitly.
-multiplatform/k2/defaultArguments/typeAlias.kt: unsupported: the annotation class Foo2
-multiplatform/k2/defaultArguments/typeAlias2.kt: unsupported: the annotation class Foo2
 multiplatform/k2/expectRefinement.kt: IllegalStateException: EXPECT_REFINEMENT_ANNOTATION_MISSING: 'expect' declaration refinement is an experimental feature. Mark the declaration with the '@ExpectR
 multiplatform/k2/expectStatic.kt: unsupported: the static property a
 multiplatform/k2/expectValInInlineClass.kt: IllegalStateException: VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION: Value classes without '@JvmInline' annotation are not yet supported.
@@ -939,11 +864,9 @@ multiplatform/k2/hmpp/expectRefinementLibVsApp.kt: IllegalStateException: EXPECT
 multiplatform/k2/hmpp/expectRefinementPlatformExtraMembers.kt: IllegalStateException: EXPECT_REFINEMENT_ANNOTATION_MISSING: 'expect' declaration refinement is an experimental feature. Mark the declaration with the '@ExpectR
 multiplatform/k2/hmpp/friendDependency.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'o'.
 multiplatform/k2/hmpp/kt83572.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsModule'.
-multiplatform/k2/hmpp/moveToDiagnostic/optInActual2-2.kt: unsupported: the annotation class Ann
 multiplatform/k2/hmpp/overridingInternalFromFriend.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Foo'.
 multiplatform/k2/hmpp/stdlibRegressions.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.doubleArrayOf_43c58aefc57c329c" }
 multiplatform/k2/kt57391.kt: IllegalStateException: CLI phase returned null. See errors in the message collector
-multiplatform/k2/migratedOldTests/mpp_optional_expectation.kt: unsupported: the annotation class Optional
 multiplatform/k2/migratedOldTests/remap_expect_property_ref.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 nameBasedDestructuring/fullFormExtraPropType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
 nameBasedDestructuring/shortFormExtraPropType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
@@ -951,7 +874,6 @@ nothingValue/nothingValueException.kt: unsupported: a call to CONSTRUCTOR …
 nothingValue/toStringOnNothing.kt: IllegalStateException: Boxing a value of the non-primitive kotlin.Nothing
 objects/companionObjectAccess/companionObjectInitOrderWithSuperinterface.kt: wrong result
 objects/flist.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
-objects/interfaceCompanionObjectReference.kt: unsupported: the annotation class Anno
 objects/kt1047.kt: unsupported: the static field out outside the VM modules
 objects/kt1737.kt: unsupported: the supertype Runnable outside the VM modules
 objects/kt2663_2.kt: unsupported: the supertype Runnable outside the VM modules
@@ -959,13 +881,10 @@ objects/kt3238.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved refer
 objects/throwingInitializersCompanionObjects.kt: unsupported: a value of type kotlin.Nothing
 objects/throwingInitializersObjects.kt: unsupported: a value of type kotlin.Nothing
 objects/useAnonymousObjectAsIterator.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
-operatorConventions/annotatedAssignment.kt: unsupported: the annotation class Annotation
 operatorConventions/kt14227.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 operatorConventions/untilOperator.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
 package/jsExportNameClash.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsExport'.
 package/jsExportNameClashIntermodule.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsExport'.
-primitiveTypes/charToByte.kt: unsupported: the annotation class Foo
-primitiveTypes/equalityWithObject/kt42281.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
 primitiveTypes/kt14868.kt: unsupported: overriding FUN …
 primitiveTypes/kt1508.kt: unsupported: overriding FUN …
 primitiveTypes/kt16732.kt: unsupported: overriding FUN …
@@ -1001,7 +920,6 @@ properties/lateinit/topLevel/accessorException.kt: unsupported: the expression G
 properties/lateinit/topLevel/uninitializedMemberAccess.kt: unsupported: the expression GET_CLASS …
 properties/lateinit/topLevel/uninitializedRead.kt: unsupported: the expression GET_CLASS …
 properties/primitiveOverrideDelegateAccessor.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-properties/twoAnnotatedExtensionPropertiesWithoutBackingFields.kt: unsupported: the annotation class Anno
 propertyCallableReference/dynamicReceiver.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 propertyCallableReference/multipleModules.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 propertyCallableReference/valClass.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -1011,19 +929,17 @@ propertyCallableReference/varClass.kt: unsupported: the expression RICH_PROPERTY
 propertyCallableReference/varExtension.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 propertyCallableReference/varModule.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 publishedApi/inlineFromFriendModule.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'published'.
-ranges/contains/generated/arrayIndices.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
 ranges/forInCharSequenceWithCustomIterator.kt: unsupported: overriding FUN …
 ranges/forInCharSequenceWithMultipleGetFunctions.kt: unsupported: overriding FUN …
 ranges/forInCustomCharSequence.kt: unsupported: overriding FUN …
 ranges/forInCustomIterable.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
 ranges/forInDoubleRangeWithCustomIterator.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 ranges/forInFloatRangeWithCustomIterator.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
-ranges/forInIndices/kt13241_Array.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
 ranges/forInIndices/kt43159_ArrayUpperBound.kt: IllegalStateException: UPPER_BOUND_CANNOT_BE_ARRAY: Upper bound of type parameter cannot be an array.
 ranges/safeCallRangeTo.kt: unsupported: the expression CLASS_REFERENCE …
 reflection/classLiterals/lambdaClass.kt: unsupported: the expression GET_CLASS …
 reflection/classes/localClassSimpleName.kt: unsupported: the expression CLASS_REFERENCE …
-reflection/classes/qualifiedName.kt: unsupported: the annotation class MyAnnotation
+reflection/classes/qualifiedName.kt: unsupported: the expression CLASS_REFERENCE …
 reflection/classes/qualifiedNameOfStandardClasses.kt: unsupported: the expression CLASS_REFERENCE …
 reflection/classes/qualifiedNameOfStandardClassesOther.kt: unsupported: the expression CLASS_REFERENCE …
 reflection/classes/qualifiedNameWithDollars.kt: unsupported: the expression CLASS_REFERENCE …
@@ -1041,7 +957,6 @@ regressions/dataClassInInlineFunctionWithTypeParameters.kt: unsupported: a call 
 regressions/dataClassInRegularFunctionWithTypeParameters.kt: unsupported: a call to CONSTRUCTOR …
 regressions/hashCodeNPE.kt: unsupported: a call to CONSTRUCTOR …
 regressions/kt1779.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
-regressions/kt2210.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 regressions/kt2246.kt: IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
 regressions/kt344Runnable.kt: unsupported: the supertype Runnable outside the VM modules
 regressions/kt47279.kt: unsupported: a value of type kotlin.Nothing
@@ -1059,7 +974,6 @@ reified/reifiedNullableNothing3.kt: IllegalStateException: UNSUPPORTED: 'Array<N
 reified/reifiedNullableNothing4.kt: IllegalStateException: UNSUPPORTED: 'Array<Nothing?>' is not supported on the JVM.
 reified/reifiedTypeArgumentWithIntersectionTypeAsTypeArgument.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 reified/reifiedTypeArgumentWithRecursion.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
-reified/varargs.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 safeCall/genericNull.kt: unsupported: overriding FUN …
 sam/constructors/sameWrapperClass.kt: unsupported: a call to getClass
 sam/constructors/sameWrapperClass2.kt: unsupported: the expression GET_CLASS …
@@ -1152,19 +1066,11 @@ typeMapping/kt3976.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 typeMapping/nothing.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Nothing" }
 typeMapping/nullNothing.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Nothing" }
 typeMapping/nullableNothing.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.Nothing" }
-typealias/typeAliasOnTypeAlias.kt: unsupported: the annotation class Ann
 unaryOp/call.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
 unaryOp/callNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
 unitConversion/unitConversionForSubtype.kt: unsupported: implementing the function type Function0
 unitConversion/unitConversionWithSamSubtype.kt: unsupported: implementing the function type Function0
-unsignedTypes/implicitIntegerCoercionNamedArg.kt: unsupported: the annotation class ImplicitIntegerCoercion
-unsignedTypes/implicitIntegerCoercionOverloadResolutionAmbiguity.kt: unsupported: the annotation class ImplicitIntegerCoercion
 unsignedTypes/kt25784.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-unsignedTypes/kt61418.kt: unsupported: the annotation class ImplicitIntegerCoercion
-unsignedTypes/signedToUnsignedConversions.kt: unsupported: the annotation class ImplicitIntegerCoercion
-unsignedTypes/varargsOfUnsignedTypes.kt: unsupported: the annotation class AnnoUByte
-vararg/emptyVarArg.kt: IllegalStateException: kotlin.UIntArray is no array type
-vararg/varargInFunParam.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.intArrayOf_97988f5543bde3a3" }
 versionOverloads/basicWrappers.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 versionOverloads/callableRefDefault.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 versionOverloads/companions.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.

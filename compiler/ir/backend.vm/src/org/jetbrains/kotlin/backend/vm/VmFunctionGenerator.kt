@@ -1055,7 +1055,14 @@ internal class VmFunctionGenerator private constructor(
     /** The argument [parameter] takes when a call leaves it out and it has no default: an empty array. */
     private fun emptyVararg(parameter: IrValueParameter): VmValue {
         if (!parameter.isEmptyVararg()) unsupported("a default argument")
-        return newArray(parameter.type, constant(VmType.I64, 0))
+        return emptyArray(parameter.type)
+    }
+
+    /** A new empty array of [type]: an unsigned array is a value class wrapping the array of the signed type. */
+    private fun emptyArray(type: IrType): VmValue {
+        val valueClass = type.classOrNull?.owner?.takeIf { it.isValue }
+        val array = newArray(valueClass?.let { gen.valueClassField(it).type } ?: type, constant(VmType.I64, 0))
+        return if (valueClass == null || valueClass.isInlinedValueClass()) array else valueClassBox(valueClass, array)
     }
 
     /**
@@ -1197,6 +1204,8 @@ internal class VmFunctionGenerator private constructor(
     private fun intrinsic(call: IrCall, callee: IrSimpleFunction): Intrinsic? {
         val builtIns = gen.irBuiltIns
         val symbol = call.symbol
+        // `arrayOf()` and the like with no elements, which leave their vararg out.
+        if (callee.isArrayOf() && call.arguments.single() == null) return Intrinsic(emptyArray(call.type))
         // No intrinsic declares a default, so a call leaving an argument out is an ordinary one.
         val args = call.arguments.map { it ?: return null }
         val value = when (symbol) {
