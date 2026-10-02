@@ -1273,11 +1273,12 @@ internal class VmFunctionGenerator private constructor(
         return when (callee.name.asString()) {
             "get" -> {
                 val array = operand(args[0])
-                Intrinsic(newValue(gen.heldType(callee.returnType)).also { emit(VmInstruction.ArrayGet(it, array, operand(args[1]))) })
+                val index = operandAs(args[1], callee.parameters[1].type)
+                Intrinsic(newValue(gen.heldType(callee.returnType)).also { emit(VmInstruction.ArrayGet(it, array, index)) })
             }
             "set" -> {
                 val array = operand(args[0])
-                emit(VmInstruction.ArraySet(array, operand(args[1]), operandAs(args[2], callee.parameters[2].type)))
+                emit(VmInstruction.ArraySet(array, operandAs(args[1], callee.parameters[1].type), operandAs(args[2], callee.parameters[2].type)))
                 Intrinsic(null)
             }
             "<get-size>" -> Intrinsic(newValue(VmType.I64).also { emit(VmInstruction.ArrayLength(it, operand(args[0]))) })

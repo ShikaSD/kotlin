@@ -1,5 +1,5 @@
 # Box tests under compiler/testData/codegen/box expected to fail on the VM; see JKlibVmExpectedFailures.
-# 1187 failures; the most common reasons:
+# 1185 failures; the most common reasons:
 #     262  unsupported: the expression RICH_PROPERTY_REFERENCE …
 #      49  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 #      47  unsupported: a bridge from FUN …
@@ -25,8 +25,8 @@
 #       9  IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE: Declaration annotated with '@OptionalExpectation' can only be used in common module sour
 #       9  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.arrayOf_b26b6e53df8dea64" }
 #       8  IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
-#       8  run: Uncaught exception: vm.builtin.ClassCast
 #       8  unsupported: the annotation class Ann
+#       8  run: Uncaught exception: vm.builtin.ClassCast
 #       7  unsupported: naming CONSTRUCTOR …
 #       7  unsupported: the annotation class Anno
 #       6  IllegalStateException: EXPECT_REFINEMENT_ANNOTATION_MISSING: 'expect' declaration refinement is an experimental feature. Mark the declaration with the '@ExpectR
@@ -822,12 +822,10 @@ inlineClasses/checkBoxingUnboxingForInheritedTypeSpecializedFunctions.kt: unsupp
 inlineClasses/checkCallingMembersInsideInlineClassGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Foo
 inlineClasses/constructorCallableReference.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inlineClasses/constructorCallableReferenceGeneric.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-inlineClasses/contextsAndAccessors/kt26858Generic.kt: run: Uncaught exception: vm.builtin.ArrayIndexOutOfBounds
 inlineClasses/createInlineClassInArgumentPositionGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.AsInt
 inlineClasses/customIterator.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 inlineClasses/defaultParameterValues/defaultParameterValuesOfInlineClassTypeBoxingGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Z
 inlineClasses/defaultParameterValues/defaultValueOfInlineClassTypeInInlineFunInInlineClassGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Host
-inlineClasses/defaultWithInlineClassArgumentGeneric.kt: run: Uncaught exception: vm.builtin.ArrayIndexOutOfBounds
 inlineClasses/functionNameMangling/reflectionForFunctionWithMangledName.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<S, S>'.
 inlineClasses/functionNameMangling/reflectionForFunctionWithMangledNameGeneric.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<S<String>, S<String>>'.
 inlineClasses/functionNameMangling/reflectionForPropertyOfInlineClassType.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KMutableProperty0<S>'.

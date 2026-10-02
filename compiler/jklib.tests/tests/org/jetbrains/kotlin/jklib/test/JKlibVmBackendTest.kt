@@ -3282,4 +3282,32 @@ class JKlibVmBackendTest {
         """
         assertTrue(runBox(tempDir, source))
     }
+
+    /** An array index of a type parameter bounded by `Int` is held boxed, and unboxed to read the element. */
+    @Test
+    fun testArrayReadAtAnIndexOfABoundedTypeParameter(@TempDir tempDir: File) {
+        val source = """
+            fun <T : Int> at(xs: IntArray, i: T): Int = xs[i]
+
+            fun box(): String = if (at(intArrayOf(5, 7), 1) == 7) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** An array index of a type parameter bounded by `Int` is held boxed, and unboxed to write the element. */
+    @Test
+    fun testArrayWriteAtAnIndexOfABoundedTypeParameter(@TempDir tempDir: File) {
+        val source = """
+            fun <T : Int> put(xs: IntArray, i: T) {
+                xs[i] = 9
+            }
+
+            fun box(): String {
+                val xs = intArrayOf(5, 7)
+                put(xs, 1)
+                return if (xs[1] == 9) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
 }
