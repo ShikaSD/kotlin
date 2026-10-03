@@ -257,7 +257,7 @@ class VmModuleGenerator(
         val fields = members.properties.mapNotNull { it.backingField }
         val computed = fields.filter { it.initializer != null && constantStart(it) == null }
         val owner = if (computed.isEmpty()) null else VmOwner.Class(fileOwner(file))
-        for (field in fields) {
+        for (field in fields.filter(::hasStorage)) {
             val start = when {
                 constantStart(field) != null -> VmGlobalStart.Constant(constantStart(field)!!)
                 field.initializer == null -> VmGlobalStart.Zero
@@ -658,9 +658,11 @@ class VmModuleGenerator(
         return anyType
     }
 
-    /** How a register, field or global holds a value of [type]: as [vmType], and `Unit` as the reference it is. */
-    internal fun heldType(type: IrType): VmType =
-        vmType(type) ?: if (type.isUnit()) anyType else unsupported("a value of type ${type.render()}")
+    /**
+     * How a register, field or global holds a value of [type]: as [vmType], `Unit` as the reference it is, and `Nothing`,
+     * which no slot ever receives, as a reference too; see [hasStorage].
+     */
+    internal fun heldType(type: IrType): VmType = vmType(type) ?: anyType
 
     /**
      * How a built-in of the runtime mirror declares [type]: as the class a reference has, which the linker checks the
@@ -805,10 +807,16 @@ class VmModuleGenerator(
                 is IrProperty -> it.backingField
                 is IrField -> it
                 else -> null
-            } ?: return@mapNotNull null
+            }?.takeIf(::hasStorage) ?: return@mapNotNull null
             LayoutField(field.name.asString(), heldType(field.type), field)
         }
     }
+
+    /**
+     * Whether [field] is stored: one of type `Nothing` never is, since nothing completes to assign it, so it has no slot,
+     * its initializer runs only for its effect, and reading it gives the default a slot would have held.
+     */
+    internal fun hasStorage(field: IrField): Boolean = !field.type.isNothing()
 
     internal fun fieldIndex(field: IrField): Int {
         val owner = field.parentAsClass

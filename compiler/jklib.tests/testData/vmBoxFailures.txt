@@ -1,5 +1,5 @@
 # Box tests under compiler/testData/codegen/box expected to fail on the VM; see JKlibVmExpectedFailures.
-# 1080 failures; the most common reasons:
+# 1070 failures; the most common reasons:
 #     266  unsupported: the expression RICH_PROPERTY_REFERENCE …
 #      49  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 #      47  unsupported: a bridge from FUN …
@@ -17,7 +17,6 @@
 #      13  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::spliterator_8a56e74d22ceafe7" }
 #      13  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Map::forEach_d546d9ade32fe7ae" }
 #      13  run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
-#      13  unsupported: a value of type kotlin.Nothing
 #      13  wrong result
 #      11  unsupported: implementing the function type Function0
 #       9  IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE: Declaration annotated with '@OptionalExpectation' can only be used in common module sour
@@ -28,6 +27,7 @@
 #       6  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
 #       6  link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
 #       6  unsupported: `rem` on doubles
+#       6  unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
 #       6  unsupported: calling FUN …
 #       6  unsupported: defaults for more than 64 parameters
 #       5  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
@@ -101,7 +101,6 @@ boxing/boxing12.kt: unsupported: overriding FUN …
 boxing/kt84727_if.kt: run: Uncaught exception: vm.builtin.NullReference
 boxing/missingValueClassUnboxing.kt: IllegalStateException: VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION: Value classes without '@JvmInline' annotation are not yet supported.
 boxingOptimization/checkcastAndInstanceOf.kt: unsupported: a type test against java.lang.Object outside the VM modules
-boxingOptimization/kt5493.kt: unsupported: a value of type kotlin.Nothing
 branching/when7.kt: unsupported: a call to CONSTRUCTOR …
 branching/when_with_try1.kt: unsupported: a call to CONSTRUCTOR …
 bridges/delegationComplexWithList.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::spliterator_8a56e74d22ceafe7" }
@@ -369,7 +368,6 @@ constants/numberLiteralCoercionToInferredType.kt: IllegalStateException: TYPE_IN
 contextParameters/contextualCallableReference.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<Int, String>'.
 contextParameters/contextualCallableReferenceEquality.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 contextParameters/withExtensionReceiverInSupertype.kt: unsupported: implementing the function type Function3
-controlStructures/breakContinueInExpressions/breakInLoopConditions.kt: unsupported: a value of type kotlin.Nothing
 controlStructures/emptyFor.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 controlStructures/forInArray/forInDelegatedPropertyUpdatedInLoopBody.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexCheckSideEffects.kt: unsupported: overriding FUN …
@@ -574,7 +572,7 @@ delegatedProperty/twoPropByOneDelegete.kt: unsupported: the expression RICH_PROP
 delegatedProperty/valByMapDelegatedProperty.kt: IllegalStateException: DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE: Property delegate must have a 'getValue(ValByMapExtensionsTest, KProperty1<*, *>)' method. Non
 delegatedProperty/valInInnerClass.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/varInInnerClass.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-delegation/delegationByCompanionToNothing.kt: unsupported: a value of type kotlin.Nothing
+delegation/delegationByCompanionToNothing.kt: unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
 delegation/delegationExtensionPropertyDelegated.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegation/ifWithCallableReferenceInLazy.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegation/kt44199.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty<*>'.
@@ -606,12 +604,10 @@ extensionFunctions/delegatedPropertyWithExtensionType.kt: unsupported: the expre
 extensionFunctions/extensionFunctionAsASupertypeOfValueClass.kt: unsupported: implementing the function type Function1
 extensionFunctions/extensionFunctionAsATypeLocal.kt: unsupported: implementing the function type Function1
 extensionFunctions/extensionFunctionAsSupertype.kt: unsupported: implementing the function type Function1
-extensionFunctions/extensionFunctionDifferentReceivers.kt: unsupported: a value of type kotlin.Nothing
 extensionFunctions/extensionFunctionInValueClass.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 extensionFunctions/nestedExtensionFunctionAsASupertype.kt: unsupported: implementing the function type Function2
 extensionFunctions/suspendConversionForExtensionFunAsASuperType.kt: unsupported: implementing the function type Function1
 extensionProperties/extensionPropertyDelegated.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-extensionProperties/extensionPropertyDifferentReceiver.kt: unsupported: a value of type kotlin.Nothing
 extensionProperties/extensionPropertyWithInline.kt: unsupported: the expression CLASS_REFERENCE …
 fakeOverride/fakeOverrideWithMissingClassInSignature.kt: CompilationErrorException: Module "app" has a reference to symbol /Some|null[0]. Neither the module itself nor its dependencies contain such declaration.
 fakeOverride/internalFromFriendModule.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'o' on receiver of type 'Derived'.
@@ -664,8 +660,6 @@ funInterface/subtypeOfFunctionalTypeToFunInterfaceConversion.kt: unsupported: im
 function/sum.kt: unsupported: `rem` on doubles
 functions/bigArity/instanceOfCallableReference.kt: wrong result
 functions/bigArity/subclass.kt: unsupported: implementing the function type Function42
-functions/invoke/implicitInvokeInCompanionObjectWithFunctionalArgument.kt: unsupported: a value of type kotlin.Nothing
-functions/invoke/implicitInvokeWithFunctionLiteralArgument.kt: unsupported: a value of type kotlin.Nothing
 functions/invoke/kt3190.kt: unsupported: implementing the function type Function1
 functions/invoke/kt3822invokeOnThis.kt: unsupported: implementing the function type Function0
 functions/kt1038.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
@@ -773,8 +767,6 @@ inlineClasses/interfaceDelegation/memberFunDelegatedToInlineClassIntGeneric.kt: 
 inlineClasses/interfaceDelegation/memberFunDelegatedToInlineClassLongGeneric.kt: IllegalStateException: Boxing a value of the non-primitive T of <root>.Z
 inlineClasses/kt25750.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inlineClasses/kt25750Generic.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-inlineClasses/kt25771.kt: unsupported: a value of type kotlin.Nothing
-inlineClasses/kt47823.kt: unsupported: a value of type kotlin.Nothing
 inlineClasses/kt57973.kt: IllegalStateException: No declaration of FUN name:f-impl visibility:public modality:FINAL <> ($this:<root>.IC, i1:kotlin.Long, i2:kotlin.Long, i3:kotlin.Long, i
 inlineClasses/kt70461.kt: unsupported: a call to CONSTRUCTOR …
 inlineClasses/propertyDelegation/captureLocalVarDelegatedToInlineClass.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -878,8 +870,8 @@ objects/kt1047.kt: unsupported: the static field out outside the VM modules
 objects/kt1737.kt: unsupported: the supertype Runnable outside the VM modules
 objects/kt2663_2.kt: unsupported: the supertype Runnable outside the VM modules
 objects/kt3238.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'java' on receiver of type 'KClass<Obj.Inner>'.
-objects/throwingInitializersCompanionObjects.kt: unsupported: a value of type kotlin.Nothing
-objects/throwingInitializersObjects.kt: unsupported: a value of type kotlin.Nothing
+objects/throwingInitializersCompanionObjects.kt: unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
+objects/throwingInitializersObjects.kt: unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
 objects/useAnonymousObjectAsIterator.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 operatorConventions/kt14227.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.plus_c926e24f1800a711" }
 operatorConventions/untilOperator.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterable::forEach_bd25ba6e2158fd14" }
@@ -959,7 +951,6 @@ regressions/hashCodeNPE.kt: unsupported: a call to CONSTRUCTOR …
 regressions/kt1779.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 regressions/kt2246.kt: IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
 regressions/kt344Runnable.kt: unsupported: the supertype Runnable outside the VM modules
-regressions/kt47279.kt: unsupported: a value of type kotlin.Nothing
 regressions/kt71119.kt: unsupported: a call to CONSTRUCTOR …
 regressions/objectCaptureOuterConstructorProperty.kt: link: Failed to link: UnresolvedImport { module: "kotlin-stdlib", symbol: "kotlin.collections.Iterator::forEachRemaining_ab411f18c02c616c" }
 regressions/objectInsideDelegation.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -1130,4 +1121,3 @@ volatile/volatileShort.kt: IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_
 volatile/volatileString.kt: IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE: Declaration annotated with '@OptionalExpectation' can only be used in common module sour
 when/NoWhenBranchMatchedExceptionAfterAnonymous.kt: wrong result
 when/integralWhenWithNoInlinedConstants.kt: IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
-when/nothingTyped.kt: unsupported: a value of type kotlin.Nothing

@@ -81,6 +81,15 @@ class JKlibVmBackendTest {
         return run(File(repo, "target/box_tests/execute"), container)
     }
 
+    /** [source] compiled, as the VM's `dump_ir` prints the module. */
+    private fun dumpIr(tempDir: File, source: String): String {
+        val repo = System.getProperty("kotlin.vm.repo")
+        assumeTrue(repo != null, "KOTLIN_VM_REPO names no VM checkout to run on")
+        val compilation = compile(tempDir, source)
+        assertEquals(ExitCode.OK, compilation.exitCode) { "Compilation failed: ${compilation.output}" }
+        return run(File(repo, "target/box_tests/dump_ir"), File(tempDir, "main.vir").path)
+    }
+
     private fun run(binary: File, vararg args: String): String {
         assertTrue(binary.canExecute()) { "$binary is missing: build the VM repository with `cargo build --profile box_tests`" }
         val process = ProcessBuilder(binary.path, *args).redirectErrorStream(true).start()
@@ -3665,5 +3674,74 @@ class JKlibVmBackendTest {
             fun box(): String = if (count() == 0) "OK" else "fail"
         """
         assertTrue(runBox(tempDir, source))
+    }
+
+    /** A class with a field of type `Nothing` constructs until the field's initializer throws. */
+    @Test
+    fun testFieldOfTypeNothing(@TempDir tempDir: File) {
+        val source = """
+            class Never {
+                val never: Nothing = throw IllegalStateException("never")
+            }
+
+            fun box(): String = try {
+                Never()
+                "fail"
+            } catch (e: IllegalStateException) {
+                "OK"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A local of a type parameter that inlining substitutes with `Nothing` has a slot. */
+    @Test
+    fun testLocalOfTypeNothingFromInlining(@TempDir tempDir: File) {
+        val source = """
+            inline fun <T> evaluate(f: () -> T): T {
+                val result = f()
+                return result
+            }
+
+            fun box(): String = try {
+                evaluate { throw IllegalStateException("never") }
+            } catch (e: IllegalStateException) {
+                "OK"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A safe call of an extension on `Nothing` on `null` keeps its receiver in a slot, and answers null. */
+    @Test
+    fun testSafeCallOfAnExtensionOnNothing(@TempDir tempDir: File) {
+        val source = """
+            fun Nothing.ignored(): String = "fail"
+
+            fun box(): String = if (null?.ignored() == null) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A field of type `Nothing` takes no slot in its class. */
+    @Test
+    fun testFieldOfTypeNothingHasNoSlot(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, """
+            class Never {
+                val kept = 1
+                val never: Nothing = throw IllegalStateException("never")
+            }
+        """)
+        assertTrue("field kept" in dump) { dump }
+        assertFalse("field never" in dump) { dump }
+    }
+
+    /** A top-level property of type `Nothing` takes no global. */
+    @Test
+    fun testTopLevelPropertyOfTypeNothingHasNoGlobal(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, """
+            val never: Nothing = throw IllegalStateException("never")
+        """)
+        assertFalse("never" in dump.lines().filter { it.startsWith("global") }.joinToString()) { dump }
     }
 }

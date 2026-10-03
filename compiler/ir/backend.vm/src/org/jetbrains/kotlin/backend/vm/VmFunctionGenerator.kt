@@ -226,7 +226,8 @@ internal class VmFunctionGenerator private constructor(
     /** The body of a file's initializer: each field's initializer stored to its global, in declaration order. */
     private fun generateFileInitializer(fields: List<IrField>): VmFunction {
         for (field in fields) {
-            emit(VmInstruction.StoreGlobal(gen.globalOf(field), operandAs(field.initializer!!.expression, field.type)))
+            val value = operandAs(field.initializer!!.expression, field.type)
+            if (gen.hasStorage(field)) emit(VmInstruction.StoreGlobal(gen.globalOf(field), value))
         }
         terminate(VmTerminator.Return(null))
         return finish()
@@ -473,6 +474,10 @@ internal class VmFunctionGenerator private constructor(
         is IrGetField -> {
             val field = expression.symbol.owner
             val receiver = expression.receiver
+            if (!gen.hasStorage(field)) {
+                if (receiver != null) expression(receiver)
+                return constant(gen.heldType(field.type), 0)
+            }
             val dst = newValue(gen.heldType(field.type))
             if (receiver == null) {
                 emit(VmInstruction.LoadGlobal(dst, gen.globalOf(field)))
@@ -488,7 +493,10 @@ internal class VmFunctionGenerator private constructor(
         is IrSetField -> {
             val field = expression.symbol.owner
             val receiver = expression.receiver
-            if (receiver == null) {
+            if (!gen.hasStorage(field)) {
+                if (receiver != null) expression(receiver)
+                expression(expression.value)
+            } else if (receiver == null) {
                 emit(VmInstruction.StoreGlobal(gen.globalOf(field), operandAs(expression.value, field.type)))
             } else {
                 val obj = operand(receiver)
@@ -1194,7 +1202,8 @@ internal class VmFunctionGenerator private constructor(
         val initializer = field.initializer ?: return
         // As on the JVM, which leaves such a field to its default: an initializer running earlier may have set it.
         if ((initializer.expression as? IrConst)?.isDefaultValue() == true) return
-        emit(VmInstruction.StoreField(self, gen.fieldIndex(field), operandAs(initializer.expression, field.type)))
+        val value = operandAs(initializer.expression, field.type)
+        if (gen.hasStorage(field)) emit(VmInstruction.StoreField(self, gen.fieldIndex(field), value))
     }
 
     /** What an intrinsic produced: a value, or none for one returning `Unit`. */
