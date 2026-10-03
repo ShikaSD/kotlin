@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.jklib.test.vm
 
+import org.jetbrains.kotlin.cli.jklib.config.jklibTargetsVm
 import org.jetbrains.kotlin.cli.jklib.config.klibPaths
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.jklib.test.irText.JKlibSourceRootConfigurator
@@ -23,6 +24,7 @@ class JKlibVmSourceRootConfigurator(testServices: TestServices) : JKlibSourceRoo
     override fun configureCompilerConfiguration(configuration: CompilerConfiguration, module: TestModule) {
         super.configureCompilerConfiguration(configuration, module)
         configuration.klibPaths += kotlinTestKlib.path
+        configuration.jklibTargetsVm = true
     }
 
     companion object {

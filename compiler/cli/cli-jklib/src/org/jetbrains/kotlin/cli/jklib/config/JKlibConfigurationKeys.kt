@@ -12,6 +12,7 @@ object JKlibConfigurationKeys {
     val JKLIB_OUTPUT_DESTINATION = CompilerConfigurationKey.create<String>("jklib output destination")
     val JKLIB_COMPILE_IR = CompilerConfigurationKey.create<Boolean>("jklib compile ir")
     val KLIB_PATHS = CompilerConfigurationKey.create<List<String>>("KLIB_PATHS")
+    val JKLIB_TARGETS_VM = CompilerConfigurationKey.create<Boolean>("jklib targets the VM")
     val JKLIB_VM_OUTPUT = CompilerConfigurationKey.create<String>("jklib VM binary IR output")
 }
 
@@ -37,4 +38,11 @@ var CompilerConfiguration.jklibVmOutput: String?
     get() = get(JKlibConfigurationKeys.JKLIB_VM_OUTPUT)
     set(value) {
         putIfNotNull(JKlibConfigurationKeys.JKLIB_VM_OUTPUT, value)
+    }
+
+/** Whether the compilation sees the built-in collection classes as the VM has them: with Kotlin's members only, not the JDK's. */
+var CompilerConfiguration.jklibTargetsVm: Boolean
+    get() = get(JKlibConfigurationKeys.JKLIB_TARGETS_VM) ?: false
+    set(value) {
+        put(JKlibConfigurationKeys.JKLIB_TARGETS_VM, value)
     }

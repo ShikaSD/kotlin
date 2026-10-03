@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.cli.jklib
 
 import org.jetbrains.kotlin.cli.common.SessionConstructionUtils
 import org.jetbrains.kotlin.cli.common.SessionWithSources
+import org.jetbrains.kotlin.cli.jklib.config.jklibTargetsVm
 import org.jetbrains.kotlin.cli.jvm.compiler.VfsBasedProjectEnvironment
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.fir.*
@@ -35,8 +36,9 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 
+/** [targetsVm] gives the built-in collection classes their common members, without the ones the JVM maps from the JDK. */
 @OptIn(SessionConfiguration::class)
-object FirJKlibSessionFactory : FirAbstractSessionFactory<FirJKlibSessionFactory.Context>() {
+class FirJKlibSessionFactory(private val targetsVm: Boolean) : FirAbstractSessionFactory<FirJKlibSessionFactory.Context>() {
     override fun createPlatformSpecificSharedProviders(
         session: FirSession,
         moduleData: FirModuleData,
@@ -127,7 +129,7 @@ object FirJKlibSessionFactory : FirAbstractSessionFactory<FirJKlibSessionFactory
     }
 
     override fun createKotlinScopeProviderForLibrarySession(): FirKotlinScopeProvider {
-        return FirKotlinScopeProvider(::wrapScopeWithJvmMapped)
+        return if (targetsVm) FirKotlinScopeProvider() else FirKotlinScopeProvider(::wrapScopeWithJvmMapped)
     }
 
     override fun FirSession.registerLibrarySessionComponents(c: Context) {
@@ -195,6 +197,7 @@ object FirJKlibSessionFactory : FirAbstractSessionFactory<FirJKlibSessionFactory
         moduleData: FirModuleData,
         languageVersionSettings: LanguageVersionSettings,
     ): FirKotlinScopeProvider {
+        if (targetsVm) return FirKotlinScopeProvider()
         if (languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation) && moduleData.isCommon) return FirKotlinScopeProvider()
         return FirKotlinScopeProvider { klass, declaredScope, useSiteSession, scopeSession, memberRequiredPhase ->
             wrapScopeWithJvmMapped(
@@ -278,6 +281,7 @@ internal fun <F> prepareJKlibSessions(
 ): List<SessionWithSources<F>> {
     val predefinedJavaComponents = FirSharableJavaComponents(firCachesFactoryForCliMode)
     val packagePartProviderForLibraries = projectEnvironment.getPackagePartProvider(librariesScope)
+    val sessionFactory = FirJKlibSessionFactory(targetsVm = configuration.jklibTargetsVm)
 
     return SessionConstructionUtils.prepareSessions(
         files,
@@ -291,7 +295,7 @@ internal fun <F> prepareJKlibSessions(
         isScript = { false },
         fileBelongsToModule,
         createSharedLibrarySession = {
-            FirJKlibSessionFactory.createSharedLibrarySession(
+            sessionFactory.createSharedLibrarySession(
                 rootModuleName,
                 projectEnvironment,
                 extensionRegistrars,
@@ -302,7 +306,7 @@ internal fun <F> prepareJKlibSessions(
             )
         },
         createLibrarySession = { sharedLibrarySession ->
-            FirJKlibSessionFactory.createLibrarySession(
+            sessionFactory.createLibrarySession(
                 resolvedLibraries,
                 sharedLibrarySession,
                 libraryList.moduleDataProvider,
@@ -316,7 +320,7 @@ internal fun <F> prepareJKlibSessions(
             )
         },
         createSourceSession = { moduleData, kmpModuleKind, sessionConfigurator ->
-            FirJKlibSessionFactory.createSourceSession(
+            sessionFactory.createSourceSession(
                 moduleData = moduleData,
                 javaSourcesScope = projectEnvironment.getSearchScopeForProjectJavaSources(),
                 projectEnvironment = projectEnvironment,

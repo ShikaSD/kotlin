@@ -3744,4 +3744,31 @@ class JKlibVmBackendTest {
         """)
         assertFalse("never" in dump.lines().filter { it.startsWith("global") }.joinToString()) { dump }
     }
+
+    /** A class implementing `Iterator` has the common members only, so it links without the JDK's `forEachRemaining`. */
+    @Test
+    fun testClassImplementingIteratorInheritsNoJavaDefault(@TempDir tempDir: File) {
+        val source = """
+            class Countdown(var n: Int) : Iterator<Int> {
+                override fun hasNext(): Boolean = n > 0
+                override fun next(): Int = n--
+            }
+
+            fun box(): String {
+                var sum = 0
+                for (x in Countdown(3)) sum += x
+                return if (sum == 6) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** The VM sees the common members of the built-in collections only: the JDK's `forEachRemaining` does not resolve. */
+    @Test
+    fun testJdkMappedMemberDoesNotResolve(@TempDir tempDir: File) {
+        val (output, exitCode) = compile(tempDir, "fun f(it: Iterator<Int>) = it.forEachRemaining { }")
+
+        assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
+        assertTrue(output.contains("unresolved reference 'forEachRemaining'")) { output }
+    }
 }

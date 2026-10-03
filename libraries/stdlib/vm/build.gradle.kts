@@ -228,13 +228,6 @@ val copyMinimalSources = tasks.register("copyMinimalSources", Sync::class) {
         into("src/jvm")
     }
 
-    from(stdlibProjectDir.resolve("jvm-minimal-for-test/jvm-src")) {
-        include(
-            "minimalThrowables.kt",
-        )
-        into("src/jvm")
-    }
-
     // What the VM's standard library declares itself, until the common sources it stands in for build: common code, and
     // the VM's half of the platform's, whose externals the VM backend compiles to VM operations.
     from(file("src")) {
