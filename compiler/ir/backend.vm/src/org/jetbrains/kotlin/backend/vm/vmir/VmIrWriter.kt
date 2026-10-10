@@ -322,6 +322,7 @@ private class ModuleEncoder(private val module: VmModule) {
     private fun function(function: VmFunction) {
         symbol(function.symbol)
         optionalOwner(function.owner)
+        optionalString(function.export)
         types(function.valueTypes)
         varint(function.params.size)
         function.params.forEach(::value)

@@ -33,6 +33,8 @@ class JKlibVmBackendTest {
         files: Map<String, String>,
         name: String = "main",
         dependencies: List<String> = emptyList(),
+        targetsVm: Boolean = true,
+        extraArgs: List<String> = emptyList(),
     ): Compilation {
         val sources = File(tempDir, name).apply { mkdirs() }
         val paths = files.map { file -> File(sources, file.key).apply { writeText(file.value.trimIndent()) }.path }
@@ -42,8 +44,7 @@ class JKlibVmBackendTest {
             "-module-name", name,
             "-no-stdlib",
             "-Xklib=${klibs.joinToString(File.pathSeparator)}",
-            "-Xvm-output=${File(tempDir, "$name.vir").path}",
-        )
+        ) + extraArgs + if (targetsVm) listOf("-Xvm-output=${File(tempDir, "$name.vir").path}") else emptyList()
         // A stream of this compilation's own: capturing System.err would race the other tests running in parallel.
         val messages = ByteArrayOutputStream()
         val exitCode = K2JKlibCompiler().exec(PrintStream(messages), *args.toTypedArray())
@@ -82,10 +83,13 @@ class JKlibVmBackendTest {
     }
 
     /** [source] compiled, as the VM's `dump_ir` prints the module. */
-    private fun dumpIr(tempDir: File, source: String): String {
+    private fun dumpIr(tempDir: File, source: String): String = dumpIr(tempDir, mapOf("box.kt" to source))
+
+    /** [files] compiled as one module, as the VM's `dump_ir` prints it. */
+    private fun dumpIr(tempDir: File, files: Map<String, String>): String {
         val repo = System.getProperty("kotlin.vm.repo")
         assumeTrue(repo != null, "KOTLIN_VM_REPO names no VM checkout to run on")
-        val compilation = compile(tempDir, source)
+        val compilation = compile(tempDir, files)
         assertEquals(ExitCode.OK, compilation.exitCode) { "Compilation failed: ${compilation.output}" }
         return run(File(repo, "target/box_tests/dump_ir"), File(tempDir, "main.vir").path)
     }
@@ -3770,5 +3774,215 @@ class JKlibVmBackendTest {
 
         assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
         assertTrue(output.contains("unresolved reference 'forEachRemaining'")) { output }
+    }
+
+    /** A line of the dump naming the exports. */
+    private fun exportsOf(dump: String): List<String> = dump.lines().filter { " export " in it }.map { it.substringAfter(" export ") }
+
+    /** A public top-level function crosses to the JVM by the name the JVM compiles its method to. */
+    @Test
+    fun testPublicTopLevelFunctionIsExportedUnderItsJvmName(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf("Greeting.kt" to """
+            package sample
+
+            fun greeting(name: String): String = name
+        """))
+        assertEquals(listOf("\"jvm:sample/GreetingKt.greeting(Ljava/lang/String;)Ljava/lang/String;\" {"), exportsOf(dump)) { dump }
+    }
+
+    /** `@file:JvmName` names the JVM class holding the file's functions. */
+    @Test
+    fun testFileJvmNameNamesTheExportOwner(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf("Greeting.kt" to """
+            @file:JvmName("Api")
+            package sample
+
+            fun answer(): Int = 42
+        """))
+        assertEquals(listOf("\"jvm:sample/Api.answer()I\" {"), exportsOf(dump)) { dump }
+    }
+
+    /** `@JvmName` on a function names its JVM method. */
+    @Test
+    fun testFunctionJvmNameNamesTheExportMethod(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf("Greeting.kt" to """
+            package sample
+
+            @JvmName("hello")
+            fun greeting(): Int = 1
+        """))
+        assertEquals(listOf("\"jvm:sample/GreetingKt.hello()I\" {"), exportsOf(dump)) { dump }
+    }
+
+    /** A file in the root package has a facade class with no package. */
+    @Test
+    fun testFileInTheRootPackageHasNoPackageInTheExport(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf("Greeting.kt" to "fun answer(): Int = 42"))
+        assertEquals(listOf("\"jvm:GreetingKt.answer()I\" {"), exportsOf(dump)) { dump }
+    }
+
+    /** Each primitive has its descriptor letter. */
+    @Test
+    fun testExportDescriptorOfPrimitives(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf("Greeting.kt" to """
+            package sample
+
+            fun mix(a: Int, b: Long, c: Short, d: Byte, e: Char, f: Boolean, g: Float, h: Double): Int = a
+        """))
+        assertEquals(listOf("\"jvm:sample/GreetingKt.mix(IJSBCZFD)I\" {"), exportsOf(dump)) { dump }
+    }
+
+    /** A nullable primitive is its box. */
+    @Test
+    fun testExportDescriptorOfNullablePrimitive(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf("Greeting.kt" to """
+            package sample
+
+            fun orNull(a: Int?): Boolean? = null
+        """))
+        assertEquals(
+            listOf("\"jvm:sample/GreetingKt.orNull(Ljava/lang/Integer;)Ljava/lang/Boolean;\" {"), exportsOf(dump),
+        ) { dump }
+    }
+
+    /** `Unit` is the JVM's `void`. */
+    @Test
+    fun testExportDescriptorOfUnitResult(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf("Greeting.kt" to """
+            package sample
+
+            fun nothingToSay() {}
+        """))
+        assertEquals(listOf("\"jvm:sample/GreetingKt.nothingToSay()V\" {"), exportsOf(dump)) { dump }
+    }
+
+    /** An extension receiver is the first parameter. */
+    @Test
+    fun testExportDescriptorOfExtensionReceiver(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf("Greeting.kt" to """
+            package sample
+
+            fun String.shout(times: Int): String = this
+        """))
+        assertEquals(listOf("\"jvm:sample/GreetingKt.shout(Ljava/lang/String;I)Ljava/lang/String;\" {"), exportsOf(dump)) { dump }
+    }
+
+    @Test
+    fun testPrivateFunctionIsNotExported(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf("Greeting.kt" to """
+            package sample
+
+            private fun hidden(): Int = 1
+        """))
+        assertEquals(emptyList<String>(), exportsOf(dump)) { dump }
+    }
+
+    /** The JVM mangles an internal function's name with its module's, which is not covered. */
+    @Test
+    fun testInternalFunctionIsNotExported(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf("Greeting.kt" to """
+            package sample
+
+            internal fun inside(): Int = 1
+        """))
+        assertEquals(emptyList<String>(), exportsOf(dump)) { dump }
+    }
+
+    /** A class's members are not exported yet. */
+    @Test
+    fun testMemberFunctionIsNotExported(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf("Greeting.kt" to """
+            package sample
+
+            class Greeter {
+                fun greet(): Int = 1
+            }
+        """))
+        assertEquals(emptyList<String>(), exportsOf(dump)) { dump }
+    }
+
+    /** A type outside the primitives and `String` has no covered descriptor, so its function is not exported. */
+    @Test
+    fun testFunctionOfUncoveredTypeIsNotExported(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf("Greeting.kt" to """
+            package sample
+
+            fun sum(numbers: List<Int>): Int = 0
+        """))
+        assertEquals(emptyList<String>(), exportsOf(dump)) { dump }
+    }
+
+    /** A VM compilation takes an `expect` declaration its module has no `actual` for; the JVM has it. */
+    @Test
+    fun testExpectFunctionWithoutActualIsAccepted(@TempDir tempDir: File) {
+        val (output, exitCode) = compile(tempDir, "expect fun platformName(): String")
+
+        assertEquals(ExitCode.OK, exitCode) { output }
+    }
+
+    /** Outside a VM compilation, an `expect` declaration without an `actual` is still an error. */
+    @Test
+    fun testExpectFunctionWithoutActualIsReportedOutsideTheVm(@TempDir tempDir: File) {
+        val (output, exitCode) = compile(
+            tempDir, mapOf("box.kt" to "expect fun platformName(): String"), targetsVm = false, extraArgs = listOf("-Xmulti-platform"),
+        )
+
+        assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
+        assertTrue(output.contains("has no 'actual' declaration")) { output }
+    }
+
+    /** A call of an `expect` function without an `actual` is a call of the host function named by the JVM's `actual`. */
+    @Test
+    fun testCallOfExpectFunctionIsAHostImportOfItsActual(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf(
+            "Platform.kt" to """
+                package sample
+
+                expect fun platformName(): String
+            """,
+            "Greeting.kt" to """
+                package sample
+
+                fun greeting(): String = platformName()
+            """,
+        ))
+        val externs = dump.lines().filter { it.startsWith("extern ") }
+        assertEquals(listOf("extern @\"jvm:sample/Platform_jvmKt.platformName()Ljava/lang/String;\"() -> @vm.builtin.String"), externs) { dump }
+        assertTrue("call @\"jvm:sample/Platform_jvmKt.platformName()Ljava/lang/String;\"()" in dump) { dump }
+    }
+
+    /** The `expect` function has no code of its own to export. */
+    @Test
+    fun testExpectFunctionIsNotExported(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf("Platform.kt" to "package sample\n\nexpect fun platformName(): String"))
+        assertEquals(emptyList<String>(), exportsOf(dump)) { dump }
+    }
+
+    /** The actual's class is named after the actual's file, `Name.jvm.kt`, by the platform file convention. */
+    @Test
+    fun testHostImportIsNamedAfterTheExpectFilesJvmCounterpart(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf(
+            "Env.kt" to """
+                package sample
+
+                expect fun home(): String
+
+                fun path(): String = home()
+            """,
+        ))
+        assertTrue("extern @\"jvm:sample/Env_jvmKt.home()Ljava/lang/String;\"()" in dump) { dump }
+    }
+
+    /** A call of an `expect` function whose JVM name is not covered is reported. */
+    @Test
+    fun testCallOfExpectFunctionOfUncoveredTypeIsReported(@TempDir tempDir: File) {
+        val (output, exitCode) = compile(tempDir, """
+            expect fun names(): List<String>
+
+            fun count(): Int = names().size
+        """)
+
+        assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
+        assertTrue(output.contains("the VM backend does not support calling the expect")) { output }
     }
 }

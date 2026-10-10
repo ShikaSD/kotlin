@@ -164,6 +164,8 @@ class VmModuleGenerator(
             when {
                 function.body != null || isAbstract -> true
                 isRuntimeMirror(function) -> false
+                // Bound to the JVM's `actual` by the host; see [hostImport].
+                function is IrSimpleFunction && function.isExpect && function.isTopLevel -> false
                 isStdlib -> false
                 else -> unsupported("the declaration ${function.render()}")
             }
@@ -197,7 +199,7 @@ class VmModuleGenerator(
         // The VM starts a program from its entry module's first function.
         functions.singleOrNull(::isBox)?.let { module.functions += boxEntry(it as IrSimpleFunction) }
         for (function in bodies) {
-            stubbing(function) { module.functions += VmFunctionGenerator(this, function).generate() }
+            stubbing(function) { module.functions += VmFunctionGenerator(this, function).generate().also { it.export = exportName(function) } }
                 ?: stub(function)?.let(module.functions::add)
         }
         for (function in functions.filter { function -> function.parameters.any { it.defaultValue != null } }) {
@@ -1056,12 +1058,40 @@ class VmModuleGenerator(
     internal fun staticTarget(callee: IrFunction): CallTarget {
         val symbol = if (isRuntimeMirror(callee)) {
             runtimeFunction(callee.fqNameWhenAvailable!!.asString(), callee.parameters.map { mirrorType(it.type)!! }, mirrorType(callee.returnType))
+        } else if (callee is IrSimpleFunction && callee.isExpect && callee.isTopLevel) {
+            hostImport(callee)
         } else if (callee.symbol in definedFunctions) {
             functionSymbol(callee)
         } else {
             importFunction(callee) ?: unsupported("a call to ${callee.render()} outside the VM modules")
         }
         return CallTarget(VmCallee.Static(symbol), symbol)
+    }
+
+    /**
+     * The extern standing for the `expect` function [callee], which has no `actual` in the VM: the host runs the JVM's,
+     * which `jvm:` and the JVM name of the `actual` in the file's platform facade bind; see [jvmActualFacadeName].
+     */
+    private fun hostImport(callee: IrSimpleFunction): VmFunctionSymbol = hostImports.getOrPut(callee.symbol) {
+        val file = callee.fileOrNull ?: unsupported("calling the expect ${callee.render()} of no file")
+        val name = jvmBindingName(callee, file.jvmActualFacadeName())
+            ?: unsupported("calling the expect ${callee.render()}, whose JVM name is covered for a public function over primitives and String only")
+        val symbol = VmFunctionSymbol(name, callee.parameters.map(::heldParameterType), vmType(callee.returnType))
+        module.externals += symbol
+        symbol
+    }
+
+    private val hostImports = hashMapOf<IrSimpleFunctionSymbol, VmFunctionSymbol>()
+
+    private fun heldParameterType(parameter: IrValueParameter): VmType = heldType(parameter.type)
+
+    /**
+     * The name [function] is exported by: its JVM name, for each public top-level function of a module the VM runs. Null
+     * for any other, and for a function whose JVM name is not covered; see [jvmBindingName].
+     */
+    private fun exportName(function: IrFunction): String? {
+        if (isStdlib || function !is IrSimpleFunction) return null
+        return jvmBindingName(function, function.fileOrNull?.jvmFacadeName() ?: return null)
     }
 
     /** [function] as the VM module declaring it defines it, imported, or null when no VM module does. */

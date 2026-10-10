@@ -94,6 +94,8 @@ class VmInitializer(val function: VmFunctionSymbol, val owner: VmOwner, val fing
 value class VmValue(val index: Int)
 
 class VmFunction(val symbol: VmFunctionSymbol, val owner: VmOwner?) {
+    /** The name an embedder calls the function by, unique across the linked program. */
+    var export: String? = null
     val valueTypes = mutableListOf<VmType>()
     val params = mutableListOf<VmValue>()
     val blocks = mutableListOf<VmBlock>()

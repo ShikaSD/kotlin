@@ -8,6 +8,8 @@ dependencies {
     api(project(":compiler:ir.tree"))
     api(project(":compiler:ir.backend.common"))
     api(project(":compiler:ir.inline"))
+    implementation(project(":compiler:backend.jvm.lower"))
+    implementation(project(":compiler:frontend.common.jvm"))
     implementation(project(":compiler:util"))
     implementation(project(":core:compiler.common"))
     implementation(project(":core:descriptors"))

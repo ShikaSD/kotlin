@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.cli.jklib.pipeline
 
+import org.jetbrains.kotlin.KtSourceFile
+import org.jetbrains.kotlin.backend.common.actualizer.IrActualizationErrors
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.linkage.partial.PartialLinkageDiagnostics
 import org.jetbrains.kotlin.backend.common.serialization.IrSerializationSettings
@@ -33,6 +35,8 @@ import org.jetbrains.kotlin.cli.pipeline.jvm.JvmFrontendPipelinePhase
 import org.jetbrains.kotlin.cli.report
 import org.jetbrains.kotlin.compiler.plugin.getCompilerExtensions
 import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.diagnostics.DiagnosticContext
+import org.jetbrains.kotlin.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.diagnostics.impl.deduplicating
 import org.jetbrains.kotlin.fir.DependencyListForCliModule
@@ -314,7 +318,9 @@ private fun AllModulesFrontendOutput.convertToIrAndActualize(
     diagnosticsReporter: BaseDiagnosticsCollector,
     irGeneratorExtensions: Collection<IrGenerationExtension>,
 ): Fir2IrActualizedResult {
-    val fir2IrConfiguration = Fir2IrConfiguration.forJKlibCompilation(configuration, diagnosticsReporter)
+    // An `expect` declaration of a VM compilation has no `actual`: the VM backend binds it to the JVM's.
+    val reporter = if (configuration.jklibTargetsVm) WithoutMissingActuals(diagnosticsReporter) else diagnosticsReporter
+    val fir2IrConfiguration = Fir2IrConfiguration.forJKlibCompilation(configuration, reporter)
 
     return convertToIrAndActualize(
         fir2IrExtensions,
@@ -455,3 +461,14 @@ object JKlibMetadataSerializationPhase : PipelinePhase<JKlibFrontendPipelineArti
     }
 }
 
+/** Drops the report of an `expect` declaration without an `actual`, and forwards the rest to [delegate]. */
+private class WithoutMissingActuals(private val delegate: BaseDiagnosticsCollector) : BaseDiagnosticsCollector() {
+    override val diagnostics: List<KtDiagnostic> get() = delegate.diagnostics
+    override val diagnosticsByFile: Map<KtSourceFile?, List<KtDiagnostic>> get() = delegate.diagnosticsByFile
+    override val hasErrors: Boolean get() = delegate.hasErrors
+    override val hasWarningsForWError: Boolean get() = delegate.hasWarningsForWError
+
+    override fun report(diagnostic: KtDiagnostic?, context: DiagnosticContext) {
+        if (diagnostic?.factory != IrActualizationErrors.NO_ACTUAL_FOR_EXPECT) delegate.report(diagnostic, context)
+    }
+}
