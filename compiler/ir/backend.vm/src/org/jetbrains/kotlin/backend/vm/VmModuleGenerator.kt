@@ -150,7 +150,8 @@ class VmModuleGenerator(
                         members.properties += declaration
                         listOfNotNull(declaration.getter, declaration.setter).filterTo(members.functions) { !it.isOnlyInlined() }
                     }
-                    is IrClass -> stubbing(declaration) { collectClass(declaration, classes, functions) }
+                    // The JVM's `actual` is the class; the VM declares none of its own.
+                    is IrClass -> if (!declaration.isExpect) stubbing(declaration) { collectClass(declaration, classes, functions) }
                     is IrTypeAlias -> {}
                     else -> unsupported("the declaration ${declaration.render()}")
                 }

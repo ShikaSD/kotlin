@@ -3777,7 +3777,7 @@ class JKlibVmBackendTest {
     }
 
     /** A line of the dump naming the exports. */
-    private fun exportsOf(dump: String): List<String> = dump.lines().filter { " export " in it }.map { it.substringAfter(" export ") }
+    private fun exportsOf(dump: String): List<String> = dump.lines().filter { it.startsWith("fn ") && " binds " in it }.map { it.substringAfter(" binds ") }
 
     /** A public top-level function crosses to the JVM by the name the JVM compiles its method to. */
     @Test
@@ -3920,6 +3920,13 @@ class JKlibVmBackendTest {
         assertEquals(ExitCode.OK, exitCode) { output }
     }
 
+    /** An `expect` class without an `actual` is the JVM's, and the module declares no class for it. */
+    @Test
+    fun testExpectClassWithoutActualDeclaresNoClass(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, mapOf("Platform.kt" to "package sample\n\nexpect class Logger(tag: String) {\n  fun log(message: String)\n}"))
+        assertFalse(dump.lines().any { it.contains("Logger") }) { dump }
+    }
+
     /** Outside a VM compilation, an `expect` declaration without an `actual` is still an error. */
     @Test
     fun testExpectFunctionWithoutActualIsReportedOutsideTheVm(@TempDir tempDir: File) {
@@ -3947,8 +3954,11 @@ class JKlibVmBackendTest {
             """,
         ))
         val externs = dump.lines().filter { it.startsWith("extern ") }
-        assertEquals(listOf("extern @\"jvm:sample/Platform_jvmKt.platformName()Ljava/lang/String;\"() -> @vm.builtin.String"), externs) { dump }
-        assertTrue("call @\"jvm:sample/Platform_jvmKt.platformName()Ljava/lang/String;\"()" in dump) { dump }
+        val name = "jvm_sample_Platform_jvmKt.platformName__Ljava_lang_String_"
+        assertEquals(
+            listOf("extern @$name() -> @vm.builtin.String binds \"jvm:sample/Platform_jvmKt.platformName()Ljava/lang/String;\""), externs,
+        ) { dump }
+        assertTrue("call @$name()" in dump) { dump }
     }
 
     /** The `expect` function has no code of its own to export. */
@@ -3970,7 +3980,7 @@ class JKlibVmBackendTest {
                 fun path(): String = home()
             """,
         ))
-        assertTrue("extern @\"jvm:sample/Env_jvmKt.home()Ljava/lang/String;\"()" in dump) { dump }
+        assertTrue("extern @jvm_sample_Env_jvmKt.home__Ljava_lang_String_() -> @vm.builtin.String binds \"jvm:sample/Env_jvmKt.home()Ljava/lang/String;\"" in dump) { dump }
     }
 
     /** A call of an `expect` function whose JVM name is not covered is reported. */

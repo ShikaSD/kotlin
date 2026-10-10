@@ -408,3 +408,14 @@ artifacts {
         builtBy(compileStdlib)
     }
 }
+
+// The compiler's classpath as a file, one entry per line, for builds outside this repository that compile for the VM
+// with `org.jetbrains.kotlin.cli.jklib.K2JKlibCompiler` against this standard library.
+val writeCompilerClasspath = tasks.register("writeCompilerClasspath") {
+    val classpath = project.configurations.getByName("jklibCompilerClasspath") +
+            project.configurations.getByName("substrateStdlibCompilerDependencies")
+    val output = layout.buildDirectory.file("libs/kotlin-vm-compiler.classpath")
+    inputs.files(classpath)
+    outputs.file(output)
+    doLast { output.get().asFile.writeText(classpath.files.joinToString("\n", postfix = "\n") { it.absolutePath }) }
+}
