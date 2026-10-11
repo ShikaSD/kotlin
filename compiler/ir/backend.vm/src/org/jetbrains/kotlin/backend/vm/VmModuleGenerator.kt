@@ -116,6 +116,11 @@ class VmModuleGenerator(
      * link against the rest.
      */
     private val isStdlib: Boolean = false,
+    /**
+     * The files of the compilation the JVM owns: the `actual`s, and the platform code beside them. None is generated, and
+     * a call of one of their functions is a host import; see [hostImport].
+     */
+    private val hostFiles: Set<IrFile> = emptySet(),
     /** Told of each declaration of the standard library generated as a stub; see [isStdlib]. */
     private val reportStub: (String) -> Unit = {},
 ) {
@@ -1059,7 +1064,7 @@ class VmModuleGenerator(
     internal fun staticTarget(callee: IrFunction): CallTarget {
         val symbol = if (isRuntimeMirror(callee)) {
             runtimeFunction(callee.fqNameWhenAvailable!!.asString(), callee.parameters.map { mirrorType(it.type)!! }, mirrorType(callee.returnType))
-        } else if (callee is IrSimpleFunction && callee.isExpect && callee.isTopLevel) {
+        } else if (callee is IrSimpleFunction && callee.fileOrNull in hostFiles) {
             hostImport(callee)
         } else if (callee.symbol in definedFunctions) {
             functionSymbol(callee)
@@ -1070,13 +1075,15 @@ class VmModuleGenerator(
     }
 
     /**
-     * The extern standing for the `expect` function [callee], which has no `actual` in the VM: the host runs the JVM's,
-     * which `jvm:` and the JVM name of the `actual` in the file's platform facade bind; see [jvmActualFacadeName].
+     * The extern standing for [callee], a function of one of the [hostFiles], which the host runs: bound by `jvm:` and the
+     * JVM name of [callee] itself, in the facade of its own file. A call of an `expect` function reaches here as a call of
+     * its `actual`, which the actualizer put in its place.
      */
     private fun hostImport(callee: IrSimpleFunction): VmFunctionSymbol = hostImports.getOrPut(callee.symbol) {
-        val file = callee.fileOrNull ?: unsupported("calling the expect ${callee.render()} of no file")
-        val name = jvmBindingName(callee, file.jvmActualFacadeName())
-            ?: unsupported("calling the expect ${callee.render()}, whose JVM name is covered for a public function over primitives and String only")
+        val facade = callee.fileOrNull?.jvmFacadeName()
+            ?: unsupported("calling ${callee.render()}, which is in a multifile class")
+        val name = jvmBindingName(callee, facade)
+            ?: unsupported("calling ${callee.render()} on the JVM, whose JVM name is covered for a public top-level function over primitives and String only")
         val symbol = VmFunctionSymbol(name, callee.parameters.map(::heldParameterType), vmType(callee.returnType))
         module.externals += symbol
         symbol

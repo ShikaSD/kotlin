@@ -33,6 +33,7 @@ fun copyK2JKlibCompilerArguments(from: K2JKlibCompilerArguments, to: K2JKlibComp
     to.supportCompatqualCheckerFrameworkAnnotations = from.supportCompatqualCheckerFrameworkAnnotations
     to.typeEnhancementImprovementsInStrictMode = from.typeEnhancementImprovementsInStrictMode
     to.valueClasses = from.valueClasses
+    to.vmHostFragments = from.vmHostFragments.copyOf()
     to.vmOutput = from.vmOutput
 
     return to

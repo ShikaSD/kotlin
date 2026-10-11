@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.ir.util.isTopLevel
 import org.jetbrains.kotlin.ir.util.nonDispatchParameters
-import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 
 /*
  * The names a function crosses between the VM and the JVM by: `jvm:`, the JVM class that holds the method, a dot, the
@@ -69,13 +68,4 @@ internal fun jvmBindingName(function: IrSimpleFunction, owner: String): String? 
 internal fun IrFile.jvmFacadeName(): String? {
     val info = getFileClassInfoFromIrFile(this, File(fileEntry.name).name)
     return if (info.withJvmMultifileClass) null else info.fileClassFqName.asString().replace('.', '/')
-}
-
-/**
- * The internal name of the class holding the `actual`s of the `expect` declarations of this file, by the platform file
- * convention: the file `Name.kt` has its `actual`s in `Name.jvm.kt`, which the JVM compiles to `Name_jvmKt`.
- */
-internal fun IrFile.jvmActualFacadeName(): String {
-    val actualFileName = "${File(fileEntry.name).nameWithoutExtension}.jvm.kt"
-    return PackagePartClassUtils.getPackagePartFqName(packageFqName, actualFileName).asString().replace('.', '/')
 }

@@ -5,8 +5,6 @@
 
 package org.jetbrains.kotlin.cli.jklib.pipeline
 
-import org.jetbrains.kotlin.KtSourceFile
-import org.jetbrains.kotlin.backend.common.actualizer.IrActualizationErrors
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.linkage.partial.PartialLinkageDiagnostics
 import org.jetbrains.kotlin.backend.common.serialization.IrSerializationSettings
@@ -24,6 +22,7 @@ import org.jetbrains.kotlin.cli.diagnosticFactoriesStorage
 import org.jetbrains.kotlin.cli.jklib.config.jklibCompileIr
 import org.jetbrains.kotlin.cli.jklib.config.jklibOutputDestination
 import org.jetbrains.kotlin.cli.jklib.config.jklibTargetsVm
+import org.jetbrains.kotlin.cli.jklib.config.jklibVmHostFragments
 import org.jetbrains.kotlin.cli.jklib.config.jklibVmOutput
 import org.jetbrains.kotlin.cli.jklib.config.klibPaths
 import org.jetbrains.kotlin.cli.jklib.prepareJKlibSessions
@@ -35,8 +34,6 @@ import org.jetbrains.kotlin.cli.pipeline.jvm.JvmFrontendPipelinePhase
 import org.jetbrains.kotlin.cli.report
 import org.jetbrains.kotlin.compiler.plugin.getCompilerExtensions
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.diagnostics.DiagnosticContext
-import org.jetbrains.kotlin.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.diagnostics.impl.deduplicating
 import org.jetbrains.kotlin.fir.DependencyListForCliModule
@@ -192,6 +189,7 @@ object JKlibConfigurationUpdater : ConfigurationUpdater<K2JKlibCompilerArguments
         configuration.jklibCompileIr = arguments.compileIr || arguments.vmOutput != null
         arguments.vmOutput?.let { configuration.jklibVmOutput = it }
         configuration.jklibTargetsVm = arguments.vmOutput != null
+        configuration.jklibVmHostFragments = arguments.vmHostFragments.toList()
         arguments.friendModules?.let { configuration.friendPaths = it.split(File.pathSeparator).filterNot(String::isEmpty) }
 
         // TODO(KT-87172): call configuration.setupCommonKlibArguments() instead of manual setup.
@@ -318,9 +316,7 @@ private fun AllModulesFrontendOutput.convertToIrAndActualize(
     diagnosticsReporter: BaseDiagnosticsCollector,
     irGeneratorExtensions: Collection<IrGenerationExtension>,
 ): Fir2IrActualizedResult {
-    // An `expect` declaration of a VM compilation has no `actual`: the VM backend binds it to the JVM's.
-    val reporter = if (configuration.jklibTargetsVm) WithoutMissingActuals(diagnosticsReporter) else diagnosticsReporter
-    val fir2IrConfiguration = Fir2IrConfiguration.forJKlibCompilation(configuration, reporter)
+    val fir2IrConfiguration = Fir2IrConfiguration.forJKlibCompilation(configuration, diagnosticsReporter)
 
     return convertToIrAndActualize(
         fir2IrExtensions,
@@ -458,17 +454,5 @@ object JKlibMetadataSerializationPhase : PipelinePhase<JKlibFrontendPipelineArti
             input.projectEnvironment,
             input.rootDisposable,
         )
-    }
-}
-
-/** Drops the report of an `expect` declaration without an `actual`, and forwards the rest to [delegate]. */
-private class WithoutMissingActuals(private val delegate: BaseDiagnosticsCollector) : BaseDiagnosticsCollector() {
-    override val diagnostics: List<KtDiagnostic> get() = delegate.diagnostics
-    override val diagnosticsByFile: Map<KtSourceFile?, List<KtDiagnostic>> get() = delegate.diagnosticsByFile
-    override val hasErrors: Boolean get() = delegate.hasErrors
-    override val hasWarningsForWError: Boolean get() = delegate.hasWarningsForWError
-
-    override fun report(diagnostic: KtDiagnostic?, context: DiagnosticContext) {
-        if (diagnostic?.factory != IrActualizationErrors.NO_ACTUAL_FOR_EXPECT) delegate.report(diagnostic, context)
     }
 }
