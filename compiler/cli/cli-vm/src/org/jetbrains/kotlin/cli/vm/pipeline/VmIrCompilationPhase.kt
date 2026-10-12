@@ -77,6 +77,12 @@ import org.jetbrains.kotlin.storage.StorageManager
 import org.jetbrains.kotlin.types.KotlinType
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
+import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
+import org.jetbrains.kotlin.resolve.descriptorUtil.classId
+import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
+import org.jetbrains.kotlin.resolve.scopes.MemberScope
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 
 @OptIn(ObsoleteDescriptorBasedAPI::class)
 object VmIrCompilationPhase :
@@ -130,12 +136,11 @@ object VmIrCompilationPhase :
             ),
         )
 
-        // Deserialize modules
-        // We explicitly use the DeserializationStrategy.ALL to deserialize the whole world,
-        // so that we don't rely on linker side effects for proper deserialization.
+        // Only the module being compiled is deserialized whole: the VM backend generates nothing of its dependencies, which
+        // the VM links as binary IR, so their declarations are read as the module references them.
         lateinit var mainModuleFragment: IrModuleFragment
         for ([dep, descriptor] in dependencyDescriptorsByKlib) {
-            val strategy = if (descriptor == mainModule || dep.isJklibStdlib) {
+            val strategy = if (descriptor == mainModule) {
                 DeserializationStrategy.ALL
             } else {
                 DeserializationStrategy.WITH_INLINE_BODIES
@@ -164,9 +169,16 @@ object VmIrCompilationPhase :
             irBuiltIns,
             DescriptorByIdSignatureFinderImpl(mainModule, mangler),
             JvmGeneratorExtensionsImpl(configuration),
-        ).apply { unboundSymbolGeneration = true }
-
+        )
         linker.stubGenerator = stubGenerator
+
+        // A JDK stub names the Kotlin classes its Java types map to, and with stubs made on reference, one the stdlib has not
+        // been read for yet would get a stub in place of its declaration. The stdlib is read on demand, so those are read first.
+        @OptIn(InternalSymbolFinderAPI::class)
+        for (classId in javaMappedClasses(builtIns.builtInsModule)) {
+            irBuiltIns.symbolFinder.findClass(classId)?.takeUnless { it.isBound }?.let(linker::getDeclaration)
+        }
+        stubGenerator.unboundSymbolGeneration = true
 
         val pluginContext = IrPluginContextImpl(
             mainModule,
@@ -324,6 +336,23 @@ object VmIrCompilationPhase :
         }
 
         return dependencyDescriptorsByKlib
+    }
+
+    /** The classes of the `kotlin` and `kotlin.collections` packages that a JDK class maps to, nested ones included. */
+    private fun javaMappedClasses(builtInsModule: ModuleDescriptor): List<ClassId> {
+        val classes = mutableListOf<ClassId>()
+        fun visit(scope: MemberScope) {
+            for (descriptor in scope.getContributedDescriptors(DescriptorKindFilter.CLASSIFIERS)) {
+                if (descriptor !is ClassDescriptor) continue
+                val classId = descriptor.classId ?: continue
+                if (JavaToKotlinClassMap.mapKotlinToJava(classId.asSingleFqName().toUnsafe()) != null) classes += classId
+                visit(descriptor.unsubstitutedInnerClassesScope)
+            }
+        }
+        for (pkg in listOf(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, StandardNames.COLLECTIONS_PACKAGE_FQ_NAME)) {
+            visit(builtInsModule.getPackage(pkg).memberScope)
+        }
+        return classes
     }
 
     private fun loadLibraries(klibFiles: List<String>, configuration: CompilerConfiguration): List<KotlinLibrary> {
