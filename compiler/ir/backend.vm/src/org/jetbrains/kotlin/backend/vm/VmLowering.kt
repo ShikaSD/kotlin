@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrDiagnosticReporter
 import org.jetbrains.kotlin.ir.InternalSymbolFinderAPI
 import org.jetbrains.kotlin.ir.declarations.IrFactory
-import org.jetbrains.kotlin.ir.declarations.IrFile
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
@@ -249,8 +249,8 @@ internal fun IrClass.isInlinedValueClass(): Boolean {
 }
 
 /**
- * Lowers [module] and generates it as one VM module named [moduleName], leaving out its [hostFiles], which the JVM owns;
- * see [VmModuleGenerator]. Compiling the standard library, [isStdlib], [reportStub] is told of each function generated as
+ * Lowers [module] and generates it as one VM module named [moduleName], calling the `expect` functions [hostActuals]
+ * names on the JVM; see [VmModuleGenerator]. Compiling the standard library, [isStdlib], [reportStub] is told of each function generated as
  * a stub.
  */
 fun compileToVm(
@@ -258,10 +258,9 @@ fun compileToVm(
     moduleName: String,
     context: VmLoweringContext,
     isStdlib: Boolean = false,
-    hostFiles: Set<IrFile> = emptySet(),
+    hostActuals: (IrSimpleFunction) -> String? = { null },
     reportStub: (String) -> Unit = {},
 ): VmModule {
-    module.files.removeAll(hostFiles)
     lowerForVm(context, module)
-    return VmModuleGenerator(context.irBuiltIns, moduleName, isStdlib, hostFiles, reportStub).generate(module)
+    return VmModuleGenerator(context.irBuiltIns, moduleName, isStdlib, hostActuals, reportStub).generate(module)
 }

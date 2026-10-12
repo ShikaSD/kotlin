@@ -203,6 +203,7 @@ object VmIrCompilationPhase :
             pluginContext,
             mainModuleFragment,
             configuration,
+            input.hostActuals,
         )
     }
 

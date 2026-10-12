@@ -6,7 +6,9 @@
 package org.jetbrains.kotlin.vm.test
 
 import org.jetbrains.kotlin.cli.common.ExitCode
+import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.cli.vm.K2VmCompiler
+import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.vm.test.VmSourceRootConfigurator
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -16,6 +18,14 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintStream
 import java.util.concurrent.TimeUnit
+import java.util.zip.ZipFile
+import org.jetbrains.org.objectweb.asm.ClassReader
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.tree.ClassNode
+import org.jetbrains.org.objectweb.asm.tree.FieldInsnNode
+import org.jetbrains.org.objectweb.asm.tree.LdcInsnNode
+import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode
+import org.jetbrains.org.objectweb.asm.tree.MethodNode
 
 /**
  * The VM backend behind `-Xvm-output`. A test that runs its output needs a built checkout of the VM repository, named by
@@ -3968,7 +3978,7 @@ class VmBackendTest {
         assertFalse("helper" in dump) { dump }
     }
 
-    /** A call of an `expect` function is a call of its `actual`, which the host runs. */
+    /** A call of an `expect` function is a host import of its `actual`, which the host runs. */
     @Test
     fun testCallOfExpectFunctionIsAHostImportOfItsActual(@TempDir tempDir: File) {
         val dump = dumpIr(
@@ -4031,5 +4041,185 @@ class VmBackendTest {
 
         assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
         assertTrue(output.contains("the VM backend does not support calling")) { output }
+    }
+
+    /** The classes of the proxy jar of [files], compiled beside the JVM's [hostFiles], by internal name. */
+    private fun proxies(tempDir: File, files: Map<String, String>, hostFiles: Map<String, String> = emptyMap()): Map<String, ClassNode> {
+        val jar = File(tempDir, "proxies.jar")
+        val compilation = compile(tempDir, files, hostFiles = hostFiles, extraArgs = listOf("-Xvm-proxies=${jar.path}"))
+        assertEquals(ExitCode.OK, compilation.exitCode) { "Compilation failed: ${compilation.output}" }
+        return ZipFile(jar).use { zip ->
+            zip.entries().asSequence().filter { it.name.endsWith(".class") }.associate { entry ->
+                val node = ClassNode()
+                ClassReader(zip.getInputStream(entry).readBytes()).accept(node, 0)
+                node.name to node
+            }
+        }
+    }
+
+    private fun ClassNode.method(name: String): MethodNode? = methods.singleOrNull { it.name == name }
+
+    private val MethodNode.strings: List<String>
+        get() = instructions.filterIsInstance<LdcInsnNode>().mapNotNull { it.cst as? String }
+
+    private val MethodNode.calls: List<String>
+        get() = instructions.filterIsInstance<MethodInsnNode>().map { "${it.owner}.${it.name}${it.desc}" }
+
+    /** A proxy looks its export up through the bridge by the name the module exports the function under. */
+    @Test
+    fun testProxyLooksTheExportUpByItsName(@TempDir tempDir: File) {
+        val classes = proxies(tempDir, mapOf("Greeting.kt" to "package sample\n\nfun greeting(name: String): String = \"Hello, \" + name"))
+        val proxy = classes.getValue("sample/GreetingKt").method("greeting")!!
+
+        assertTrue("jvm:sample/GreetingKt.greeting(Ljava/lang/String;)Ljava/lang/String;" in proxy.strings) { proxy.strings.toString() }
+        assertTrue("vm/bridge/VmBridge.exportToken(Ljava/lang/String;)J" in proxy.calls) { proxy.calls.toString() }
+    }
+
+    /** A proxy keeps its export's token in a static field of its class, so only its first call looks the export up. */
+    @Test
+    fun testProxyKeepsTheExportTokenInAStaticField(@TempDir tempDir: File) {
+        val classes = proxies(tempDir, mapOf("Greeting.kt" to "package sample\n\nfun greeting(name: String): String = \"Hello, \" + name"))
+        val facade = classes.getValue("sample/GreetingKt")
+        val token = facade.fields.single { it.access and Opcodes.ACC_STATIC != 0 && it.desc == "J" }
+        val accesses = facade.method("greeting")!!.instructions.filterIsInstance<FieldInsnNode>()
+            .filter { it.owner == facade.name && it.name == token.name }.map { it.opcode }
+
+        assertEquals(setOf(Opcodes.GETSTATIC, Opcodes.PUTSTATIC), accesses.toSet())
+    }
+
+    /** A function the module does not export has no proxy. */
+    @Test
+    fun testPrivateFunctionHasNoProxy(@TempDir tempDir: File) {
+        val classes = proxies(tempDir, mapOf("Greeting.kt" to "package sample\n\nfun greeting(): String = name()\n\nprivate fun name(): String = \"x\""))
+        assertNull(classes.getValue("sample/GreetingKt").method("name"))
+    }
+
+    /** A function the VM exports under no name, for a type the binding does not cover, has a proxy that throws. */
+    @Test
+    fun testProxyOfAnUncoveredSignatureThrows(@TempDir tempDir: File) {
+        val classes = proxies(tempDir, mapOf("Names.kt" to "package sample\n\nfun names(): List<String> = listOf(\"a\")"))
+        val proxy = classes.getValue("sample/NamesKt").method("names")!!
+
+        assertTrue(proxy.instructions.any { it.opcode == Opcodes.ATHROW })
+        assertFalse(proxy.calls.any { it.startsWith("vm/bridge/VmBridge.") }) { proxy.calls.toString() }
+    }
+
+    /** The JVM's fragment has no proxies: its classes are the JVM's own. */
+    @Test
+    fun testJvmFragmentHasNoProxies(@TempDir tempDir: File) {
+        val classes = proxies(
+            tempDir,
+            mapOf("Greeting.kt" to "package sample\n\nfun greeting(): String = \"Hello\""),
+            hostFiles = mapOf("Main.kt" to "package sample\n\nfun helper(): Int = 1"),
+        )
+        assertEquals(setOf("sample/GreetingKt"), classes.keys)
+    }
+
+    /** Kotlin code on the JVM compiles against the proxies, which carry the module's Kotlin metadata. */
+    @Test
+    fun testJvmCodeCompilesAgainstTheProxies(@TempDir tempDir: File) {
+        proxies(tempDir, mapOf("Greeting.kt" to "package sample\n\nfun greeting(name: String): String = \"Hello, \" + name"))
+        val main = File(tempDir, "Main.kt").apply { writeText("package sample\n\nfun main() { println(greeting(\"JVM\")) }") }
+        val classpath = listOf(File(tempDir, "proxies.jar"), ForTestCompileRuntime.runtimeJarForTests()).joinToString(File.pathSeparator)
+        val messages = ByteArrayOutputStream()
+        val exitCode = K2JVMCompiler().exec(
+            PrintStream(messages), main.path, "-d", File(tempDir, "jvm").path, "-no-stdlib", "-classpath", classpath,
+        )
+        assertEquals(ExitCode.OK, exitCode) { messages.toString() }
+    }
+
+    private val animals = """
+        package sample
+
+        open class Animal(val name: String) {
+            open fun sound(): String = "..."
+            fun greet(): String = name + " says " + sound()
+        }
+
+        class Dog(name: String) : Animal(name) {
+            override fun sound(): String = "woof"
+            override fun toString(): String = "dog"
+        }
+    """
+
+    /** A class is a shell: it implements `VmShell` and holds its VM object's handle. */
+    @Test
+    fun testClassProxyIsAShell(@TempDir tempDir: File) {
+        val animal = proxies(tempDir, mapOf("Animals.kt" to animals)).getValue("sample/Animal")
+
+        assertTrue("vm/bridge/VmShell" in animal.interfaces) { animal.interfaces.toString() }
+        assertTrue(animal.fields.any { it.name == "\$vm\$handle" && it.desc == "J" }) { animal.fields.map { it.name }.toString() }
+    }
+
+    /** A shell that extends a shell holds no handle of its own: its superclass's is the one. */
+    @Test
+    fun testSubclassShellHasNoHandleOfItsOwn(@TempDir tempDir: File) {
+        val dog = proxies(tempDir, mapOf("Animals.kt" to animals)).getValue("sample/Dog")
+        assertFalse(dog.fields.any { it.name == "\$vm\$handle" }) { dog.fields.map { it.name }.toString() }
+    }
+
+    /** An override calls the selector of the member it overrides, which dispatches on the receiver's VM class. */
+    @Test
+    fun testOverrideCallsTheSelectorOfItsRoot(@TempDir tempDir: File) {
+        val proxy = proxies(tempDir, mapOf("Animals.kt" to animals)).getValue("sample/Dog").method("sound")!!
+
+        assertTrue("vm/bridge/VmBridge.methodToken(Ljava/lang/String;Ljava/lang/String;)J" in proxy.calls) { proxy.calls.toString() }
+        assertTrue(proxy.strings.any { it.startsWith("sample.Animal::sound_") }) { proxy.strings.toString() }
+    }
+
+    /** A member no class can override calls its VM function. */
+    @Test
+    fun testFinalMemberCallsItsFunction(@TempDir tempDir: File) {
+        val proxy = proxies(tempDir, mapOf("Animals.kt" to animals)).getValue("sample/Animal").method("greet")!!
+        assertTrue("vm/bridge/VmBridge.functionToken(Ljava/lang/String;Ljava/lang/String;Z)J" in proxy.calls) { proxy.calls.toString() }
+    }
+
+    /** A constructor runs its class's chain constructor, which makes no VM object, before the VM function that does. */
+    @Test
+    fun testConstructorRunsTheChainConstructorFirst(@TempDir tempDir: File) {
+        val dog = proxies(tempDir, mapOf("Animals.kt" to animals)).getValue("sample/Dog")
+        val constructor = dog.methods.single { it.name == "<init>" && it.desc == "(Ljava/lang/String;)V" }
+
+        assertEquals(
+            listOf("sample/Dog.<init>(Lvm/bridge/VmShell;)V", "vm/bridge/VmBridge.constructorToken(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)J"),
+            constructor.calls.filter { it.startsWith("sample/Dog.<init>") || it.contains("constructorToken") },
+        )
+    }
+
+    /** A shell's chain constructor runs its superclass's, so that the VM object is made once, for the most derived class. */
+    @Test
+    fun testChainConstructorRunsTheSuperclassChainConstructor(@TempDir tempDir: File) {
+        val dog = proxies(tempDir, mapOf("Animals.kt" to animals)).getValue("sample/Dog")
+        val chain = dog.methods.single { it.name == "<init>" && it.desc == "(Lvm/bridge/VmShell;)V" }
+        assertEquals(listOf("sample/Animal.<init>(Lvm/bridge/VmShell;)V"), chain.calls)
+    }
+
+    /** An override of `equals`, `hashCode` or `toString` has no proxy: the shell inherits `Object`'s. */
+    @Test
+    fun testOverrideOfAnyHasNoProxy(@TempDir tempDir: File) {
+        val dog = proxies(tempDir, mapOf("Animals.kt" to animals)).getValue("sample/Dog")
+        assertNull(dog.method("toString"))
+    }
+
+    /** The jar names each shell with the VM class it stands for. */
+    @Test
+    fun testShellListNamesEachShellsVmClass(@TempDir tempDir: File) {
+        proxies(tempDir, mapOf("Outer.kt" to "package sample\n\nclass Outer { class Nested }"))
+        val shellList = ZipFile(File(tempDir, "proxies.jar")).use { zip ->
+            zip.getInputStream(zip.getEntry("META-INF/vm.shells")).readBytes().decodeToString()
+        }
+        assertEquals(setOf("class sample/Outer sample.Outer", "class sample/Outer\$Nested sample.Outer\$Nested"), shellList.lines().filter { it.isNotEmpty() }.toSet())
+    }
+
+    /** The VM names a shell's proxies look their calls up by are the names the module gives its functions. */
+    @Test
+    fun testShellNamesAreTheModulesNames(@TempDir tempDir: File) {
+        val classes = proxies(tempDir, mapOf("Animals.kt" to animals))
+        val module = File(tempDir, "main.vir").readText(Charsets.ISO_8859_1)
+        val names = listOf("sample/Animal", "sample/Dog").flatMap { classes.getValue(it).methods }
+            .flatMap { it.strings }.filter { "::" in it }
+
+        assertTrue(names.isNotEmpty())
+        assertEquals(emptyList<String>(), names.filter { it !in module })
     }
 }

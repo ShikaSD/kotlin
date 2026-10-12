@@ -30,7 +30,7 @@ class VmCliPipeline(
                 VmFrontendPipelinePhase.thenIf(
                     condition = ::skipIrGeneration,
                     onTrue = VmMetadataSerializationPhase,
-                    onFalse = VmFir2IrPipelinePhase then VmKlibSerializationPhase,
+                    onFalse = VmFir2IrPipelinePhase then VmKlibSerializationPhase then VmProxyPhase,
                 )
 
         return when {

@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.cli.diagnosticFactoriesStorage
 import org.jetbrains.kotlin.cli.vm.config.klibDestination
 import org.jetbrains.kotlin.cli.vm.config.vmHostFragments
 import org.jetbrains.kotlin.cli.vm.config.vmOutput
+import org.jetbrains.kotlin.cli.vm.config.vmProxies
 import org.jetbrains.kotlin.cli.vm.config.klibPaths
 import org.jetbrains.kotlin.cli.vm.prepareVmSessions
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
@@ -185,6 +186,7 @@ object VmConfigurationUpdater : ConfigurationUpdater<K2VmCompilerArguments>() {
 
         arguments.destination?.let { configuration.klibDestination = it }
         arguments.vmOutput?.let { configuration.vmOutput = it }
+        arguments.vmProxies?.let { configuration.vmProxies = it }
         configuration.vmHostFragments = arguments.vmHostFragments.toList()
         arguments.friendModules?.let { configuration.friendPaths = it.split(File.pathSeparator).filterNot(String::isEmpty) }
 
@@ -289,7 +291,10 @@ object VmFir2IrPipelinePhase : PipelinePhase<VmFrontendPipelineArtifact, VmFir2I
         val fir2IrExtensions = JvmFir2IrExtensions()
         val irGenerationExtensions = configuration.getCompilerExtensions(IrGenerationExtension)
 
-        val fir2IrResult = firResult.convertToIrAndActualize(
+        // The JVM's fragments only pair their `actual`s with the `expect`s; nothing of them is converted to IR.
+        val [hosts, vmOutputs] = firResult.outputs.partition(configuration::isHostFragment)
+        val vmResult = AllModulesFrontendOutput(vmOutputs)
+        val fir2IrResult = vmResult.convertToIrAndActualize(
             fir2IrExtensions,
             configuration,
             diagnosticsReporter,
@@ -299,7 +304,8 @@ object VmFir2IrPipelinePhase : PipelinePhase<VmFrontendPipelineArtifact, VmFir2I
         return VmFir2IrPipelineArtifact(
             fir2IrResult,
             configuration,
-            input.frontendOutput,
+            vmResult,
+            hostActuals(hosts, fir2IrResult.components),
             input.projectEnvironment,
             input.rootDisposable,
         )
@@ -387,8 +393,10 @@ object VmKlibSerializationPhase : PipelinePhase<VmFir2IrPipelineArtifact, VmSeri
         return VmSerializationArtifact(
             destination.pathString,
             configuration,
+            input.hostActuals,
             input.projectEnvironment,
             input.rootDisposable,
+            fir2IrResult = input.result,
         )
     }
 }
@@ -447,6 +455,7 @@ object VmMetadataSerializationPhase : PipelinePhase<VmFrontendPipelineArtifact, 
         return VmSerializationArtifact(
             destination.pathString,
             configuration,
+            VmHostActuals.NONE,
             input.projectEnvironment,
             input.rootDisposable,
         )

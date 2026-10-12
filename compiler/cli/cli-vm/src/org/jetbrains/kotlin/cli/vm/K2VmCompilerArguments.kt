@@ -273,6 +273,17 @@ The default value is 'indy'.""",
         }
 
     @Argument(
+        value = "-Xvm-proxies",
+        valueDescription = "<path>",
+        description = "Write a jar of the module's proxies, which the JVM compiles against: each public top-level function calls the VM."
+    )
+    var vmProxies: String? = null
+        set(value) {
+            checkFrozen()
+            field = if (value.isNullOrEmpty()) null else value
+        }
+
+    @Argument(
         value = "-Xvm-host-fragment",
         valueDescription = "<fragment name>",
         description = "A fragment of '-Xfragments' the JVM owns: analyzed and actualized, but not compiled for the VM. A call of one of its declarations is a call of the JVM's. Can be repeated."

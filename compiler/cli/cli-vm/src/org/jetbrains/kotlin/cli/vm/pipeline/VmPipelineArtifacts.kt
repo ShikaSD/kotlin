@@ -38,7 +38,9 @@ data class VmFrontendPipelineArtifact(
 data class VmFir2IrPipelineArtifact(
     override val result: Fir2IrActualizedResult,
     override val configuration: CompilerConfiguration,
+    /** The fragments the VM runs, without the JVM's. */
     val frontendOutput: AllModulesFrontendOutput,
+    val hostActuals: VmHostActuals,
     val projectEnvironment: VfsBasedProjectEnvironment,
     val rootDisposable: Disposable,
 ) : Fir2IrPipelineArtifact() {
@@ -51,8 +53,11 @@ data class VmFir2IrPipelineArtifact(
 data class VmSerializationArtifact(
     val outputKlibPath: String,
     override val configuration: CompilerConfiguration,
+    val hostActuals: VmHostActuals,
     val projectEnvironment: VfsBasedProjectEnvironment,
     val rootDisposable: Disposable,
+    /** The IR the klib was written from, which [VmProxyPhase] generates the proxies of; null when the klib has no IR. */
+    val fir2IrResult: Fir2IrActualizedResult? = null,
     override val exitCode: ExitCode = ExitCode.OK,
 ) : PipelineArtifactWithExitCode() {
     @CliPipelineInternals(OPT_IN_MESSAGE)
@@ -65,6 +70,7 @@ data class VmIrCompilationArtifact(
     val pluginContext: IrPluginContext,
     val moduleFragment: IrModuleFragment,
     override val configuration: CompilerConfiguration,
+    val hostActuals: VmHostActuals,
     override val exitCode: ExitCode = ExitCode.OK,
 ) : PipelineArtifactWithExitCode() {
     @CliPipelineInternals(OPT_IN_MESSAGE)

@@ -117,10 +117,10 @@ class VmModuleGenerator(
      */
     private val isStdlib: Boolean = false,
     /**
-     * The files of the compilation the JVM owns: the `actual`s, and the platform code beside them. None is generated, and
-     * a call of one of their functions is a host import; see [hostImport].
+     * The internal name of the JVM facade holding the `actual` of an `expect` function, for each the JVM implements. A
+     * call of one is a host import; see [hostImport].
      */
-    private val hostFiles: Set<IrFile> = emptySet(),
+    private val hostActuals: (IrSimpleFunction) -> String? = { null },
     /** Told of each declaration of the standard library generated as a stub; see [isStdlib]. */
     private val reportStub: (String) -> Unit = {},
 ) {
@@ -298,7 +298,7 @@ class VmModuleGenerator(
         val simpleName = file.fileEntry.name.substringAfterLast('/').removeSuffix(".kt").replaceFirstChar { it.uppercase() } + "Kt"
         val packageName = file.packageFqName
         val name = if (packageName.isRoot) simpleName else "${packageName.asString()}.$simpleName"
-        module.classes += VmClass(sanitized(name), null, emptyList(), isOpen = true, isAbstract = true, VmClassKind.Interface)
+        module.classes += VmClass(vmSanitized(name), null, emptyList(), isOpen = true, isAbstract = true, VmClassKind.Interface)
         return module.classes.size - 1
     }
 
@@ -349,7 +349,7 @@ class VmModuleGenerator(
     }
 
     private fun globalName(field: IrField): String =
-        sanitized(field.correspondingPropertySymbol?.owner?.fqNameWhenAvailable?.asString() ?: field.name.asString())
+        vmSanitized(field.correspondingPropertySymbol?.owner?.fqNameWhenAvailable?.asString() ?: field.name.asString())
 
     /**
      * [globalName], made distinct from the module's other globals by a counter. Only private properties of two files in
@@ -402,7 +402,7 @@ class VmModuleGenerator(
     internal fun defaultStub(function: IrFunction): VmFunctionSymbol = defaultStubs.getOrPut(function.symbol) {
         if (function.parameters.size > Long.SIZE_BITS) unsupported("defaults for more than ${Long.SIZE_BITS} parameters")
         val original = functionSymbol(function)
-        val symbol = VmFunctionSymbol(sanitized("${original.name}\$default"), original.paramTypes + VmType.I64, original.returnType)
+        val symbol = VmFunctionSymbol(vmSanitized("${original.name}\$default"), original.paramTypes + VmType.I64, original.returnType)
         when {
             function.fileOrNull?.module == fragment -> {}
             vmModuleOf(function) != null -> module.imports += VmImport(vmModuleOf(function)!!, symbol)
@@ -420,7 +420,7 @@ class VmModuleGenerator(
 
     /** A name for a function only code generation creates, distinct from every other function's in the module. */
     internal fun uniqueFunctionName(base: String): String {
-        val name = sanitized(base)
+        val name = vmSanitized(base)
         if (usedFunctionNames.add(name)) return name
         return generateSequence(1) { it + 1 }.map { "${name}_$it" }.first(usedFunctionNames::add)
     }
@@ -833,25 +833,13 @@ class VmModuleGenerator(
     }
 
     /**
-     * The name the JVM gives the class: its package, then its name after those of the classes nesting it, joined by `$`.
-     * What the runtime's `Any.toString` shows.
-     */
-    private val IrClass.jvmName: String
-        get() {
-            val nesting = generateSequence(this) { it.parent as? IrClass }.toList().asReversed()
-            val packageName = getPackageFragment().packageFqName
-            val simpleNames = nesting.joinToString("$") { it.name.asString() }
-            return if (packageName.isRoot) simpleNames else "${packageName.asString()}.$simpleNames"
-        }
-
-    /**
-     * A class's name in the VM: its [jvmName]. A class other modules can name, by its public signature, keeps it
+     * A class's name in the VM: [vmClassName]. A class other modules can name, by its public signature, keeps it
      * exactly; a local or anonymous one, which lowering has moved out of its function, gets a counter when another
      * class of the module has the name already.
      */
     private val IrClass.vmName: String
         get() = classNames.getOrPut(symbol) {
-            val name = sanitized(jvmName)
+            val name = vmClassName(this)
             if (usedClassNames.add(name) || symbol.signature is IdSignature.CommonSignature) return@getOrPut name
             generateSequence(1) { it + 1 }.map { "${name}_$it" }.first(usedClassNames::add)
         }
@@ -955,7 +943,7 @@ class VmModuleGenerator(
                 else -> unsupported("implementing an interface with ${member.render()}")
             }
             if (selector.paramTypes.isNotEmpty() || selector.returnType != type) unsupported("a bridge to ${member.render()}")
-            val symbol = VmFunctionSymbol(sanitized("${declaration.vmName}::${member.name.asString()}"), listOf(anyType), type)
+            val symbol = VmFunctionSymbol(vmSanitized("${declaration.vmName}::${member.name.asString()}"), listOf(anyType), type)
             val function = VmFunction(symbol, owner = null)
             val self = function.newValue(anyType)
             function.params += self
@@ -1064,7 +1052,7 @@ class VmModuleGenerator(
     internal fun staticTarget(callee: IrFunction): CallTarget {
         val symbol = if (isRuntimeMirror(callee)) {
             runtimeFunction(callee.fqNameWhenAvailable!!.asString(), callee.parameters.map { mirrorType(it.type)!! }, mirrorType(callee.returnType))
-        } else if (callee is IrSimpleFunction && callee.fileOrNull in hostFiles) {
+        } else if (callee is IrSimpleFunction && callee.isExpect) {
             hostImport(callee)
         } else if (callee.symbol in definedFunctions) {
             functionSymbol(callee)
@@ -1075,15 +1063,14 @@ class VmModuleGenerator(
     }
 
     /**
-     * The extern standing for [callee], a function of one of the [hostFiles], which the host runs: bound by `jvm:` and the
-     * JVM name of [callee] itself, in the facade of its own file. A call of an `expect` function reaches here as a call of
-     * its `actual`, which the actualizer put in its place.
+     * The extern standing for [callee], an `expect` function whose `actual` the host runs: bound by `jvm:` and the JVM
+     * name of [callee], in the facade of the `actual`'s file.
      */
     private fun hostImport(callee: IrSimpleFunction): VmFunctionSymbol = hostImports.getOrPut(callee.symbol) {
-        val facade = callee.fileOrNull?.jvmFacadeName()
-            ?: unsupported("calling ${callee.render()}, which is in a multifile class")
+        val facade = hostActuals(callee)
+            ?: unsupported("calling ${callee.render()}, whose actual is not a top-level function in a JVM file's own facade")
         val name = jvmBindingName(callee, facade)
-            ?: unsupported("calling ${callee.render()} on the JVM, whose JVM name is covered for a public top-level function over primitives and String only")
+            ?: unsupported("calling ${callee.render()} on the JVM, a signature whose JVM name is not covered")
         val symbol = VmFunctionSymbol(name, callee.parameters.map(::heldParameterType), vmType(callee.returnType))
         module.externals += symbol
         symbol
@@ -1099,7 +1086,7 @@ class VmModuleGenerator(
      */
     private fun exportName(function: IrFunction): String? {
         if (isStdlib || function !is IrSimpleFunction) return null
-        return jvmBindingName(function, function.fileOrNull?.jvmFacadeName() ?: return null)
+        return jvmExportName(function)
     }
 
     /** [function] as the VM module declaring it defines it, imported, or null when no VM module does. */
@@ -1134,16 +1121,13 @@ class VmModuleGenerator(
     }
 
     /**
-     * A function's name in the VM: its qualified name — a member's as `Class::name` — then the hash its public signature
-     * carries, which is what tells overloads apart. A function without one is private to the module, so a counter
-     * tells its overloads apart instead.
+     * A function's name in the VM: [vmFunctionName], with the hash its public signature carries, which is what tells
+     * overloads apart. A function without one is private to the module, so a counter tells its overloads apart instead.
      */
     private fun vmName(function: IrFunction): String {
         val owner = function.parentClassOrNull
-        val base = if (owner != null) "${owner.vmName}::${function.name.asString()}"
-        else function.fqNameWhenAvailable?.asString() ?: function.name.asString()
         val hash = signatureHash(function.symbol.signature) ?: inlineClassImplHash(function)
-        val name = sanitized(if (hash == null) base else "${base}_${java.lang.Long.toHexString(hash)}")
+        val name = vmFunctionName(function, owner?.vmName, hash)
         // Another module's function is named as that module names it, which only a public signature makes stable.
         if (vmModuleOf(function) != null) return if (hash == null) unsupported("naming ${function.render()} of another module") else name
         if (usedFunctionNames.add(name)) return name
@@ -1175,17 +1159,35 @@ class VmModuleGenerator(
         else -> null
     }
 
-    /** Keeps only what an IR text name may hold, so a dump reads back in. */
-    private fun sanitized(name: String): String = buildString(name.length) {
-        var i = 0
-        while (i < name.length) {
-            if (name.startsWith("::", i)) {
-                append("::")
-                i += 2
-                continue
-            }
-            val c = name[i++]
-            append(if (c.isLetterOrDigit() || c == '_' || c == '.' || c == '$') c else '_')
+}
+
+/** The name the JVM gives [irClass], dotted: what the runtime's `Any.toString` shows. */
+private val IrClass.jvmName: String
+    get() = jvmInternalName.replace('/', '.')
+
+/** The name the VM knows [irClass] by, when other modules can name it: its JVM name. */
+fun vmClassName(irClass: IrClass): String = vmSanitized(irClass.jvmName)
+
+/**
+ * The name the VM knows [function] by: its qualified name, a member's as `Class::name` after its class's [ownerName],
+ * then the [hash] of its public signature, which the klib writes and the mangler computes, when it has one.
+ */
+fun vmFunctionName(function: IrFunction, ownerName: String? = function.parentClassOrNull?.let(::vmClassName), hash: Long?): String {
+    val base = if (ownerName != null) "$ownerName::${function.name.asString()}"
+    else function.fqNameWhenAvailable?.asString() ?: function.name.asString()
+    return vmSanitized(if (hash == null) base else "${base}_${java.lang.Long.toHexString(hash)}")
+}
+
+/** Keeps only what an IR text name may hold, so a dump reads back in. */
+private fun vmSanitized(name: String): String = buildString(name.length) {
+    var i = 0
+    while (i < name.length) {
+        if (name.startsWith("::", i)) {
+            append("::")
+            i += 2
+            continue
         }
+        val c = name[i++]
+        append(if (c.isLetterOrDigit() || c == '_' || c == '.' || c == '$') c else '_')
     }
 }

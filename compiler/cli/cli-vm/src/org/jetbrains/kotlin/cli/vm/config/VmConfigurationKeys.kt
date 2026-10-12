@@ -12,6 +12,7 @@ object VmConfigurationKeys {
     val KLIB_DESTINATION = CompilerConfigurationKey.create<String>("klib destination")
     val KLIB_PATHS = CompilerConfigurationKey.create<List<String>>("KLIB_PATHS")
     val VM_OUTPUT = CompilerConfigurationKey.create<String>("VM binary IR output")
+    val VM_PROXIES = CompilerConfigurationKey.create<String>("jar of the JVM's proxies")
     val VM_HOST_FRAGMENTS = CompilerConfigurationKey.create<List<String>>("fragments the JVM owns")
 }
 
@@ -32,6 +33,13 @@ var CompilerConfiguration.vmOutput: String?
     get() = get(VmConfigurationKeys.VM_OUTPUT)
     set(value) {
         putIfNotNull(VmConfigurationKeys.VM_OUTPUT, value)
+    }
+
+/** Where the jar of the module's proxies goes, which the JVM compiles against in place of the module's own classes. */
+var CompilerConfiguration.vmProxies: String?
+    get() = get(VmConfigurationKeys.VM_PROXIES)
+    set(value) {
+        putIfNotNull(VmConfigurationKeys.VM_PROXIES, value)
     }
 
 /**
