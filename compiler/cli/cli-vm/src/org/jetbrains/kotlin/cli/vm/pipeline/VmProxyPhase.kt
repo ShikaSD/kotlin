@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.cli.vm.pipeline
 
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irIfThen
+import org.jetbrains.kotlin.backend.common.lower.irNot
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
 import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
@@ -55,6 +56,7 @@ import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.util.OperatorNameConventions
 import java.io.File
 
 /**
@@ -165,7 +167,7 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
      */
     private fun IrDeclaration.isProxied(): Boolean = when (this) {
         is IrClass -> !isExpect && (kind == ClassKind.CLASS || kind == ClassKind.INTERFACE) && !isValue && !isInner && isVisible()
-        is IrSimpleFunction -> isVisible() && !overridesAny()
+        is IrSimpleFunction -> isVisible()
         is IrProperty -> isVisible()
         is IrConstructor -> isVisible()
         else -> false
@@ -174,8 +176,8 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
     private fun IrDeclarationWithVisibility.isVisible(): Boolean =
         visibility == DescriptorVisibilities.PUBLIC || visibility == DescriptorVisibilities.PROTECTED
 
-    /** Whether [this] overrides `equals`, `hashCode` or `toString`, which a shell inherits from `Object` for now. */
-    private fun IrSimpleFunction.overridesAny(): Boolean = roots().any { it.parent == irBuiltIns.anyClass.owner }
+    /** The member of `Any` [this] overrides, if it overrides `equals`, `hashCode` or `toString`. */
+    private fun IrSimpleFunction.anyRoot(): IrSimpleFunction? = roots().firstOrNull { it.parent == irBuiltIns.anyClass.owner }
 
     private fun IrSimpleFunction.roots(): List<IrSimpleFunction> =
         if (overriddenSymbols.isEmpty()) listOf(this) else overriddenSymbols.flatMap { it.owner.roots() }.distinct()
@@ -256,8 +258,12 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
         val receiver = function.dispatchReceiverParameter!!
         val isOverridable = function.overriddenSymbols.isNotEmpty() ||
                 function.modality != Modality.FINAL && function.parentAsClass.modality != Modality.FINAL
-        if (isOverridable) {
-            val selector = vmName(function.roots().first())
+        val anyRoot = function.anyRoot()
+        if (anyRoot != null && anyRoot.name == OperatorNameConventions.EQUALS) {
+            proxyEquals(function, tokens, binding)
+        } else if (isOverridable) {
+            // The runtime declares `Any`'s selectors, under its own names rather than the module's.
+            val selector = anyRoot?.let { "Any::${it.name}" } ?: vmName(function.roots().first())
             proxy(function, tokens, { methodToken(selector, binding) }) { token, arguments ->
                 callMethodToken(token, builder.irGet(receiver), arguments)
             }
@@ -269,6 +275,16 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
         }
     }
 
+    /** `equals` calls `Any`'s selector, but a JVM object that is no shell is no VM object, so it equals none. */
+    private fun proxyEquals(function: IrSimpleFunction, tokens: Tokens, binding: String) {
+        val receiver = function.dispatchReceiverParameter!!
+        val other = function.parameters.single { it.kind == IrParameterKind.Regular }
+        proxy(
+            function, tokens, { methodToken("Any::equals", binding) },
+            guard = { irIfThen(irNot(irIs(irGet(other), bridge.shell.defaultType)), irReturn(irFalse())) },
+        ) { token, arguments -> callMethodToken(token, builder.irGet(receiver), arguments) }
+    }
+
     /**
      * Replaces [function]'s body with a call through the token [lookUp] answers, kept in a private static field of its
      * class or file after the first call, answering what [call] answers.
@@ -277,10 +293,12 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
         function: IrSimpleFunction,
         tokens: Tokens,
         lookUp: VmBridge.Calls.() -> IrExpression,
+        guard: (IrBuilderWithScope.() -> IrExpression)? = null,
         call: VmBridge.Calls.(token: IrExpression, arguments: IrExpression) -> IrExpression,
     ) {
         val token = tokens.next()
         function.body = DeclarationIrBuilder(fir2IrResult.pluginContext, function.symbol).irBlockBody {
+            guard?.let { +it() }
             val calls = bridge.Calls(this)
             +lookUpOnce(token) { calls.lookUp() }
             val result = calls.call(irGetField(null, token), argumentsOf(function))

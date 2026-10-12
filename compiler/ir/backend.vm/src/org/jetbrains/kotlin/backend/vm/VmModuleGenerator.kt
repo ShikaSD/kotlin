@@ -130,6 +130,9 @@ class VmModuleGenerator(
     private val runtimeSelectors = hashMapOf<String, Int>()
     private val functionSymbols = hashMapOf<IrFunctionSymbol, VmFunctionSymbol>()
     private val definedFunctions = hashSetOf<IrFunctionSymbol>()
+
+    /** The JVM names two functions of the module share, as two extensions differing only in a bound can; see [exportName]. */
+    private val clashingExportNames = hashMapOf<String, Int>()
     private val classIndices = hashMapOf<IrClassSymbol, Int>()
     private val fieldLayouts = hashMapOf<IrClassSymbol, List<LayoutField>>()
     private val selectors = hashMapOf<IrSimpleFunctionSymbol, Int>()
@@ -178,6 +181,7 @@ class VmModuleGenerator(
         }
         val bodies = functions.filter { it.body != null }
         bodies.mapTo(definedFunctions) { it.symbol }
+        bodies.mapNotNull(::jvmExportNameOf).groupingBy { it }.eachCount().filterTo(clashingExportNames) { it.value > 1 }
 
         // The classes other modules can name first, so no local class takes a name one of them has.
         classes.sortedBy { it.symbol.signature !is IdSignature.CommonSignature }.forEach { it.vmName }
@@ -195,7 +199,7 @@ class VmModuleGenerator(
                 if (!function.isFakeOverride && function.overriddenSymbols.isEmpty() && function.isOverridable() && answerable) {
                     val symbol = functionSymbol(function)
                     module.selectors += VmSelector(
-                        symbol.name, null, classIndices.getValue(declaration.symbol), symbol.paramTypes.drop(1), symbol.returnType,
+                        selectorName(function), null, classIndices.getValue(declaration.symbol), symbol.paramTypes.drop(1), symbol.returnType,
                     )
                     selectors[function.symbol] = module.selectors.size - 1
                 }
@@ -1010,11 +1014,17 @@ class VmModuleGenerator(
         else -> unsupported("overriding ${root.render()}")
     }
 
+    /**
+     * The name of the selector [root] declares: its function's name without its class's, since the VM names a selector
+     * `Class::selector` after its class, as the runtime's `Any::toString` is. Its full name is the function's.
+     */
+    private fun selectorName(root: IrSimpleFunction): String = functionSymbol(root).name.removePrefix("${root.parentAsClass.vmName}::")
+
     /** The selector [root] declares in the VM module declaring it, or null when no VM module does. */
     private fun importSelector(root: IrSimpleFunction): Int? {
         val owner = vmModuleOf(root) ?: return null
         val symbol = functionSymbol(root)
-        module.selectors += VmSelector(symbol.name, owner, classIndex(root.parentAsClass)!!, symbol.paramTypes.drop(1), symbol.returnType)
+        module.selectors += VmSelector(selectorName(root), owner, classIndex(root.parentAsClass)!!, symbol.paramTypes.drop(1), symbol.returnType)
         return (module.selectors.size - 1).also { selectors[root.symbol] = it }
     }
 
@@ -1082,9 +1092,12 @@ class VmModuleGenerator(
 
     /**
      * The name [function] is exported by: its JVM name, for each public top-level function of a module the VM runs. Null
-     * for any other, and for a function whose JVM name is not covered; see [jvmBindingName].
+     * for any other, for a function whose JVM name is not covered, see [jvmBindingName], and for one another function
+     * shares, which the JVM could not have both of.
      */
-    private fun exportName(function: IrFunction): String? {
+    private fun exportName(function: IrFunction): String? = jvmExportNameOf(function)?.takeUnless { it in clashingExportNames }
+
+    private fun jvmExportNameOf(function: IrFunction): String? {
         if (isStdlib || function !is IrSimpleFunction) return null
         return jvmExportName(function)
     }

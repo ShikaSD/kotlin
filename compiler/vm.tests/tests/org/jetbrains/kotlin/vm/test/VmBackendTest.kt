@@ -26,6 +26,7 @@ import org.jetbrains.org.objectweb.asm.tree.FieldInsnNode
 import org.jetbrains.org.objectweb.asm.tree.LdcInsnNode
 import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode
 import org.jetbrains.org.objectweb.asm.tree.MethodNode
+import org.jetbrains.org.objectweb.asm.tree.TypeInsnNode
 
 /**
  * The VM backend behind `-Xvm-output`. A test that runs its output needs a built checkout of the VM repository, named by
@@ -3749,6 +3750,17 @@ class VmBackendTest {
         assertTrue(runBox(tempDir, source))
     }
 
+    /** A selector is named after its member alone, since the VM names it `Class::selector` after its class. */
+    @Test
+    fun testSelectorIsNamedWithoutItsClass(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, """
+            open class Shape {
+                open fun area(): Int = 1
+            }
+        """)
+        assertTrue(Regex("""selector @area_\w+\(""").containsMatchIn(dump)) { dump }
+    }
+
     /** A field of type `Nothing` takes no slot in its class. */
     @Test
     fun testFieldOfTypeNothingHasNoSlot(@TempDir tempDir: File) {
@@ -3997,6 +4009,21 @@ class VmBackendTest {
         assertTrue("call @$name()" in dump) { dump }
     }
 
+    /** Two functions sharing a JVM name, which the JVM could not have both of, export neither. */
+    @Test
+    fun testFunctionsSharingAJvmNameAreNotExported(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, """
+            package sample
+
+            class C<T>(val value: T)
+
+            val <T : Any?> C<T>.text: String get() = "nullable"
+
+            val <T : Any> C<T>.text: String get() = "not null"
+        """)
+        assertEquals(emptyList<String>(), exportsOf(dump).filter { "getText" in it }) { dump }
+    }
+
     /** Neither the `expect` function nor its `actual` has code in the module to export. */
     @Test
     fun testExpectFunctionIsNotExported(@TempDir tempDir: File) {
@@ -4139,6 +4166,7 @@ class VmBackendTest {
         class Dog(name: String) : Animal(name) {
             override fun sound(): String = "woof"
             override fun toString(): String = "dog"
+            override fun equals(other: Any?): Boolean = other is Dog
         }
     """
 
@@ -4194,11 +4222,22 @@ class VmBackendTest {
         assertEquals(listOf("sample/Animal.<init>(Lvm/bridge/VmShell;)V"), chain.calls)
     }
 
-    /** An override of `equals`, `hashCode` or `toString` has no proxy: the shell inherits `Object`'s. */
+    /** An override of a member of `Any` calls the selector the runtime declares for it. */
     @Test
-    fun testOverrideOfAnyHasNoProxy(@TempDir tempDir: File) {
-        val dog = proxies(tempDir, mapOf("Animals.kt" to animals)).getValue("sample/Dog")
-        assertNull(dog.method("toString"))
+    fun testOverrideOfAnyCallsTheRuntimesSelector(@TempDir tempDir: File) {
+        val proxy = proxies(tempDir, mapOf("Animals.kt" to animals)).getValue("sample/Dog").method("toString")!!
+        assertTrue("Any::toString" in proxy.strings) { proxy.strings.toString() }
+    }
+
+    /** `equals` answers false for a JVM object that is no shell before calling into the VM, since it is no VM object. */
+    @Test
+    fun testEqualsTestsForAShellFirst(@TempDir tempDir: File) {
+        val proxy = proxies(tempDir, mapOf("Animals.kt" to animals)).getValue("sample/Dog").method("equals")!!
+        val instructions = proxy.instructions.toList()
+        val test = instructions.indexOfFirst { it is TypeInsnNode && it.opcode == Opcodes.INSTANCEOF && it.desc == "vm/bridge/VmShell" }
+        val lookUp = instructions.indexOfFirst { it is MethodInsnNode && it.name == "methodToken" }
+
+        assertTrue(test in 0..<lookUp) { "instanceof at $test, look-up at $lookUp" }
     }
 
     /** The jar names each shell with the VM class it stands for. */
@@ -4211,13 +4250,13 @@ class VmBackendTest {
         assertEquals(setOf("class sample/Outer sample.Outer", "class sample/Outer\$Nested sample.Outer\$Nested"), shellList.lines().filter { it.isNotEmpty() }.toSet())
     }
 
-    /** The VM names a shell's proxies look their calls up by are the names the module gives its functions. */
+    /** The VM names a shell's proxies look their calls up by are the names the module gives its functions, but the runtime's. */
     @Test
     fun testShellNamesAreTheModulesNames(@TempDir tempDir: File) {
         val classes = proxies(tempDir, mapOf("Animals.kt" to animals))
         val module = File(tempDir, "main.vir").readText(Charsets.ISO_8859_1)
         val names = listOf("sample/Animal", "sample/Dog").flatMap { classes.getValue(it).methods }
-            .flatMap { it.strings }.filter { "::" in it }
+            .flatMap { it.strings }.filter { "::" in it && !it.startsWith("Any::") }
 
         assertTrue(names.isNotEmpty())
         assertEquals(emptyList<String>(), names.filter { it !in module })
