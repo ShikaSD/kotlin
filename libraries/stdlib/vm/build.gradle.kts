@@ -1,6 +1,6 @@
 description = "Kotlin Stdlib for the VM"
 
-// The standard library the VM runs, built with jklib as the jklib test stdlib is, and growing toward the common flavor
+// The standard library the VM runs, built by the VM compiler with the jklib test stdlib's stubs, and growing toward the common flavor
 // Wasm and Native build: common sources, with Kotlin implementations where the JVM's delegates to Java.
 
 plugins {
@@ -16,7 +16,7 @@ jvmToolchains {
 
 val stdlibProjectDir = file("$rootDir/libraries/stdlib")
 
-val jklibCompilerClasspath = configurations.create("jklibCompilerClasspath") {
+val vmCompilerClasspath = configurations.create("vmCompilerClasspath") {
     isCanBeConsumed = false
     isCanBeResolved = true
 }
@@ -27,9 +27,9 @@ val substrateStdlibCompilerDependencies = configurations.create("substrateStdlib
 }
 
 dependencies {
-    // 1. Dependencies to RUN the JKlib Compiler
-    jklibCompilerClasspath(project(":compiler:cli-jklib"))
-    jklibCompilerClasspath(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) {
+    // 1. Dependencies to RUN the VM compiler
+    vmCompilerClasspath(project(":compiler:cli-vm"))
+    vmCompilerClasspath(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) {
         isTransitive = false
     }
     substrateStdlibCompilerDependencies(intellijCore())
@@ -317,18 +317,18 @@ fun JavaExec.configureJklibCompilation(
 ) {
     dependsOn(sourceTask)
 
-    val jklibCompilerClasspath = project.configurations.getByName("jklibCompilerClasspath")
+    val vmCompilerClasspath = project.configurations.getByName("vmCompilerClasspath")
     val substrateStdlibCompilerDependencies = project.configurations.getByName("substrateStdlibCompilerDependencies")
-    classpath = jklibCompilerClasspath + substrateStdlibCompilerDependencies
-    mainClass.set("org.jetbrains.kotlin.cli.jklib.K2JKlibCompiler")
+    classpath = vmCompilerClasspath + substrateStdlibCompilerDependencies
+    mainClass.set("org.jetbrains.kotlin.cli.vm.K2VmCompiler")
 
     val sourceTree = fileTree(sourceTask.map { it.destinationDir }) {
         include("**/*.kt")
     }
     inputs.files(sourceTree)
-    inputs.files(jklibCompilerClasspath)
+    inputs.files(vmCompilerClasspath)
         .withNormalizer(ClasspathNormalizer::class)
-        .withPropertyName("jklibCompilerClasspath")
+        .withPropertyName("vmCompilerClasspath")
     outputs.dir(klibOutput)
 
     doFirst {
@@ -343,7 +343,7 @@ fun JavaExec.configureJklibCompilation(
         val (jvmSourceFiles, commonSourceFiles) = paths.partition { fragmentOf(it) == "platform" }
 
         logger.lifecycle("Compiling ${jvmSourceFiles.size} JVM files and ${commonSourceFiles.size} Common files, total ${allFiles.size}")
-        logger.lifecycle("Running K2JKlibCompiler with Java version: ${System.getProperty("java.version")}")
+        logger.lifecycle("Running K2VmCompiler with Java version: ${System.getProperty("java.version")}")
 
         val outputPath = klibOutput.get().asFile.absolutePath
 
@@ -390,29 +390,29 @@ val compileMinimalStdlib = tasks.register("compileMinimalStdlib") {
     dependsOn(compileStdlib)
 }
 
-val distJKlib = configurations.create("distJKlib") {
+val distVm = configurations.create("distVm") {
     isCanBeConsumed = true
     isCanBeResolved = false
 }
-val distMinimalJKlib = configurations.create("distMinimalJKlib") {
+val distMinimalVm = configurations.create("distMinimalVm") {
     isCanBeConsumed = true
     isCanBeResolved = false
-    extendsFrom(distJKlib)
+    extendsFrom(distVm)
 }
 
 artifacts {
-    add(distJKlib.name, outputKlib) {
+    add(distVm.name, outputKlib) {
         builtBy(compileStdlib)
     }
-    add(distJKlib.name, outputVir) {
+    add(distVm.name, outputVir) {
         builtBy(compileStdlib)
     }
 }
 
 // The compiler's classpath as a file, one entry per line, for builds outside this repository that compile for the VM
-// with `org.jetbrains.kotlin.cli.jklib.K2JKlibCompiler` against this standard library.
+// with `org.jetbrains.kotlin.cli.vm.K2VmCompiler` against this standard library.
 val writeCompilerClasspath = tasks.register("writeCompilerClasspath") {
-    val classpath = project.configurations.getByName("jklibCompilerClasspath") +
+    val classpath = project.configurations.getByName("vmCompilerClasspath") +
             project.configurations.getByName("substrateStdlibCompilerDependencies")
     val output = layout.buildDirectory.file("libs/kotlin-vm-compiler.classpath")
     inputs.files(classpath)

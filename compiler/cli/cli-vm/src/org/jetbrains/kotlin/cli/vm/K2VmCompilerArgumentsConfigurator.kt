@@ -1,0 +1,69 @@
+/*
+ * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
+package org.jetbrains.kotlin.cli.vm
+
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArgumentsConfigurator
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArgumentsConfigurator.Reporter
+import org.jetbrains.kotlin.cli.common.arguments.JavaTypeEnhancementStateParser
+import org.jetbrains.kotlin.config.*
+
+class K2VmCompilerArgumentsConfigurator : CommonCompilerArgumentsConfigurator() {
+    override fun configureAnalysisFlags(
+        arguments: CommonCompilerArguments,
+        reporter: Reporter,
+        languageVersion: LanguageVersion,
+    ): MutableMap<AnalysisFlag<*>, Any> = with(arguments) {
+        require(this is K2VmCompilerArguments)
+        val result = super.configureAnalysisFlags(arguments, reporter, languageVersion)
+        result[JvmAnalysisFlags.javaTypeEnhancementState] = JavaTypeEnhancementStateParser(reporter, languageVersion.toKotlinVersion())
+            .parse(jsr305, supportCompatqualCheckerFrameworkAnnotations, jspecifyAnnotations, nullabilityAnnotations)
+
+        configureJvmDefaultMode(reporter)?.let { result[JvmAnalysisFlags.jvmDefaultMode] = it }
+        result[JvmAnalysisFlags.inheritMultifileParts] = inheritMultifileParts
+        result[JvmAnalysisFlags.outputBuiltinsMetadata] = outputBuiltinsMetadata
+        return result
+    }
+
+    override fun configureLanguageFeatures(
+        arguments: CommonCompilerArguments,
+        reporter: Reporter,
+        languageVersion: LanguageVersion,
+    ): MutableMap<LanguageFeature, LanguageFeature.State> = with(arguments) {
+        require(this is K2VmCompilerArguments)
+        val result = super.configureLanguageFeatures(arguments, reporter, languageVersion)
+        if (typeEnhancementImprovementsInStrictMode) {
+            result[LanguageFeature.TypeEnhancementImprovementsInStrictMode] = LanguageFeature.State.ENABLED
+        }
+        if (enhanceTypeParameterTypesToDefNotNull) {
+            result[LanguageFeature.ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated] = LanguageFeature.State.ENABLED
+        }
+        // The VM compilation of common code declares `expect` declarations whose `actual`s are on the JVM.
+        if (vmOutput != null) result[LanguageFeature.MultiPlatformProjects] = LanguageFeature.State.ENABLED
+        if (configureJvmDefaultMode(null)?.isEnabled == true) {
+            result[LanguageFeature.ForbidSuperDelegationToAbstractFakeOverride] =
+                LanguageFeature.State.ENABLED
+        }
+        return result
+    }
+
+    private fun K2VmCompilerArguments.configureJvmDefaultMode(
+        reporter: Reporter?,
+    ): JvmDefaultMode? =
+        when {
+            jvmDefault != null ->
+                JvmDefaultMode.fromStringOrNull(jvmDefault).also {
+                    if (it == null) {
+                        reporter?.reportError(
+                            "Unknown -jvm-default mode: $jvmDefault, supported modes: " +
+                                    "${JvmDefaultMode.entries.map(JvmDefaultMode::description)}",
+                        )
+                    }
+                }
+
+            else -> null
+        }
+}

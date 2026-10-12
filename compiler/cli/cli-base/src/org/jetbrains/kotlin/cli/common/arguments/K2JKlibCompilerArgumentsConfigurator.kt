@@ -37,8 +37,6 @@ class K2JKlibCompilerArgumentsConfigurator : CommonCompilerArgumentsConfigurator
         if (enhanceTypeParameterTypesToDefNotNull) {
             result[LanguageFeature.ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated] = LanguageFeature.State.ENABLED
         }
-        // The VM compilation of common code declares `expect` declarations whose `actual`s are on the JVM.
-        if (vmOutput != null) result[LanguageFeature.MultiPlatformProjects] = LanguageFeature.State.ENABLED
         if (configureJvmDefaultMode(null)?.isEnabled == true) {
             result[LanguageFeature.ForbidSuperDelegationToAbstractFakeOverride] =
                 LanguageFeature.State.ENABLED

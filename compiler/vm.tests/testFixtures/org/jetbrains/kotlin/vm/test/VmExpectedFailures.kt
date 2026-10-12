@@ -3,7 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.jklib.test.vm
+package org.jetbrains.kotlin.vm.test
 
 import org.jetbrains.kotlin.test.WrappedException
 import org.jetbrains.kotlin.test.model.TestFailureSuppressor
@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap
  * With the system property [UPDATE_PROPERTY] set, nothing fails: each test's outcome is recorded instead, and the file
  * rewritten when the test JVM exits, the header counting the most common reasons.
  */
-class JKlibVmExpectedFailures(testServices: TestServices) : TestFailureSuppressor(testServices) {
+class VmExpectedFailures(testServices: TestServices) : TestFailureSuppressor(testServices) {
     private val test: String
         get() = testServices.moduleStructure.originalTestDataFiles.first().invariantSeparatorsPath.substringAfter(BOX_ROOT)
 
@@ -63,7 +63,7 @@ class JKlibVmExpectedFailures(testServices: TestServices) : TestFailureSuppresso
     }
 
     companion object {
-        const val FILE = "compiler/jklib.tests/testData/vmBoxFailures.txt"
+        const val FILE = "compiler/vm.tests/testData/vmBoxFailures.txt"
         const val UPDATE_PROPERTY = "kotlin.vm.box.update"
         private const val BOX_ROOT = "compiler/testData/codegen/box/"
         private const val PASSED = ""
@@ -101,7 +101,7 @@ class JKlibVmExpectedFailures(testServices: TestServices) : TestFailureSuppresso
         }
 
         private fun render(failures: Map<String, String>): String = buildString {
-            appendLine("# Box tests under compiler/testData/codegen/box expected to fail on the VM; see JKlibVmExpectedFailures.")
+            appendLine("# Box tests under compiler/testData/codegen/box expected to fail on the VM; see VmExpectedFailures.")
             appendLine("# ${failures.size} failures; the most common reasons:")
             failures.values.groupingBy { it }.eachCount().entries.sortedWith(compareBy({ -it.value }, { it.key })).take(50).forEach {
                 appendLine("#   %5d  %s".format(it.value, it.key))

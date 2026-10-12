@@ -3,28 +3,35 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.jklib.test.vm
+package org.jetbrains.kotlin.vm.test
 
-import org.jetbrains.kotlin.cli.jklib.config.jklibTargetsVm
-import org.jetbrains.kotlin.cli.jklib.config.klibPaths
+import org.jetbrains.kotlin.cli.vm.config.klibDestination
+import org.jetbrains.kotlin.cli.vm.config.klibPaths
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.jklib.test.irText.JKlibSourceRootConfigurator
 import org.jetbrains.kotlin.test.model.TestModule
+import org.jetbrains.kotlin.test.services.EnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.TestServices
+import org.jetbrains.kotlin.test.services.configuration.addSourcesForDependsOnClosure
+import org.jetbrains.kotlin.test.services.temporaryDirectoryManager
 import java.io.File
 
 /**
- * Compiles every module against the VM's standard library, `:kotlin-stdlib-vm`, rather than the jklib test one, and
- * against the VM's kotlin.test, `:kotlin-test-vm`, which [JKlibVmBoxRunner] links every program with.
+ * Compiles every module against the VM's standard library, `:kotlin-stdlib-vm`, and the VM's kotlin.test,
+ * `:kotlin-test-vm`, which [VmBoxRunner] links every program with.
  */
-class JKlibVmSourceRootConfigurator(testServices: TestServices) : JKlibSourceRootConfigurator(testServices) {
-    override val stdlib: File
-        get() = vmStdlib
-
+class VmSourceRootConfigurator(testServices: TestServices) : EnvironmentConfigurator(testServices) {
     override fun configureCompilerConfiguration(configuration: CompilerConfiguration, module: TestModule) {
-        super.configureCompilerConfiguration(configuration, module)
+        configuration.addSourcesForDependsOnClosure(module, testServices)
+
+        configuration.klibPaths += vmStdlib.path
         configuration.klibPaths += kotlinTestKlib.path
-        configuration.jklibTargetsVm = true
+
+        val tempDir = testServices.temporaryDirectoryManager.getOrCreateTempDirectory("klib-output")
+        configuration.klibDestination = File(tempDir, "${module.name}.klib").absolutePath
+
+        // The test infrastructure registers a module's dependencies as JVM class directories, but the compilation
+        // resolves only klibs: each dependency compiled before this module, to the path this configurator gave it.
+        configuration.klibPaths += module.regularDependencies.map { File(tempDir, "${it.dependencyModule.name}.klib").absolutePath }
     }
 
     companion object {

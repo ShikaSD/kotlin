@@ -16,16 +16,12 @@ import org.jetbrains.kotlin.test.services.configuration.addSourcesForDependsOnCl
 import org.jetbrains.kotlin.test.services.temporaryDirectoryManager
 import java.io.File
 
-open class JKlibSourceRootConfigurator(testServices: TestServices) : EnvironmentConfigurator(testServices) {
-    /** The standard library every module is compiled against. */
-    protected open val stdlib: File
-        get() = ForTestCompileRuntime.jklibStdlibForTests()
-
+class JKlibSourceRootConfigurator(testServices: TestServices) : EnvironmentConfigurator(testServices) {
 
     override fun configureCompilerConfiguration(configuration: CompilerConfiguration, module: TestModule) {
         configuration.addSourcesForDependsOnClosure(module, testServices)
 
-        configuration.klibPaths += stdlib.path
+        configuration.klibPaths += ForTestCompileRuntime.jklibStdlibForTests().path
 
         val tempDir = testServices.temporaryDirectoryManager.getOrCreateTempDirectory("klib-output")
         val outputFile = File(tempDir, "${module.name}.klib")

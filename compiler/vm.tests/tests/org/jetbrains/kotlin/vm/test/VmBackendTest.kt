@@ -3,11 +3,11 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.jklib.test
+package org.jetbrains.kotlin.vm.test
 
 import org.jetbrains.kotlin.cli.common.ExitCode
-import org.jetbrains.kotlin.cli.jklib.K2JKlibCompiler
-import org.jetbrains.kotlin.jklib.test.vm.JKlibVmSourceRootConfigurator
+import org.jetbrains.kotlin.cli.vm.K2VmCompiler
+import org.jetbrains.kotlin.vm.test.VmSourceRootConfigurator
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
@@ -21,9 +21,9 @@ import java.util.concurrent.TimeUnit
  * The VM backend behind `-Xvm-output`. A test that runs its output needs a built checkout of the VM repository, named by
  * the `KOTLIN_VM_REPO` environment variable, and is skipped without one.
  */
-class JKlibVmBackendTest {
+class VmBackendTest {
     private val stdlibKlib: String
-        get() = JKlibVmSourceRootConfigurator.vmStdlib.path
+        get() = VmSourceRootConfigurator.vmStdlib.path
 
     private data class Compilation(val output: String, val exitCode: ExitCode)
 
@@ -59,7 +59,7 @@ class JKlibVmBackendTest {
         ) + fragmentArgs + extraArgs + if (targetsVm) listOf("-Xvm-output=${File(tempDir, "$name.vir").path}") else emptyList()
         // A stream of this compilation's own: capturing System.err would race the other tests running in parallel.
         val messages = ByteArrayOutputStream()
-        val exitCode = K2JKlibCompiler().exec(PrintStream(messages), *args.toTypedArray())
+        val exitCode = K2VmCompiler().exec(PrintStream(messages), *args.toTypedArray())
         return Compilation(messages.toString(), exitCode)
     }
 
@@ -89,7 +89,7 @@ class JKlibVmBackendTest {
         val runtime = File(repo, "runtime/src/runtime.ir").path
         // The VM starts from the first module's first function: `main`'s entry.
         val virs = names.asReversed().map { File(tempDir, "$it.vir").path }
-        val stdlib = JKlibVmSourceRootConfigurator.vmStdlibVir.path
+        val stdlib = VmSourceRootConfigurator.vmStdlibVir.path
         run(File(repo, "target/box_tests/link_ir"), container, *virs.toTypedArray(), stdlib, runtime)
         return run(File(repo, "target/box_tests/execute"), container)
     }

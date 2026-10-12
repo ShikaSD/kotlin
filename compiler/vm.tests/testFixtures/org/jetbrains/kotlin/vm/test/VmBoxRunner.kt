@@ -3,7 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.jklib.test.vm
+package org.jetbrains.kotlin.vm.test
 
 import org.jetbrains.kotlin.test.model.BinaryArtifactHandler
 import org.jetbrains.kotlin.test.model.TestModule
@@ -15,14 +15,14 @@ import java.util.concurrent.TimeUnit
 /**
  * Links every module's binary IR with the VM's kotlin.test and the VM runtime, from the VM checkout [vmRepository]
  * names, and runs `box()`.
- * A failure's message starts with the step that failed, which is what [JKlibVmExpectedFailures] groups failures by.
+ * A failure's message starts with the step that failed, which is what [VmExpectedFailures] groups failures by.
  */
-class JKlibVmBoxRunner(testServices: TestServices) : BinaryArtifactHandler<JKlibVmArtifact>(
-    testServices, JKlibVmArtifactKind, failureDisablesNextSteps = true, doNotRunIfThereWerePreviousFailures = true,
+class VmBoxRunner(testServices: TestServices) : BinaryArtifactHandler<VmArtifact>(
+    testServices, VmArtifactKind, failureDisablesNextSteps = true, doNotRunIfThereWerePreviousFailures = true,
 ) {
-    private val modules = mutableListOf<Pair<TestModule, JKlibVmArtifact>>()
+    private val modules = mutableListOf<Pair<TestModule, VmArtifact>>()
 
-    override fun processModule(module: TestModule, info: JKlibVmArtifact) {
+    override fun processModule(module: TestModule, info: VmArtifact) {
         modules += module to info
     }
 
@@ -35,8 +35,8 @@ class JKlibVmBoxRunner(testServices: TestServices) : BinaryArtifactHandler<JKlib
         val container = File(testServices.temporaryDirectoryManager.getOrCreateTempDirectory("vm-output"), "main.vmc").path
 
         val runtime = File(repository, "runtime/src/runtime.ir").path
-        val kotlinTest = JKlibVmSourceRootConfigurator.kotlinTestVir.path
-        val stdlib = JKlibVmSourceRootConfigurator.vmStdlibVir.path
+        val kotlinTest = VmSourceRootConfigurator.kotlinTestVir.path
+        val stdlib = VmSourceRootConfigurator.vmStdlibVir.path
         val link = exec(File(repository, "target/box_tests/link_ir"), container, *virs.toTypedArray(), kotlinTest, stdlib, runtime)
             ?: throw AssertionError("timeout: link")
         if (link.first != 0) throw AssertionError("link: ${lastMessage(link.second)}")

@@ -212,6 +212,7 @@ include(
     ":compiler:cli-jvm",
     ":compiler:cli-js",
     ":compiler:cli-jklib",
+    ":compiler:cli-vm",
     ":compiler:cli-metadata",
     ":compiler:cli:cli-native-klib",
     ":compiler:incremental-compilation-impl",
@@ -219,6 +220,7 @@ include(
     ":compiler:tests-common",
     ":compiler:tests-integration",
     ":compiler:jklib.tests",
+    ":compiler:vm.tests",
     ":js:js.ast",
     ":js:js.sourcemap",
     ":js:js.parser",
@@ -814,6 +816,7 @@ project(":compiler:cli-jvm").projectDir = File("$rootDir/compiler/cli/cli-jvm")
 project(":compiler:cli-js").projectDir = File("$rootDir/compiler/cli/cli-js")
 project(":compiler:cli-metadata").projectDir = File("$rootDir/compiler/cli/cli-metadata")
 project(":compiler:cli-jklib").projectDir = File("$rootDir/compiler/cli/cli-jklib")
+project(":compiler:cli-vm").projectDir = File("$rootDir/compiler/cli/cli-vm")
 project(":kotlin-runner").projectDir = File("$rootDir/compiler/cli/cli-runner")
 project(":kotlin-daemon").projectDir = File("$rootDir/compiler/daemon")
 project(":daemon-common").projectDir = File("$rootDir/compiler/daemon/daemon-common")

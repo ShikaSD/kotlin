@@ -33,10 +33,10 @@ class JKlibCliPipeline(
                     onFalse = JKlibFir2IrPipelinePhase then JKlibKlibSerializationPhase,
                 )
 
-        return when {
-            arguments.vmOutput != null -> phases then JKlibIrCompilationPhase then JKlibVmCodegenPhase
-            arguments.compileIr -> phases then JKlibIrCompilationPhase
-            else -> phases
+        return if (arguments.compileIr) {
+            phases then JKlibIrCompilationPhase
+        } else {
+            phases
         }
     }
 

@@ -12,7 +12,6 @@ plugins {
 dependencies {
     embedded(project(":compiler:cli-jklib")) { isTransitive = false }
     embedded(project(":compiler:ir.serialization.jklib")) { isTransitive = false }
-    embedded(project(":compiler:backend.vm")) { isTransitive = false }
 }
 
 runtimeJar {

@@ -263,28 +263,6 @@ The default value is 'indy'.""",
             field = value
         }
 
-    @Argument(
-        value = "-Xvm-output",
-        valueDescription = "<path>",
-        description = "Compile the module's IR into a binary IR file for the VM backend at the given path. Implies '-Xcompile-ir'."
-    )
-    var vmOutput: String? = null
-        set(value) {
-            checkFrozen()
-            field = if (value.isNullOrEmpty()) null else value
-        }
-
-    @Argument(
-        value = "-Xvm-host-fragment",
-        valueDescription = "<fragment name>",
-        description = "A fragment of '-Xfragments' the JVM owns: analyzed and actualized, but not compiled for the VM. A call of one of its declarations is a call of the JVM's. Can be repeated."
-    )
-    var vmHostFragments: Array<String> = emptyArray()
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
     // TODO(KT-87172): Remove if we decide to extend CommonKlibBasedCompilerArguments 
     @Argument(
         value = "-Xklib-zip-file-accessor-cache-limit",

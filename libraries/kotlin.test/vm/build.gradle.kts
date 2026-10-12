@@ -1,6 +1,6 @@
 description = "Kotlin Test for the VM"
 
-// The kotlin.test assertions the VM has, compiled with jklib against the VM stdlib into a klib programs compile against,
+// The kotlin.test assertions the VM has, compiled by the VM compiler against the VM stdlib into a klib programs compile against,
 // and by the VM backend into the module they link with. See src/kotlin/test/Assertions.kt for why it is a subset.
 
 plugins {
@@ -8,7 +8,7 @@ plugins {
     `java-base`
 }
 
-val jklibCompilerClasspath = configurations.create("jklibCompilerClasspath") {
+val vmCompilerClasspath = configurations.create("vmCompilerClasspath") {
     isCanBeConsumed = false
     isCanBeResolved = true
 }
@@ -24,8 +24,8 @@ val stdlibVm = configurations.create("stdlibVm") {
 }
 
 dependencies {
-    jklibCompilerClasspath(project(":compiler:cli-jklib"))
-    jklibCompilerClasspath(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) {
+    vmCompilerClasspath(project(":compiler:cli-vm"))
+    vmCompilerClasspath(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) {
         isTransitive = false
     }
     substrateCompilerDependencies(intellijCore())
@@ -33,7 +33,7 @@ dependencies {
     substrateCompilerDependencies(libs.intellij.fastutil)
     substrateCompilerDependencies(commonDependency("org.codehaus.woodstox:stax2-api"))
     substrateCompilerDependencies(commonDependency("com.fasterxml:aalto-xml"))
-    stdlibVm(project(":kotlin-stdlib-vm", configuration = "distJKlib"))
+    stdlibVm(project(":kotlin-stdlib-vm", configuration = "distVm"))
 }
 
 val vmSources = fileTree("src") { include("**/*.kt") }
@@ -43,12 +43,12 @@ val outputVir = layout.buildDirectory.file("libs/kotlin-test-vm.vir")
 val compileKotlinTest = tasks.register("compileKotlinTest", JavaExec::class) {
     val javaToolchains = project.extensions.getByType(JavaToolchainService::class.java)
     javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(8)) })
-    classpath = jklibCompilerClasspath + substrateCompilerDependencies
-    mainClass.set("org.jetbrains.kotlin.cli.jklib.K2JKlibCompiler")
+    classpath = vmCompilerClasspath + substrateCompilerDependencies
+    mainClass.set("org.jetbrains.kotlin.cli.vm.K2VmCompiler")
     inputs.files(vmSources).withPropertyName("sources")
     inputs.files(stdlibVm).withPropertyName("stdlib")
-    inputs.files(jklibCompilerClasspath).withNormalizer(ClasspathNormalizer::class).withPropertyName("jklibCompilerClasspath")
-    // jklib writes the klib unpacked, as a directory.
+    inputs.files(vmCompilerClasspath).withNormalizer(ClasspathNormalizer::class).withPropertyName("vmCompilerClasspath")
+    // The VM compiler writes the klib unpacked, as a directory.
     outputs.dir(outputKlib)
     outputs.file(outputVir)
 

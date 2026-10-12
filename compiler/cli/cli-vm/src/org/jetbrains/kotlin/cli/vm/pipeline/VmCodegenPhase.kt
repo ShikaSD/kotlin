@@ -3,7 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.cli.jklib.pipeline
+package org.jetbrains.kotlin.cli.vm.pipeline
 
 import org.jetbrains.kotlin.backend.vm.VmCodegenException
 import org.jetbrains.kotlin.backend.vm.VmLoweringContext
@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.cli.CliDiagnostics.IO_ERROR
 import org.jetbrains.kotlin.cli.CliDiagnostics.VM_COMPILATION_ERROR
 import org.jetbrains.kotlin.cli.CliDiagnostics.VM_COMPILATION_WARNING
 import org.jetbrains.kotlin.cli.common.diagnosticsCollector
-import org.jetbrains.kotlin.cli.jklib.config.jklibVmHostFragments
-import org.jetbrains.kotlin.cli.jklib.config.jklibVmOutput
+import org.jetbrains.kotlin.cli.vm.config.vmHostFragments
+import org.jetbrains.kotlin.cli.vm.config.vmOutput
 import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors
 import org.jetbrains.kotlin.cli.pipeline.PipelinePhase
 import org.jetbrains.kotlin.cli.report
@@ -31,13 +31,13 @@ import java.io.File
 import java.io.IOException
 
 /** Lowers and generates the linked main module as binary IR for the VM, into the file `-Xvm-output` names. */
-object JKlibVmCodegenPhase : PipelinePhase<JKlibIrCompilationArtifact, JKlibIrCompilationArtifact>(
-    name = "JKlibVmCodegenPhase",
+object VmCodegenPhase : PipelinePhase<VmIrCompilationArtifact, VmIrCompilationArtifact>(
+    name = "VmCodegenPhase",
     postActions = setOf(CheckCompilationErrors.CheckDiagnosticCollector),
 ) {
-    override fun executePhase(input: JKlibIrCompilationArtifact): JKlibIrCompilationArtifact? {
+    override fun executePhase(input: VmIrCompilationArtifact): VmIrCompilationArtifact? {
         val configuration = input.configuration
-        val output = configuration.jklibVmOutput ?: return input
+        val output = configuration.vmOutput ?: return input
         val moduleName = configuration.moduleName ?: JvmProtoBufUtil.DEFAULT_MODULE_NAME
 
         val module = try {
@@ -65,7 +65,7 @@ object JKlibVmCodegenPhase : PipelinePhase<JKlibIrCompilationArtifact, JKlibIrCo
 
     /** The files of [module] from the fragments `-Xvm-host-fragment` names, which the JVM owns. */
     private fun hostFiles(module: IrModuleFragment, configuration: CompilerConfiguration): Set<IrFile> {
-        val fragments = configuration.jklibVmHostFragments.toSet()
+        val fragments = configuration.vmHostFragments.toSet()
         val structure = configuration.hmppModuleStructure ?: return emptySet()
         val sources = structure.modules.filter { it.name in fragments }.flatMap { it.sources }.mapTo(hashSetOf(), ::canonicalPath)
         return module.files.filterTo(hashSetOf()) { canonicalPath(it.fileEntry.name) in sources }
