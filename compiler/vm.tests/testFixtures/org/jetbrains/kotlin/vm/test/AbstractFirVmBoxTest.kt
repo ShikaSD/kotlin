@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.test.services.sourceProviders.AdditionalDiagnosticsS
 import org.jetbrains.kotlin.test.services.sourceProviders.CoroutineHelpersSourceFilesProvider
 
 /**
- * The codegen box tests on the VM: each module goes through the VM compilation as the CLI takes it — frontend, KLIB, linked IR — then
+ * The codegen box tests on the VM: each module goes through the VM compilation as the CLI takes it — frontend, fir2ir, KLIB — then
  * through the VM backend, and the modules are linked with the VM runtime and `box()` run. Tests the VM cannot pass yet
  * are listed in [VmExpectedFailures.FILE].
  */
@@ -61,7 +61,6 @@ abstract class AbstractFirVmBoxTest : AbstractKotlinCompilerJKlibTest() {
         }
         facadeStep(::Fir2IrCliVmFacade)
         facadeStep(::SerializationCliVmFacade)
-        facadeStep(::VmIrCompilationCliFacade)
         facadeStep(::VmCodegenFacade)
         handlersStep(VmArtifactKind, CompilationStage.SECOND) {
             useHandlers(::VmBoxRunner)

@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.fir.backend.jvm.FirJvmBackendClassResolver
 import org.jetbrains.kotlin.fir.backend.jvm.FirJvmBackendExtension
 import org.jetbrains.kotlin.fir.pipeline.Fir2IrActualizedResult
 import org.jetbrains.kotlin.ir.IrBuiltIns
+import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.jklib.JKlibIrMangler
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.addConstructor
@@ -49,11 +50,16 @@ import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.typeOrNull
 import org.jetbrains.kotlin.ir.types.typeWith
+import org.jetbrains.kotlin.ir.util.DeepCopyIrTreeWithSymbols
+import org.jetbrains.kotlin.ir.util.DeepCopySymbolRemapper
+import org.jetbrains.kotlin.ir.util.DeepCopyTypeRemapper
 import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.createThisReceiverParameter
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.parentAsClass
+import org.jetbrains.kotlin.ir.util.patchDeclarationParents
+import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -69,7 +75,7 @@ import java.io.File
  *   may be overridden calls its selector, any other its VM function, and a constructor the VM function initializing a
  *   new VM object of the class, which the shell adopts.
  *
- * Runs after the klib is written, from the IR it was written from, which the JVM lowerings change in place.
+ * Generated from a copy of the IR the klib was written from, which [VmCodegenPhase] then lowers for the VM.
  */
 object VmProxyPhase : PipelinePhase<VmSerializationArtifact, VmSerializationArtifact>(
     name = "VmProxyPhase",
@@ -83,7 +89,7 @@ object VmProxyPhase : PipelinePhase<VmSerializationArtifact, VmSerializationArti
         val output = configuration.vmProxies ?: return input
         val fir2IrResult = input.fir2IrResult ?: return input
 
-        val module = fir2IrResult.irModuleFragment
+        val module = fir2IrResult.irModuleFragment.copyWithMetadata()
         val proxies = Proxies(VmBridge(module, fir2IrResult.irBuiltIns), fir2IrResult)
         proxies.proxyModule(module)
 
@@ -98,7 +104,7 @@ object VmProxyPhase : PipelinePhase<VmSerializationArtifact, VmSerializationArti
         )
         val backendInput = with(fir2IrResult) {
             JvmIrCodegenFactory.BackendInput(
-                irModuleFragment, irBuiltIns, symbolTable, components.irProviders, debuggerExtensions = null,
+                module, irBuiltIns, symbolTable, components.irProviders, debuggerExtensions = null,
                 FirJvmBackendExtension(components, actualizedExpectDeclarations = null), pluginContext,
             )
         }
@@ -108,6 +114,19 @@ object VmProxyPhase : PipelinePhase<VmSerializationArtifact, VmSerializationArti
         // No runtime, no reflection, reset timestamps, no main class.
         CompileEnvironmentUtil.writeToJar(File(output), false, true, true, null, state.factory.with(SHELL_LIST, shellList), configuration)
         return input
+    }
+
+    /** A copy of [this], with the Kotlin metadata the JVM backend writes into the classes, which a plain copy leaves out. */
+    private fun IrModuleFragment.copyWithMetadata(): IrModuleFragment {
+        val symbols = DeepCopySymbolRemapper()
+        acceptVoid(symbols)
+        val copier = object : DeepCopyIrTreeWithSymbols(symbols, DeepCopyTypeRemapper(symbols)) {
+            override fun <D : IrElement> D.processAttributes(other: IrElement) {
+                copyAttributes(other)
+                if (this is IrMetadataSourceOwner && other is IrMetadataSourceOwner) metadata = other.metadata
+            }
+        }
+        return transform(copier, null).also { it.patchDeclarationParents() }
     }
 
     /** [this], and a text file at [path]. */

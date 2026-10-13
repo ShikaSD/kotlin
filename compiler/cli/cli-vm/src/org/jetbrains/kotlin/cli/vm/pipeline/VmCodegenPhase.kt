@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.backend.vm.VmCodegenException
 import org.jetbrains.kotlin.backend.vm.VmLoweringContext
 import org.jetbrains.kotlin.backend.vm.compileToVm
 import org.jetbrains.kotlin.backend.vm.vmir.VmIrWriter
+import org.jetbrains.kotlin.backend.vm.vmir.VmModule
 import org.jetbrains.kotlin.cli.CliDiagnostics.IO_ERROR
 import org.jetbrains.kotlin.cli.CliDiagnostics.VM_COMPILATION_ERROR
 import org.jetbrains.kotlin.cli.CliDiagnostics.VM_COMPILATION_WARNING
@@ -25,25 +26,16 @@ import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import java.io.File
 import java.io.IOException
 
-/** Lowers and generates the linked main module as binary IR for the VM, into the file `-Xvm-output` names. */
-object VmCodegenPhase : PipelinePhase<VmIrCompilationArtifact, VmIrCompilationArtifact>(
+/** Lowers and generates the module as binary IR for the VM, into the file `-Xvm-output` names. */
+object VmCodegenPhase : PipelinePhase<VmSerializationArtifact, VmSerializationArtifact>(
     name = "VmCodegenPhase",
     postActions = setOf(CheckCompilationErrors.CheckDiagnosticCollector),
 ) {
-    override fun executePhase(input: VmIrCompilationArtifact): VmIrCompilationArtifact? {
+    override fun executePhase(input: VmSerializationArtifact): VmSerializationArtifact? {
         val configuration = input.configuration
         val output = configuration.vmOutput ?: return input
-        val moduleName = configuration.moduleName ?: JvmProtoBufUtil.DEFAULT_MODULE_NAME
-
         val module = try {
-            val diagnosticReporter = KtDiagnosticReporterWithImplicitIrBasedContext(
-                configuration.diagnosticsCollector, configuration.languageVersionSettings,
-            )
-            val context = VmLoweringContext(configuration, input.pluginContext.irBuiltIns, diagnosticReporter)
-            val isStdlib = configuration.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)
-            compileToVm(input.moduleFragment, moduleName, context, isStdlib, input.hostActuals::facadeOf) { stub ->
-                configuration.report(VM_COMPILATION_WARNING, "the VM backend generated a stub for $stub")
-            }
+            compileModuleToVm(input)
         } catch (e: VmCodegenException) {
             configuration.report(VM_COMPILATION_ERROR, e.message ?: "VM code generation failed")
             return null
@@ -55,5 +47,24 @@ object VmCodegenPhase : PipelinePhase<VmIrCompilationArtifact, VmIrCompilationAr
             return null
         }
         return input
+    }
+}
+
+/**
+ * The module the klib of [input] was written from, lowered and generated for the VM, or a [VmCodegenException] for what
+ * the backend does not support. Lowering changes the IR in place, which nothing reads after it.
+ */
+fun compileModuleToVm(input: VmSerializationArtifact): VmModule {
+    val configuration = input.configuration
+    val fir2IrResult = input.fir2IrResult ?: error("The module was compiled to no IR")
+    val moduleName = configuration.moduleName ?: JvmProtoBufUtil.DEFAULT_MODULE_NAME
+    val diagnosticReporter = KtDiagnosticReporterWithImplicitIrBasedContext(
+        configuration.diagnosticsCollector, configuration.languageVersionSettings,
+    )
+    val libraries = FirVmLibraries(input.vmLibraries, fir2IrResult.irBuiltIns)
+    val context = VmLoweringContext(configuration, fir2IrResult.irBuiltIns, diagnosticReporter, libraries)
+    val isStdlib = configuration.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)
+    return compileToVm(fir2IrResult.irModuleFragment, moduleName, context, isStdlib, input.hostActuals::facadeOf) { stub ->
+        configuration.report(VM_COMPILATION_WARNING, "the VM backend generated a stub for $stub")
     }
 }

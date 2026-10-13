@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.cli.vm.pipeline
 
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
+import org.jetbrains.kotlin.ir.inline.InlineFunctionSerializationPreProcessing
 import org.jetbrains.kotlin.backend.common.linkage.partial.PartialLinkageDiagnostics
 import org.jetbrains.kotlin.backend.common.serialization.IrSerializationSettings
 import org.jetbrains.kotlin.backend.common.serialization.serializeModuleIntoKlib
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.diagnostics.impl.deduplicating
 import org.jetbrains.kotlin.fir.DependencyListForCliModule
+import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.backend.Fir2IrConfiguration
 import org.jetbrains.kotlin.fir.backend.Fir2IrExtensions
 import org.jetbrains.kotlin.fir.backend.jvm.FirDirectJavaActualDeclarationExtractor
@@ -237,11 +239,17 @@ object VmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, Vm
 
         val moduleName = configuration.moduleName ?: JvmProtoBufUtil.DEFAULT_MODULE_NAME
 
-        val libraryList = DependencyListForCliModule.build(Name.identifier(moduleName)) {
-            dependencies(configuration.jvmClasspathRoots.map { it.absolutePath })
-            dependencies(configuration.jvmModularRoots.map { it.absolutePath })
-            dependencies(resolvedLibraries.map { it.path.absolutePathString() })
-            friendDependencies(configuration.friendPaths)
+        // The klibs, which the VM runs, and the jars, which the host does, are separate sets, so the module data of a
+        // declaration the module does not compile tells which defines it; see [FirVmLibraries]. Friends are klibs.
+        val vmLibraries = mutableSetOf<FirModuleData>()
+        val libraryList = DependencyListForCliModule.build {
+            val host = createData("<host libraries of $moduleName>")
+            val vm = createData("<VM libraries of $moduleName>")
+            val friends = createData("<friends of $moduleName>")
+            dependencies(host, (configuration.jvmClasspathRoots + configuration.jvmModularRoots).map { it.absolutePath })
+            dependencies(vm, resolvedLibraries.map { it.path.absolutePathString() })
+            friendDependencies(friends, configuration.friendPaths)
+            vmLibraries += listOf(vm, friends)
         }
 
         val librariesScope = projectEnvironment.getSearchScopeForProjectLibraries()
@@ -274,7 +282,7 @@ object VmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, Vm
         outputs.runPlatformCheckers(diagnosticsReporter)
 
         return VmFrontendPipelineArtifact(
-            AllModulesFrontendOutput(outputs), configuration, projectEnvironment,
+            AllModulesFrontendOutput(outputs), configuration, vmLibraries, projectEnvironment,
             rootDisposable,
         )
     }
@@ -305,6 +313,7 @@ object VmFir2IrPipelinePhase : PipelinePhase<VmFrontendPipelineArtifact, VmFir2I
             fir2IrResult,
             configuration,
             vmResult,
+            input.vmLibraries,
             hostActuals(hosts, fir2IrResult.components),
             input.projectEnvironment,
             input.rootDisposable,
@@ -347,6 +356,11 @@ object VmKlibSerializationPhase : PipelinePhase<VmFir2IrPipelineArtifact, VmSeri
         val diagnosticsReporter = configuration.diagnosticsCollector
         val destination = Path(configuration.klibDestination ?: "result.klib").absolute()
 
+        // A copy of each public inline function's body goes into the klib, which is all a module compiled against it reads of
+        // its IR: the VM links the modules' binary IR, so a dependency is otherwise only its metadata. A public inline body
+        // names only public declarations, so it needs no private inlining first.
+        InlineFunctionSerializationPreProcessing(crossModuleFunctionInliner = null).lower(fir2IrResult.irModuleFragment)
+
         val serializerOutput = serializeModuleIntoKlib(
             moduleName = fir2IrResult.irModuleFragment.name.asString(),
             irModuleFragment = fir2IrResult.irModuleFragment,
@@ -365,7 +379,8 @@ object VmKlibSerializationPhase : PipelinePhase<VmFir2IrPipelineArtifact, VmSeri
                 input.frontendOutput.outputs,
                 fir2IrActualizedResult = fir2IrResult,
                 exportKDoc = false,
-                produceHeaderKlib = true,
+                // A module subclassing one of the classes lays out the private fields it inherits too.
+                produceHeaderKlib = false,
             ),
         )
 
@@ -397,6 +412,7 @@ object VmKlibSerializationPhase : PipelinePhase<VmFir2IrPipelineArtifact, VmSeri
             input.projectEnvironment,
             input.rootDisposable,
             fir2IrResult = input.result,
+            vmLibraries = input.vmLibraries,
         )
     }
 }

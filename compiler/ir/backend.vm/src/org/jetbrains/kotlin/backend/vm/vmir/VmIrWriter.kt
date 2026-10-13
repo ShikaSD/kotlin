@@ -52,6 +52,9 @@ private object Tag {
     const val INTERFACE = 2L
     const val IMPORTED_CLASS = 3L
 
+    const val SELECTOR_DECLARED = 0L
+    const val SELECTOR_IMPORTED = 1L
+
     const val FLAG_OPEN = 1L
     const val FLAG_ABSTRACT = 2L
 
@@ -216,7 +219,7 @@ private class ModuleEncoder(private val module: VmModule) {
         module.classes.forEach(::classDeclaration)
         for (selector in module.selectors) {
             string(selector.name)
-            optionalString(selector.module)
+            varint(if (selector.imported) Tag.SELECTOR_IMPORTED else Tag.SELECTOR_DECLARED)
             varint(selector.receiver)
             types(selector.paramTypes)
             optionalType(selector.returnType)
@@ -224,10 +227,7 @@ private class ModuleEncoder(private val module: VmModule) {
         varint(module.externals.size)
         module.externals.forEach(::symbol)
         varint(module.imports.size)
-        for (import in module.imports) {
-            string(import.module)
-            symbol(import.symbol)
-        }
+        module.imports.forEach(::symbol)
         varint(module.globals.size)
         module.globals.forEach(::global)
         varint(module.functions.size)
@@ -244,7 +244,7 @@ private class ModuleEncoder(private val module: VmModule) {
     private fun symbolTable(): List<VmFunctionSymbol> {
         val table = LinkedHashSet<VmFunctionSymbol>()
         table += module.externals
-        module.imports.mapTo(table) { it.symbol }
+        table += module.imports
         for (declaration in module.classes) {
             val kind = declaration.kind
             if (kind is VmClassKind.Class) kind.methods.mapTo(table) { it.function }
@@ -276,11 +276,7 @@ private class ModuleEncoder(private val module: VmModule) {
         when (val kind = declaration.kind) {
             is VmClassKind.Class -> {
                 varint(Tag.CLASS)
-                varint(kind.fields.size)
-                for (field in kind.fields) {
-                    string(field.name)
-                    type(field.type)
-                }
+                fields(kind.fields)
                 varint(kind.methods.size)
                 for (method in kind.methods) {
                     varint(method.selector)
@@ -294,9 +290,23 @@ private class ModuleEncoder(private val module: VmModule) {
             VmClassKind.Interface -> varint(Tag.INTERFACE)
             is VmClassKind.Imported -> {
                 varint(Tag.IMPORTED_CLASS)
-                string(kind.module)
+                fields(kind.fields)
             }
         }
+    }
+
+    private fun fields(fields: List<VmField>) {
+        varint(fields.size)
+        for (field in fields) {
+            string(field.name)
+            type(field.type)
+        }
+    }
+
+    /** A field: the class listing it, then its index among the ones that class lists. */
+    private fun field(field: VmFieldRef) {
+        varint(field.owner)
+        varint(field.index)
     }
 
     private fun global(global: VmGlobal) {
@@ -312,10 +322,7 @@ private class ModuleEncoder(private val module: VmModule) {
                 varint(Tag.GLOBAL_OWNED)
                 optionalOwner(start.owner)
             }
-            is VmGlobalStart.Imported -> {
-                varint(Tag.GLOBAL_IMPORTED)
-                string(start.module)
-            }
+            VmGlobalStart.Imported -> varint(Tag.GLOBAL_IMPORTED)
         }
     }
 
@@ -435,12 +442,12 @@ private class ModuleEncoder(private val module: VmModule) {
                 varint(Tag.LOAD_FIELD)
                 value(instruction.dst)
                 value(instruction.obj)
-                varint(instruction.field)
+                field(instruction.field)
             }
             is VmInstruction.StoreField -> {
                 varint(Tag.STORE_FIELD)
                 value(instruction.obj)
-                varint(instruction.field)
+                field(instruction.field)
                 value(instruction.value)
             }
             is VmInstruction.ArrayLength -> {

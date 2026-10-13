@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.cli.vm.pipeline
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.jvm.compiler.VfsBasedProjectEnvironment
 import org.jetbrains.kotlin.cli.pipeline.Fir2IrPipelineArtifact
@@ -14,13 +13,15 @@ import org.jetbrains.kotlin.cli.pipeline.FrontendPipelineArtifact
 import org.jetbrains.kotlin.cli.pipeline.PipelineArtifact
 import org.jetbrains.kotlin.cli.pipeline.PipelineArtifactWithExitCode
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.pipeline.AllModulesFrontendOutput
 import org.jetbrains.kotlin.fir.pipeline.Fir2IrActualizedResult
-import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 
 data class VmFrontendPipelineArtifact(
     override val frontendOutput: AllModulesFrontendOutput,
     override val configuration: CompilerConfiguration,
+    /** The module data of the klibs the module is compiled against, the VM libraries; see [FirVmLibraries]. */
+    val vmLibraries: Set<FirModuleData>,
     val projectEnvironment: VfsBasedProjectEnvironment,
     val rootDisposable: Disposable,
 ) : FrontendPipelineArtifact() {
@@ -40,6 +41,7 @@ data class VmFir2IrPipelineArtifact(
     override val configuration: CompilerConfiguration,
     /** The fragments the VM runs, without the JVM's. */
     val frontendOutput: AllModulesFrontendOutput,
+    val vmLibraries: Set<FirModuleData>,
     val hostActuals: VmHostActuals,
     val projectEnvironment: VfsBasedProjectEnvironment,
     val rootDisposable: Disposable,
@@ -56,8 +58,12 @@ data class VmSerializationArtifact(
     val hostActuals: VmHostActuals,
     val projectEnvironment: VfsBasedProjectEnvironment,
     val rootDisposable: Disposable,
-    /** The IR the klib was written from, which [VmProxyPhase] generates the proxies of; null when the klib has no IR. */
+    /**
+     * The IR the klib was written from, which [VmCodegenPhase] compiles for the VM and [VmProxyPhase] generates the proxies
+     * of; null when the klib has no IR.
+     */
     val fir2IrResult: Fir2IrActualizedResult? = null,
+    val vmLibraries: Set<FirModuleData> = emptySet(),
     override val exitCode: ExitCode = ExitCode.OK,
 ) : PipelineArtifactWithExitCode() {
     @CliPipelineInternals(OPT_IN_MESSAGE)
@@ -66,15 +72,3 @@ data class VmSerializationArtifact(
     }
 }
 
-data class VmIrCompilationArtifact(
-    val pluginContext: IrPluginContext,
-    val moduleFragment: IrModuleFragment,
-    override val configuration: CompilerConfiguration,
-    val hostActuals: VmHostActuals,
-    override val exitCode: ExitCode = ExitCode.OK,
-) : PipelineArtifactWithExitCode() {
-    @CliPipelineInternals(OPT_IN_MESSAGE)
-    override fun withCompilerConfiguration(newConfiguration: CompilerConfiguration): PipelineArtifact {
-        return copy(configuration = newConfiguration)
-    }
-}

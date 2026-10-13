@@ -33,7 +33,8 @@ class VmModule(val name: String?) {
     val classes = mutableListOf<VmClass>()
     val selectors = mutableListOf<VmSelector>()
     val externals = mutableListOf<VmFunctionSymbol>()
-    val imports = mutableListOf<VmImport>()
+    /** Functions another module defines, which the VM linker finds by name among the program's modules. */
+    val imports = mutableListOf<VmFunctionSymbol>()
     val globals = mutableListOf<VmGlobal>()
     val functions = mutableListOf<VmFunction>()
     val initializers = mutableListOf<VmInitializer>()
@@ -49,6 +50,7 @@ class VmClass(
 )
 
 sealed interface VmClassKind {
+    /** A class: the fields it declares, after which the VM lays out none of its superclass's, and the methods it supplies. */
     class Class(val fields: List<VmField>, val methods: List<VmMethod>) : VmClassKind
 
     /**
@@ -57,22 +59,27 @@ sealed interface VmClassKind {
      */
     class Array(val element: VmType) : VmClassKind
     data object Interface : VmClassKind
-    class Imported(val module: String) : VmClassKind
+
+    /** A class another module declares, with the fields of its own the module's code names, which the linker finds by name. */
+    class Imported : VmClassKind {
+        val fields = mutableListOf<VmField>()
+    }
 }
 
 data class VmField(val name: String, val type: VmType)
+
+/** A field as an instruction names it: field [index] of the ones the class [owner] lists. */
+data class VmFieldRef(val owner: Int, val index: Int)
 
 data class VmMethod(val selector: Int, val function: VmFunctionSymbol)
 
 data class VmSelector(
     val name: String,
-    val module: String?,
+    val imported: Boolean,
     val receiver: Int,
     val paramTypes: List<VmType>,
     val returnType: VmType?,
 )
-
-data class VmImport(val module: String, val symbol: VmFunctionSymbol)
 
 class VmGlobal(val name: String, val type: VmType, val start: VmGlobalStart)
 
@@ -80,7 +87,7 @@ sealed interface VmGlobalStart {
     data object Zero : VmGlobalStart
     class Constant(val bits: Long) : VmGlobalStart
     class Owned(val owner: VmOwner) : VmGlobalStart
-    class Imported(val module: String) : VmGlobalStart
+    data object Imported : VmGlobalStart
 }
 
 sealed interface VmOwner {
@@ -132,8 +139,8 @@ sealed interface VmInstruction {
     class Store(val base: VmValue, val offset: VmValue, val src: VmValue, val width: VmWidth) : VmInstruction
     class NewObject(val dst: VmValue, val classIndex: Int) : VmInstruction
     class NewArray(val dst: VmValue, val classIndex: Int, val length: VmValue) : VmInstruction
-    class LoadField(val dst: VmValue, val obj: VmValue, val field: Int) : VmInstruction
-    class StoreField(val obj: VmValue, val field: Int, val value: VmValue) : VmInstruction
+    class LoadField(val dst: VmValue, val obj: VmValue, val field: VmFieldRef) : VmInstruction
+    class StoreField(val obj: VmValue, val field: VmFieldRef, val value: VmValue) : VmInstruction
     class ArrayLength(val dst: VmValue, val array: VmValue) : VmInstruction
     class ArrayGet(val dst: VmValue, val array: VmValue, val index: VmValue) : VmInstruction
     class ArraySet(val array: VmValue, val index: VmValue, val value: VmValue) : VmInstruction

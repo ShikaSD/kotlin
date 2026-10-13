@@ -39,9 +39,6 @@ internal fun unsupported(what: String): Nothing = throw VmCodegenException("the 
 /** A `Float`'s bits as a register holds them: in the low half, the high half zero. */
 internal fun floatBits(value: Float): Long = value.toRawBits().toLong() and 0xFFFF_FFFFL
 
-/** The module the VM repository's runtime/src/runtime.ir defines: the root class, the string class and their selectors. */
-const val VM_RUNTIME_MODULE = "vm.runtime"
-
 /**
  * The standard library's types the runtime declares, by the runtime class standing for each: the JVM class the Kotlin
  * type is compiled to, whose simple name the runtime gives its class in its own namespace, `vm.runtime`, so no Java name
@@ -109,6 +106,8 @@ private val RUNTIME_THROWABLES = mapOf(
 class VmModuleGenerator(
     internal val irBuiltIns: IrBuiltIns,
     moduleName: String,
+    /** The libraries the module is compiled against, which tell another VM module's declarations from the host's. */
+    private val libraries: VmLibraries,
     /**
      * Whether the module is the standard library itself. Its declarations the runtime implements are left out, as are
      * its intrinsics, which have no bodies; and a function it cannot generate yet becomes a stub throwing
@@ -134,7 +133,7 @@ class VmModuleGenerator(
     /** The JVM names two functions of the module share, as two extensions differing only in a bound can; see [exportName]. */
     private val clashingExportNames = hashMapOf<String, Int>()
     private val classIndices = hashMapOf<IrClassSymbol, Int>()
-    private val fieldLayouts = hashMapOf<IrClassSymbol, List<LayoutField>>()
+    private val ownFields = hashMapOf<IrClassSymbol, List<IrField>>()
     private val selectors = hashMapOf<IrSimpleFunctionSymbol, Int>()
     private val throwableToStrings = hashMapOf<IrClassSymbol, VmFunctionSymbol>()
     private val arrayClasses = hashMapOf<VmType, Int>()
@@ -184,7 +183,7 @@ class VmModuleGenerator(
         bodies.mapNotNull(::jvmExportNameOf).groupingBy { it }.eachCount().filterTo(clashingExportNames) { it.value > 1 }
 
         // The classes other modules can name first, so no local class takes a name one of them has.
-        classes.sortedBy { it.symbol.signature !is IdSignature.CommonSignature }.forEach { it.vmName }
+        classes.sortedBy { libraries.publicSignature(it) !is IdSignature.CommonSignature }.forEach { it.vmName }
         for (declaration in classes) {
             classIndices[declaration.symbol] = module.classes.size
             // Replaced once every class has an index, which supertypes and methods refer to.
@@ -199,7 +198,7 @@ class VmModuleGenerator(
                 if (!function.isFakeOverride && function.overriddenSymbols.isEmpty() && function.isOverridable() && answerable) {
                     val symbol = functionSymbol(function)
                     module.selectors += VmSelector(
-                        selectorName(function), null, classIndices.getValue(declaration.symbol), symbol.paramTypes.drop(1), symbol.returnType,
+                        selectorName(function), imported = false, classIndices.getValue(declaration.symbol), symbol.paramTypes.drop(1), symbol.returnType,
                     )
                     selectors[function.symbol] = module.selectors.size - 1
                 }
@@ -393,7 +392,7 @@ class VmModuleGenerator(
 
     /** The global [name] of the VM module declaring [declaration], or null when no VM module does. */
     private fun importGlobal(declaration: IrDeclaration, name: String, type: VmType): Int? =
-        vmModuleOf(declaration)?.let { owner -> declareGlobal(name, type, VmGlobalStart.Imported(owner)) }
+        if (isInAnotherVmModule(declaration)) declareGlobal(name, type, VmGlobalStart.Imported) else null
 
     /** The owner whose initializer a static call to [function] runs first, if any. */
     internal fun ownerOf(function: IrFunction): VmOwner? = functionOwners[function.symbol]
@@ -408,8 +407,8 @@ class VmModuleGenerator(
         val original = functionSymbol(function)
         val symbol = VmFunctionSymbol(vmSanitized("${original.name}\$default"), original.paramTypes + VmType.I64, original.returnType)
         when {
-            function.fileOrNull?.module == fragment -> {}
-            vmModuleOf(function) != null -> module.imports += VmImport(vmModuleOf(function)!!, symbol)
+            isOwn(function) -> {}
+            isInAnotherVmModule(function) -> module.imports += symbol
             else -> unsupported("a default argument to ${function.render()} outside the VM modules")
         }
         symbol
@@ -493,19 +492,14 @@ class VmModuleGenerator(
         return entry
     }
 
-    /**
-     * The VM module holding [declaration] when another Kotlin module declares it: the one the VM backend compiled that
-     * module into, named as the module is. Null for this module's declarations, and for the standard library's and
-     * Java's, which no VM module holds yet.
-     */
-    private fun vmModuleOf(declaration: IrDeclaration): String? {
-        val kotlinModule = declaration.fileOrNull?.module ?: return null
-        if (kotlinModule == fragment) return null
-        return kotlinModule.name.asStringStripSpecialMarkers()
-    }
+    /** Whether the module declares [declaration]: everything else reaches it as a library's, from outside its files. */
+    private fun isOwn(declaration: IrDeclaration): Boolean = (declaration.getPackageFragment() as? IrFile)?.module == fragment
+
+    /** Whether a VM library defines [declaration], which the module then imports; see [VmLibraries.isInVmLibrary]. */
+    private fun isInAnotherVmModule(declaration: IrDeclaration): Boolean = !isOwn(declaration) && libraries.isInVmLibrary(declaration)
 
     private fun runtimeClass(name: String): Int = runtimeClasses.getOrPut(name) {
-        module.classes += VmClass(name, null, emptyList(), isOpen = false, isAbstract = false, VmClassKind.Imported(VM_RUNTIME_MODULE))
+        module.classes += VmClass(name, null, emptyList(), isOpen = false, isAbstract = false, VmClassKind.Imported())
         module.classes.size - 1
     }
 
@@ -526,16 +520,16 @@ class VmModuleGenerator(
     private fun runtimeSelector(name: String): Int = runtimeSelectors.getOrPut(name) {
         val any = runtimeClass("Any")
         module.selectors += when (name) {
-            "equals" -> VmSelector(name, VM_RUNTIME_MODULE, any, listOf(anyType), VmType.I64)
-            "hashCode" -> VmSelector(name, VM_RUNTIME_MODULE, any, emptyList(), VmType.I64)
-            "toString" -> VmSelector(name, VM_RUNTIME_MODULE, any, emptyList(), stringType)
-            "message" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.Throwable"), emptyList(), stringType)
-            "cause" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.Throwable"), emptyList(), anyType)
-            "compareTo" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.Comparable"), listOf(anyType), VmType.I64)
-            "length" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.CharSequence"), emptyList(), VmType.I64)
-            "get" -> VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.CharSequence"), listOf(VmType.I64), VmType.I64)
+            "equals" -> VmSelector(name, imported = true, any, listOf(anyType), VmType.I64)
+            "hashCode" -> VmSelector(name, imported = true, any, emptyList(), VmType.I64)
+            "toString" -> VmSelector(name, imported = true, any, emptyList(), stringType)
+            "message" -> VmSelector(name, imported = true, runtimeClass("vm.runtime.Throwable"), emptyList(), stringType)
+            "cause" -> VmSelector(name, imported = true, runtimeClass("vm.runtime.Throwable"), emptyList(), anyType)
+            "compareTo" -> VmSelector(name, imported = true, runtimeClass("vm.runtime.Comparable"), listOf(anyType), VmType.I64)
+            "length" -> VmSelector(name, imported = true, runtimeClass("vm.runtime.CharSequence"), emptyList(), VmType.I64)
+            "get" -> VmSelector(name, imported = true, runtimeClass("vm.runtime.CharSequence"), listOf(VmType.I64), VmType.I64)
             "subSequence" ->
-                VmSelector(name, VM_RUNTIME_MODULE, runtimeClass("vm.runtime.CharSequence"), listOf(VmType.I64, VmType.I64), anyType)
+                VmSelector(name, imported = true, runtimeClass("vm.runtime.CharSequence"), listOf(VmType.I64, VmType.I64), anyType)
             else -> error("The runtime declares no selector $name on Any")
         }
         module.selectors.size - 1
@@ -631,7 +625,7 @@ class VmModuleGenerator(
 
     private fun runtimeFunction(name: String, params: List<VmType>, returnType: VmType?): VmFunctionSymbol {
         val symbol = VmFunctionSymbol(name, params, returnType)
-        if (module.imports.none { it.symbol == symbol }) module.imports += VmImport(VM_RUNTIME_MODULE, symbol)
+        if (symbol !in module.imports) module.imports += symbol
         return symbol
     }
 
@@ -718,8 +712,8 @@ class VmModuleGenerator(
                 declaration.symbol == irBuiltIns.nothingClass
 
     /** The class standing for [declaration]: the runtime's, this module's, or one imported from the VM module declaring it. */
-    internal fun classIndex(declaration: IrClass): Int? = runtimeClassOf(declaration) ?: classIndices[declaration.symbol] ?: vmModuleOf(declaration)?.let { owner ->
-        module.classes += VmClass(declaration.vmName, null, emptyList(), isOpen = false, isAbstract = false, VmClassKind.Imported(owner))
+    internal fun classIndex(declaration: IrClass): Int? = runtimeClassOf(declaration) ?: classIndices[declaration.symbol] ?: if (!isInAnotherVmModule(declaration)) null else {
+        module.classes += VmClass(declaration.vmName, null, emptyList(), isOpen = false, isAbstract = false, VmClassKind.Imported())
         (module.classes.size - 1).also { classIndices[declaration.symbol] = it }
     }
 
@@ -801,26 +795,14 @@ class VmModuleGenerator(
     /** `kotlin.Enum`, which the runtime's `Enum` implements. */
     internal fun IrClass.isEnumBase() = symbol == irBuiltIns.enumClass
 
-    /** A field of a class's VM layout: one it declares, or one the runtime class it extends lays out. */
-    private class LayoutField(val name: String, val type: VmType, val declared: IrField?)
-
-    /** The class's fields in the VM's layout: its superclass's, then its own. */
-    private fun fieldLayout(declaration: IrClass): List<LayoutField> = fieldLayouts.getOrPut(declaration.symbol) {
-        val superClass = declaration.superClass()
-        val inherited = when {
-            superClass == null || superClass.isAny() -> emptyList()
-            superClass.isEnumBase() -> listOf(LayoutField("name", stringType, null), LayoutField("ordinal", VmType.I64, null))
-            runtimeThrowable(superClass) != null -> listOf(LayoutField("message", stringType, null), LayoutField("cause", anyType, null))
-            classIndex(superClass) != null -> fieldLayout(superClass)
-            else -> unsupported("the superclass ${superClass.name} outside the VM modules")
-        }
-        inherited + declaration.declarations.mapNotNull {
-            val field = when (it) {
+    /** The fields [declaration] declares, in order; the VM lays them out after its superclass's. */
+    private fun ownFields(declaration: IrClass): List<IrField> = ownFields.getOrPut(declaration.symbol) {
+        declaration.declarations.mapNotNull {
+            when (it) {
                 is IrProperty -> it.backingField
                 is IrField -> it
                 else -> null
-            }?.takeIf(::hasStorage) ?: return@mapNotNull null
-            LayoutField(field.name.asString(), heldType(field.type), field)
+            }?.takeIf(::hasStorage)
         }
     }
 
@@ -830,11 +812,37 @@ class VmModuleGenerator(
      */
     internal fun hasStorage(field: IrField): Boolean = !field.type.isNothing()
 
-    internal fun fieldIndex(field: IrField): Int {
+    /**
+     * [field] as an instruction names it: by its position among the fields its class declares in this module, and by its
+     * name in another module's, which the VM linker finds among the fields that module's class declares.
+     */
+    internal fun fieldRef(field: IrField): VmFieldRef {
         val owner = field.parentAsClass
-        if (runtimeClassOf(owner) != null || classIndex(owner) == null) unsupported("the field ${field.name} of ${owner.name}")
-        return fieldLayout(owner).indexOfFirst { it.declared == field }
+        val index = classIndex(owner)
+        if (runtimeClassOf(owner) != null || index == null) unsupported("the field ${field.name} of ${owner.name}")
+        if (isOwn(owner)) return VmFieldRef(index, ownFields(owner).indexOf(field))
+        return importedField(index, field.name.asString(), heldType(field.type))
     }
+
+    /** The field [name] of the imported class [owner], listed on its import the first time code names it. */
+    private fun importedField(owner: Int, name: String, type: VmType): VmFieldRef {
+        val fields = (module.classes[owner].kind as VmClassKind.Imported).fields
+        val index = fields.indexOfFirst { it.name == name }.takeIf { it >= 0 } ?: fields.size.also { fields += VmField(name, type) }
+        if (fields[index].type != type) unsupported("the field $name of ${module.classes[owner].name} as two types")
+        return VmFieldRef(owner, index)
+    }
+
+    /** Where the runtime's `Enum` holds an entry's name. */
+    internal val enumNameField: VmFieldRef get() = importedField(runtimeClass("vm.runtime.Enum"), "name", stringType)
+
+    /** Where the runtime's `Enum` holds an entry's ordinal. */
+    internal val enumOrdinalField: VmFieldRef get() = importedField(runtimeClass("vm.runtime.Enum"), "ordinal", VmType.I64)
+
+    /** Where the runtime's `kotlin.internal.SharedVariableBox` holds its variable. */
+    internal val sharedBoxElementField: VmFieldRef get() = importedField(sharedVariableBoxClass, "element", anyType)
+
+    /** Where the runtime's box for a primitive [kind] holds its value. */
+    internal fun boxValueField(kind: PrimitiveType): VmFieldRef = importedField(boxClass(kind), "value", primitiveVmType(kind))
 
     /**
      * A class's name in the VM: [vmClassName]. A class other modules can name, by its public signature, keeps it
@@ -844,7 +852,7 @@ class VmModuleGenerator(
     private val IrClass.vmName: String
         get() = classNames.getOrPut(symbol) {
             val name = vmClassName(this)
-            if (usedClassNames.add(name) || symbol.signature is IdSignature.CommonSignature) return@getOrPut name
+            if (usedClassNames.add(name) || libraries.publicSignature(this) is IdSignature.CommonSignature) return@getOrPut name
             generateSequence(1) { it + 1 }.map { "${name}_$it" }.first(usedClassNames::add)
         }
 
@@ -873,7 +881,7 @@ class VmModuleGenerator(
             runtimeThrowable(superClass) != null -> runtimeThrowable(superClass)!!
             else -> classIndex(superClass) ?: unsupported("the superclass ${superClass.name} outside the VM modules")
         }
-        val fields = fieldLayout(declaration).map { VmField(it.name, it.type) }
+        val fields = ownFields(declaration).map { VmField(it.name.asString(), heldType(it.type)) }
         val isAbstract = declaration.modality == Modality.ABSTRACT || declaration.modality == Modality.SEALED
         return VmClass(
             declaration.vmName, superIndex, interfaces,
@@ -914,7 +922,7 @@ class VmModuleGenerator(
                     // Java member the JVM maps onto a Kotlin class — which nothing here answers and nothing on the VM
                     // calls.
                     val isJava = implementation.origin == IrDeclarationOrigin.IR_EXTERNAL_JAVA_DECLARATION_STUB
-                    if (isJava || (implementation.symbol !in definedFunctions && implementation.fileOrNull?.module == fragment)) continue
+                    if (isJava || (implementation.symbol !in definedFunctions && isOwn(implementation))) continue
                     if (implementation.symbol !in definedFunctions) {
                         importFunction(implementation) ?: unsupported("inheriting ${implementation.render()} outside the VM modules")
                     } else {
@@ -942,8 +950,8 @@ class VmModuleGenerator(
     private fun enumAdapter(declaration: IrClass, member: IrSimpleFunction, selector: VmSelector): VmFunctionSymbol =
         enumAdapters.getOrPut(declaration.symbol to member.name.asString()) {
             val [field, type] = when (member.name.asString()) {
-                "<get-name>" -> VmFunctionGenerator.ENUM_NAME_FIELD to stringType
-                "<get-ordinal>" -> VmFunctionGenerator.ENUM_ORDINAL_FIELD to VmType.I64
+                "<get-name>" -> enumNameField to stringType
+                "<get-ordinal>" -> enumOrdinalField to VmType.I64
                 else -> unsupported("implementing an interface with ${member.render()}")
             }
             if (selector.paramTypes.isNotEmpty() || selector.returnType != type) unsupported("a bridge to ${member.render()}")
@@ -994,7 +1002,10 @@ class VmModuleGenerator(
 
     private fun IrSimpleFunction.isOverridable(): Boolean {
         val owner = parentClassOrNull ?: return false
-        return modality != Modality.FINAL && owner.modality != Modality.FINAL &&
+        // An enum class reads as final from another module's metadata even where its entries override its members, so only
+        // the member's own modality tells, in every module alike.
+        val ownerIsFinal = owner.modality == Modality.FINAL && owner.kind != ClassKind.ENUM_CLASS
+        return modality != Modality.FINAL && !ownerIsFinal &&
                 !DescriptorVisibilities.isPrivate(visibility) && owner.kind != ClassKind.OBJECT
     }
 
@@ -1022,9 +1033,9 @@ class VmModuleGenerator(
 
     /** The selector [root] declares in the VM module declaring it, or null when no VM module does. */
     private fun importSelector(root: IrSimpleFunction): Int? {
-        val owner = vmModuleOf(root) ?: return null
+        if (!isInAnotherVmModule(root)) return null
         val symbol = functionSymbol(root)
-        module.selectors += VmSelector(selectorName(root), owner, classIndex(root.parentAsClass)!!, symbol.paramTypes.drop(1), symbol.returnType)
+        module.selectors += VmSelector(selectorName(root), imported = true, classIndex(root.parentAsClass)!!, symbol.paramTypes.drop(1), symbol.returnType)
         return (module.selectors.size - 1).also { selectors[root.symbol] = it }
     }
 
@@ -1104,9 +1115,9 @@ class VmModuleGenerator(
 
     /** [function] as the VM module declaring it defines it, imported, or null when no VM module does. */
     private fun importFunction(function: IrFunction): VmFunctionSymbol? {
-        val owner = vmModuleOf(function) ?: return null
+        if (!isInAnotherVmModule(function)) return null
         val symbol = functionSymbol(function)
-        if (module.imports.none { it.symbol == symbol }) module.imports += VmImport(owner, symbol)
+        if (symbol !in module.imports) module.imports += symbol
         return symbol
     }
 
@@ -1139,10 +1150,14 @@ class VmModuleGenerator(
      */
     private fun vmName(function: IrFunction): String {
         val owner = function.parentClassOrNull
-        val hash = signatureHash(function.symbol.signature) ?: inlineClassImplHash(function)
+        // A private function of the module, or a local declaration lowering lifted out of its scope, which no other module
+        // names; the types of a lifted one can still name the scope's type parameters, which the mangler cannot place. A
+        // member of a private class is named, by a subclass in another module.
+        val isPrivateToModule = isOwn(function) && (DescriptorVisibilities.isPrivate(function.visibility) || function.isOriginallyLocal)
+        val hash = inlineClassImplHash(function) ?: if (isPrivateToModule) null else signatureHash(libraries.publicSignature(function))
         val name = vmFunctionName(function, owner?.vmName, hash)
         // Another module's function is named as that module names it, which only a public signature makes stable.
-        if (vmModuleOf(function) != null) return if (hash == null) unsupported("naming ${function.render()} of another module") else name
+        if (isInAnotherVmModule(function)) return if (hash == null) unsupported("naming ${function.render()} of another module") else name
         if (usedFunctionNames.add(name)) return name
         return generateSequence(1) { it + 1 }.map { "${name}_$it" }.first(usedFunctionNames::add)
     }
@@ -1151,7 +1166,7 @@ class VmModuleGenerator(
 
     /**
      * The hash naming a function the value-class lowering made from a member of a value class held unboxed, which takes
-     * the value in place of the receiver; null for any other function. It has no signature, and every module calling the
+     * the value in place of the receiver; null for any other function. No klib records it, and every module calling the
      * member makes it again, so it is hashed by what it is in each: its name, and the classes its types erase to.
      */
     private fun inlineClassImplHash(function: IrFunction): Long? {

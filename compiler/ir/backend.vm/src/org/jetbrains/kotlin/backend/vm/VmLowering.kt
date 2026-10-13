@@ -75,6 +75,7 @@ class VmLoweringContext(
     override val configuration: CompilerConfiguration,
     override val irBuiltIns: IrBuiltIns,
     override val diagnosticReporter: IrDiagnosticReporter,
+    val libraries: VmLibraries,
 ) : CommonBackendContext {
     override val irFactory: IrFactory = IrFactoryImpl
     override var inVerbosePhase: Boolean = false
@@ -156,11 +157,12 @@ private class SharedVariableSymbols(irBuiltIns: IrBuiltIns) : PreSerializationKl
 }
 
 /**
- * Every inline function with a body to copy: the module's own, and those the klibs it depends on carry. One from a jar
- * has none, and its call is left for code generation to report. `suspendCoroutineUninterceptedOrReturn` and
- * `coroutineContext`, which the common library leaves to the backend, are the VM standard library's versions.
+ * Every inline function with a body to copy: the module's own, and those the VM libraries it depends on carry; see
+ * [VmLibraries.inlineFunction]. One from a host library has none, and its call is left for code generation to report.
+ * `suspendCoroutineUninterceptedOrReturn` and `coroutineContext`, which the common library leaves to the backend, are
+ * the VM standard library's versions.
  *
- * A jklib holds IR as the frontend produced it, so before its body is copied, a function from one gets the lowerings
+ * A klib holds IR as the frontend produced it, so before its body is copied, a function from one gets the lowerings
  * the module's own code got ahead of inlining: the [upgrade], since the inliner only inlines a lambda upgraded to a rich
  * function reference, and the [arrayConstructors].
  */
@@ -169,20 +171,29 @@ private class VmInlineFunctionResolver(
     private val upgrade: UpgradeCallableReferences,
     private val arrayConstructors: ArrayConstructorLowering,
 ) : InlineFunctionResolverReplacingCoroutineIntrinsics<VmLoweringContext>(context, InlineMode.ALL_INLINE_FUNCTIONS) {
-    private val lowered = hashSetOf<IrFunction>()
+    private val prepared = hashMapOf<IrFunction, IrFunction>()
 
     override fun getFunctionDeclaration(symbol: IrFunctionSymbol): IrFunction? {
-        val function = super.getFunctionDeclaration(symbol) ?: return null
-        if (lowered.add(function)) {
+        val declaration = super.getFunctionDeclaration(symbol) ?: return null
+        return prepared.getOrPut(declaration) {
+            val function = when {
+                declaration.body != null || declaration !is IrSimpleFunction -> declaration
+                context.libraries.isInVmLibrary(declaration) -> context.libraries.inlineFunction(declaration) ?: declaration
+                else -> declaration
+            }
             upgrade.lower(function)
             function.body?.let { arrayConstructors.lower(it, function) }
+            function
         }
-        return function
     }
 }
 
 /** The lowerings between the linked IR and [VmModuleGenerator], in the order they run. */
-fun lowerForVm(context: VmLoweringContext, module: IrModuleFragment) {
+fun lowerForVm(context: VmLoweringContext, module: IrModuleFragment, isStdlib: Boolean) {
+    if (isStdlib) VmOwnBuiltinsLowering(context.libraries).lower(module)
+    // An `expect` class still in the module has no `actual` the VM runs: it is an `@OptionalExpectation` annotation class,
+    // which only annotations name.
+    module.files.forEach { file -> file.declarations.removeAll { it is IrClass && it.isExpect } }
     // First, so the members it generates get every lowering that follows, such as an unsigned member's.
     val annotations = VmAnnotationImplementationLowering(context)
     module.files.forEach { annotations.lower(it) }
@@ -261,6 +272,6 @@ fun compileToVm(
     hostActuals: (IrSimpleFunction) -> String? = { null },
     reportStub: (String) -> Unit = {},
 ): VmModule {
-    lowerForVm(context, module)
-    return VmModuleGenerator(context.irBuiltIns, moduleName, isStdlib, hostActuals, reportStub).generate(module)
+    lowerForVm(context, module, isStdlib)
+    return VmModuleGenerator(context.irBuiltIns, moduleName, context.libraries, isStdlib, hostActuals, reportStub).generate(module)
 }

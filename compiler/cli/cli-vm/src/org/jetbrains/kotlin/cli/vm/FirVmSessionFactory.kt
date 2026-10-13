@@ -127,7 +127,7 @@ object FirVmSessionFactory : FirAbstractSessionFactory<FirVmSessionFactory.Conte
     }
 
     override fun createKotlinScopeProviderForLibrarySession(): FirKotlinScopeProvider {
-        return FirKotlinScopeProvider()
+        return vmScopeProvider()
     }
 
     override fun FirSession.registerLibrarySessionComponents(c: Context) {
@@ -195,7 +195,7 @@ object FirVmSessionFactory : FirAbstractSessionFactory<FirVmSessionFactory.Conte
         moduleData: FirModuleData,
         languageVersionSettings: LanguageVersionSettings,
     ): FirKotlinScopeProvider {
-        return FirKotlinScopeProvider()
+        return vmScopeProvider()
     }
 
     override fun FirSessionConfigurator.registerPlatformCheckers() {
@@ -329,3 +329,9 @@ internal fun <F> prepareVmSessions(
         }
     )
 }
+
+/**
+ * Keeps the members of `List` and `Map` marked `@PlatformDependent`, which the default scope hides from a platform without
+ * them: the VM's standard library implements them, so a class inheriting one answers its selector.
+ */
+private fun vmScopeProvider(): FirKotlinScopeProvider = FirKotlinScopeProvider { _, declaredMemberScope, _, _, _ -> declaredMemberScope }

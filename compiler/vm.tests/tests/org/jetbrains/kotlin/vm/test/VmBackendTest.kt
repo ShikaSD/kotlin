@@ -19,6 +19,8 @@ import java.io.File
 import java.io.PrintStream
 import java.util.concurrent.TimeUnit
 import java.util.zip.ZipFile
+import org.jetbrains.kotlin.library.components.inlinableFunctionsIr
+import org.jetbrains.kotlin.library.loader.KlibLoader
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.tree.ClassNode
@@ -3759,6 +3761,16 @@ class VmBackendTest {
             }
         """)
         assertTrue(Regex("""selector @area_\w+\(""").containsMatchIn(dump)) { dump }
+    }
+
+    /** The klib carries the IR of the module's public inline functions, which a module compiled against it inlines. */
+    @Test
+    fun testKlibCarriesInlineFunctionBodies(@TempDir tempDir: File) {
+        val compilation = compile(tempDir, mapOf("Twice.kt" to "package sample\n\ninline fun twice(x: Int): Int = x * 2"))
+        assertEquals(ExitCode.OK, compilation.exitCode) { compilation.output }
+
+        val klib = KlibLoader { libraryPaths(File(tempDir, "main.klib").path) }.load().librariesStdlibFirst.single()
+        assertNotNull(klib.inlinableFunctionsIr)
     }
 
     /** A field of type `Nothing` takes no slot in its class. */

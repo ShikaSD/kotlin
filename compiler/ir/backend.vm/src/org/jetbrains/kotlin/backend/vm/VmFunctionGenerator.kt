@@ -263,23 +263,13 @@ internal class VmFunctionGenerator private constructor(
         val [target, args] = constructorInvocation(call, constructor)
         val instance = newValue(VmType.Ref(classIndex)).also { emit(VmInstruction.NewObject(it, classIndex)) }
         val name = newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, entry.name.asString())) }
-        emit(VmInstruction.StoreField(instance, ENUM_NAME_FIELD, name))
-        emit(VmInstruction.StoreField(instance, ENUM_ORDINAL_FIELD, constant(VmType.I64, ordinal.toLong())))
+        emit(VmInstruction.StoreField(instance, gen.enumNameField, name))
+        emit(VmInstruction.StoreField(instance, gen.enumOrdinalField, constant(VmType.I64, ordinal.toLong())))
         emit(VmInstruction.Call(null, VmCallee.Static(target), listOf(instance) + args))
         emit(VmInstruction.StoreGlobal(gen.enumEntryGlobal(entry), instance))
     }
 
     companion object {
-        /** Where the runtime's boxes hold their value, their only field. */
-        private const val BOX_VALUE_FIELD = 0
-
-        /** Where the runtime's `kotlin.internal.SharedVariableBox` holds its variable, its only field. */
-        private const val SHARED_BOX_ELEMENT_FIELD = 0
-
-        /** Where the runtime's `Enum` lays out an entry's name and ordinal, ahead of every field an enum declares. */
-        internal const val ENUM_NAME_FIELD = 0
-        internal const val ENUM_ORDINAL_FIELD = 1
-
         /** Unowned, as every initializer is. */
         fun defaultStub(gen: VmModuleGenerator, function: IrFunction, symbol: VmFunctionSymbol): VmFunction =
             VmFunctionGenerator(gen, function, symbol, owner = null).generateDefaultStub()
@@ -392,7 +382,7 @@ internal class VmFunctionGenerator private constructor(
     private fun valueClassBox(valueClass: IrClass, value: VmValue): VmValue {
         val boxClass = gen.testedClass(valueClass.defaultType) ?: unsupported("boxing ${valueClass.name}")
         val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.NewObject(it, boxClass)) }
-        emit(VmInstruction.StoreField(box, gen.fieldIndex(gen.valueClassField(valueClass)), value))
+        emit(VmInstruction.StoreField(box, gen.fieldRef(gen.valueClassField(valueClass)), value))
         return box
     }
 
@@ -402,12 +392,12 @@ internal class VmFunctionGenerator private constructor(
             val boxClass = gen.testedClass(valueClass.defaultType) ?: unsupported("unboxing ${valueClass.name}")
             val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.RefCast(it, value, boxClass)) }
             val field = gen.valueClassField(valueClass)
-            return newValue(gen.heldType(field.type)).also { emit(VmInstruction.LoadField(it, box, gen.fieldIndex(field))) }
+            return newValue(gen.heldType(field.type)).also { emit(VmInstruction.LoadField(it, box, gen.fieldRef(field))) }
         }
         val kind = type.getPrimitiveType() ?: error("Unboxing into the non-primitive ${type.render()}")
         val boxClass = gen.boxClass(kind)
         val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.RefCast(it, value, boxClass)) }
-        return newValue(gen.vmType(type.makeNotNull())!!).also { emit(VmInstruction.LoadField(it, box, BOX_VALUE_FIELD)) }
+        return newValue(gen.vmType(type.makeNotNull())!!).also { emit(VmInstruction.LoadField(it, box, gen.boxValueField(kind))) }
     }
 
     /** The value of [expression], or null when it has none: its type is `Unit` or `Nothing`. */
@@ -485,7 +475,7 @@ internal class VmFunctionGenerator private constructor(
                 // The field of a value class held unboxed is the value itself.
                 return operand(receiver)
             } else {
-                emit(VmInstruction.LoadField(dst, operand(receiver), gen.fieldIndex(field)))
+                emit(VmInstruction.LoadField(dst, operand(receiver), gen.fieldRef(field)))
             }
             field.correspondingPropertySymbol?.owner?.takeIf { it.isLateinit }?.let { throwIfUninitialized(dst, it) }
             dst
@@ -500,7 +490,7 @@ internal class VmFunctionGenerator private constructor(
                 emit(VmInstruction.StoreGlobal(gen.globalOf(field), operandAs(expression.value, field.type)))
             } else {
                 val obj = operand(receiver)
-                emit(VmInstruction.StoreField(obj, gen.fieldIndex(field), operandAs(expression.value, field.type)))
+                emit(VmInstruction.StoreField(obj, gen.fieldRef(field), operandAs(expression.value, field.type)))
             }
             null
         }
@@ -970,9 +960,9 @@ internal class VmFunctionGenerator private constructor(
         if (callee.parentClassOrNull?.let(gen::isSharedVariableBox) != true) return null
         val box = operand(call.arguments[0]!!)
         return when (callee.name.asString()) {
-            "<get-element>" -> Intrinsic(newValue(gen.anyType).also { emit(VmInstruction.LoadField(it, box, SHARED_BOX_ELEMENT_FIELD)) })
+            "<get-element>" -> Intrinsic(newValue(gen.anyType).also { emit(VmInstruction.LoadField(it, box, gen.sharedBoxElementField)) })
             "<set-element>" -> {
-                emit(VmInstruction.StoreField(box, SHARED_BOX_ELEMENT_FIELD, reference(call.arguments[1]!!)))
+                emit(VmInstruction.StoreField(box, gen.sharedBoxElementField, reference(call.arguments[1]!!)))
                 Intrinsic(null)
             }
             else -> unsupported("${callee.render()}")
@@ -1148,7 +1138,7 @@ internal class VmFunctionGenerator private constructor(
         if (gen.isSharedVariableBox(constructor.constructedClass)) {
             val boxClass = gen.sharedVariableBoxClass
             val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.NewObject(it, boxClass)) }
-            emit(VmInstruction.StoreField(box, SHARED_BOX_ELEMENT_FIELD, reference(call.arguments[0]!!)))
+            emit(VmInstruction.StoreField(box, gen.sharedBoxElementField, reference(call.arguments[0]!!)))
             return box
         }
         gen.runtimeThrowable(constructor.constructedClass)?.let { throwable ->
@@ -1203,7 +1193,7 @@ internal class VmFunctionGenerator private constructor(
         // As on the JVM, which leaves such a field to its default: an initializer running earlier may have set it.
         if ((initializer.expression as? IrConst)?.isDefaultValue() == true) return
         val value = operandAs(initializer.expression, field.type)
-        if (gen.hasStorage(field)) emit(VmInstruction.StoreField(self, gen.fieldIndex(field), value))
+        if (gen.hasStorage(field)) emit(VmInstruction.StoreField(self, gen.fieldRef(field), value))
     }
 
     /** What an intrinsic produced: a value, or none for one returning `Unit`. */
@@ -1407,7 +1397,7 @@ internal class VmFunctionGenerator private constructor(
         val boxClass = gen.testedClass(valueClass.defaultType) ?: unsupported("spreading ${valueClass.name}")
         val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.RefCast(it, value, boxClass)) }
         val field = gen.valueClassField(valueClass)
-        return newValue(gen.heldType(field.type)).also { emit(VmInstruction.LoadField(it, box, gen.fieldIndex(field))) }
+        return newValue(gen.heldType(field.type)).also { emit(VmInstruction.LoadField(it, box, gen.fieldRef(field))) }
     }
 
     /** A vararg element's value: the element, or the array a spread element copies from. */
@@ -1438,7 +1428,11 @@ internal class VmFunctionGenerator private constructor(
      * the entries, in their order, and the standard library's functions over it. Null for any other callee.
      */
     private fun enumSpecialMember(callee: IrSimpleFunction, args: List<IrExpression>): VmValue? {
-        if (callee.origin != IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER) return null
+        // Another module's reaches the module from its metadata, which keeps no origin: a static member of an enum class
+        // is one of these.
+        val isSpecial = callee.origin == IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER ||
+                (callee.dispatchReceiverParameter == null && callee.parentClassOrNull?.kind == ClassKind.ENUM_CLASS && callee.body == null)
+        if (!isSpecial) return null
         val enumClass = callee.parentAsClass
         fun values(): VmValue {
             val entries = enumClass.declarations.filterIsInstance<IrEnumEntry>()
@@ -1478,16 +1472,16 @@ internal class VmFunctionGenerator private constructor(
                     if (entry != null) {
                         emit(VmInstruction.StringConstant(it, entry.name.asString()))
                     } else {
-                        emit(VmInstruction.LoadField(it, operand(args[0]), ENUM_NAME_FIELD))
+                        emit(VmInstruction.LoadField(it, operand(args[0]), gen.enumNameField))
                     }
                 }
             }
-            "<get-ordinal>" -> newValue(VmType.I64).also { emit(VmInstruction.LoadField(it, operand(args[0]), ENUM_ORDINAL_FIELD)) }
+            "<get-ordinal>" -> newValue(VmType.I64).also { emit(VmInstruction.LoadField(it, operand(args[0]), gen.enumOrdinalField)) }
             "compareTo" -> {
                 val lhs = operand(args[0])
                 val rhs = operand(args[1])
-                val left = newValue(VmType.I64).also { emit(VmInstruction.LoadField(it, lhs, ENUM_ORDINAL_FIELD)) }
-                val right = newValue(VmType.I64).also { emit(VmInstruction.LoadField(it, rhs, ENUM_ORDINAL_FIELD)) }
+                val left = newValue(VmType.I64).also { emit(VmInstruction.LoadField(it, lhs, gen.enumOrdinalField)) }
+                val right = newValue(VmType.I64).also { emit(VmInstruction.LoadField(it, rhs, gen.enumOrdinalField)) }
                 binary(VmBinaryOp.SUB, left, right)
             }
             else -> null
