@@ -1070,6 +1070,7 @@ internal class VmFunctionGenerator private constructor(
      */
     private fun defaultArguments(call: IrFunctionAccessExpression, declaration: IrFunction, stub: VmFunctionSymbol, leading: Int): List<VmValue> {
         var mask = 0L
+        val regularOnly = gen.hasJvmDefaultStub(declaration)
         val args = call.arguments.mapIndexed { index, argument ->
             val parameter = declaration.parameters[index]
             val slot = stub.paramTypes[leading + index]
@@ -1077,12 +1078,15 @@ internal class VmFunctionGenerator private constructor(
                 argument != null -> operandAs(argument, parameter.type, slot)
                 parameter.isEmptyVararg() -> emptyVararg(parameter)
                 else -> {
-                    mask = mask or (1L shl index)
+                    val bit = if (regularOnly) declaration.parameters.take(index).count { it.kind == IrParameterKind.Regular } else index
+                    mask = mask or (1L shl bit)
                     constant(slot, 0)
                 }
             }
         }
-        return args + constant(VmType.I64, mask)
+        // Any slot past the mask, the JVM's unused `Object`, takes null.
+        val trailing = stub.paramTypes.drop(leading + args.size + 1).map { constant(it, 0) }
+        return args + constant(VmType.I64, mask) + trailing
     }
 
     /**
@@ -1101,8 +1105,23 @@ internal class VmFunctionGenerator private constructor(
     private fun arguments(call: IrFunctionAccessExpression, callee: IrFunction, slots: List<VmType>): List<VmValue> =
         call.arguments.mapIndexed { index, argument ->
             val parameter = callee.parameters[index]
-            if (argument == null) emptyVararg(parameter) else operandAs(argument, parameter.type, slots[index])
+            when {
+                argument == null -> emptyVararg(parameter)
+                argument is IrRichPropertyReference && argument.origin == IrStatementOrigin.PROPERTY_REFERENCE_FOR_DELEGATE &&
+                        gen.isHostImport(callee) -> propertyStandIn(argument)
+                else -> operandAs(argument, parameter.type, slots[index])
+            }
         }
+
+    /**
+     * A stand-in until the VM has property references: a JVM delegate's operator is handed a `KProperty` the bridge makes,
+     * which knows the property's name and nothing else.
+     */
+    private fun propertyStandIn(reference: IrRichPropertyReference): VmValue {
+        val property = reference.reflectionTargetSymbol?.owner as? IrDeclarationWithName ?: unsupported("a reference to no property")
+        val name = newValue(gen.stringType).also { emit(VmInstruction.StringConstant(it, property.name.asString())) }
+        return newValue(gen.anyType).also { emit(VmInstruction.Call(it, VmCallee.Static(gen.propertyStandIn), listOf(name))) }
+    }
 
     /** A new instance of [constructor]'s class, which it initializes with [args], already evaluated. */
     private fun construct(constructor: IrConstructor, args: List<VmValue>): VmValue {
@@ -1140,6 +1159,11 @@ internal class VmFunctionGenerator private constructor(
             val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.NewObject(it, boxClass)) }
             emit(VmInstruction.StoreField(box, gen.sharedBoxElementField, reference(call.arguments[0]!!)))
             return box
+        }
+        // `Any()` is a bare object of the runtime's `Any`, which declares no constructor; see [delegatingConstructorCall].
+        if (with(gen) { constructor.constructedClass.isAny() }) {
+            val any = gen.runtimeClassNamed("Any")
+            return newValue(gen.anyType).also { emit(VmInstruction.NewObject(it, any)) }
         }
         gen.runtimeThrowable(constructor.constructedClass)?.let { throwable ->
             val args = constructorArguments(call, constructor)

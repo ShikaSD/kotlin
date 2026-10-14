@@ -34,6 +34,17 @@ class VmCodegenException(message: String) : RuntimeException(message)
 /** How a call reaches its callee, and the signature it calls it with. */
 internal class CallTarget(val callee: VmCallee, val symbol: VmFunctionSymbol)
 
+/**
+ * What [this] overrides in the VM: an `expect` class's member is the JVM's, which the JVM dispatches to the shell of an
+ * override, so an override of one alone declares its own selector, if it has one.
+ */
+fun IrSimpleFunction.vmOverridden(): List<IrSimpleFunction> =
+    overriddenSymbols.map { it.owner }.filter { (it.parent as? IrClass)?.isExpect != true }
+
+/** The declarations [this] overrides in the VM that override nothing themselves, in a stable order; see [vmOverridden]. */
+fun IrSimpleFunction.vmRoots(): List<IrSimpleFunction> =
+    vmOverridden().let { overridden -> if (overridden.isEmpty()) listOf(this) else overridden.flatMap { it.vmRoots() }.distinct() }
+
 internal fun unsupported(what: String): Nothing = throw VmCodegenException("the VM backend does not support $what yet")
 
 /** A `Float`'s bits as a register holds them: in the low half, the high half zero. */
@@ -400,9 +411,11 @@ class VmModuleGenerator(
     /**
      * The function filling in [function]'s default arguments, named after it: it takes the function's parameters and a
      * mask with bit `i` set for each parameter `i` a call left out, computes those, and calls the function. Every
-     * module generates the stubs of its own functions, and imports another's from it.
+     * module generates the stubs of its own functions, and imports another's from it. A JVM library's is a host import;
+     * see [jvmLibraryDefaultStub].
      */
     internal fun defaultStub(function: IrFunction): VmFunctionSymbol = defaultStubs.getOrPut(function.symbol) {
+        jvmLibraryFacadeName(function)?.let { return@getOrPut jvmLibraryDefaultStub(function, it) }
         if (function.parameters.size > Long.SIZE_BITS) unsupported("defaults for more than ${Long.SIZE_BITS} parameters")
         val original = functionSymbol(function)
         val symbol = VmFunctionSymbol(vmSanitized("${original.name}\$default"), original.paramTypes + VmType.I64, original.returnType)
@@ -415,6 +428,24 @@ class VmModuleGenerator(
     }
 
     private val defaultStubs = hashMapOf<IrFunctionSymbol, VmFunctionSymbol>()
+
+    /**
+     * The JVM's `$default` method of [function], a top-level function of a JVM library the class [facade] holds. It takes
+     * a mask of the regular parameters only, as an `int`, and a trailing `Object` the call passes null; see
+     * [VmFunctionGenerator.defaultArguments].
+     */
+    private fun jvmLibraryDefaultStub(function: IrFunction, facade: String): VmFunctionSymbol {
+        if (function.parameters.count { it.kind == IrParameterKind.Regular } > Int.SIZE_BITS) {
+            unsupported("defaults for more than ${Int.SIZE_BITS} parameters of a JVM function")
+        }
+        val name = jvmDefaultsBindingName(function, facade)
+            ?: unsupported("the defaults of ${function.render()} on the JVM, a signature whose JVM name is not covered")
+        val params = function.parameters.map(::heldParameterType) + VmType.I64 + anyType
+        return VmFunctionSymbol(name, params, vmType(function.returnType)).also { module.externals += it }
+    }
+
+    /** Whether the stub of [function]'s defaults is the JVM's, whose mask counts only regular parameters. */
+    internal fun hasJvmDefaultStub(function: IrFunction): Boolean = jvmLibraryFacadeName(function) != null
 
     /** Adds a function only code generation creates, such as a lambda's body. */
     internal fun addFunction(function: VmFunction) {
@@ -863,6 +894,8 @@ class VmModuleGenerator(
         val interfaces = declaration.superTypes.mapNotNull { it.classOrNull?.owner }.filter { it.isInterface }.mapNotNull {
             // A marker interface the VM cannot name, such as `java.io.Serializable`, only a type test could ask about.
             if (it.isMarkerOutsideVm()) return@mapNotNull null
+            // An `expect` interface is the JVM's: the class's shell implements its `actual`, and the JVM calls it there.
+            if (it.isExpect) return@mapNotNull null
             // A function type stands for `vm.builtin.Function`, the class every function value has, which an interface cannot
             // extend and a class gains nothing by naming: a value is a function value only when the VM made it one.
             // A class calling itself one is what the VM cannot express.
@@ -904,7 +937,7 @@ class VmModuleGenerator(
             val implementationSymbol = when {
                 // Answered by the runtime's `Enum`, or by `Any` through it, but for an interface's selector.
                 implementation.parentClassOrNull?.isEnumBase() == true -> {
-                    for (root in function.roots()) {
+                    for (root in function.vmRoots()) {
                         val selector = selectors[root.symbol] ?: continue
                         methods += VmMethod(selector, enumAdapter(declaration, implementation, module.selectors[selector]))
                     }
@@ -931,7 +964,7 @@ class VmModuleGenerator(
                 }
                 else -> continue // Answered by the runtime's `Any`.
             }
-            for (root in function.roots()) {
+            for (root in function.vmRoots()) {
                 val selector = selectorOf(root) ?: continue
                 val declared = module.selectors[selector]
                 if (declared.paramTypes != implementationSymbol.paramTypes.drop(1) || declared.returnType != implementationSymbol.returnType) {
@@ -996,10 +1029,6 @@ class VmModuleGenerator(
         }
     }
 
-    /** The declarations this one overrides that override nothing themselves, in a stable order. */
-    private fun IrSimpleFunction.roots(): List<IrSimpleFunction> =
-        if (overriddenSymbols.isEmpty()) listOf(this) else overriddenSymbols.flatMap { it.owner.roots() }.distinct()
-
     private fun IrSimpleFunction.isOverridable(): Boolean {
         val owner = parentClassOrNull ?: return false
         // An enum class reads as final from another module's metadata even where its entries override its members, so only
@@ -1015,6 +1044,8 @@ class VmModuleGenerator(
         if (root.parentClassOrNull?.fqNameWhenAvailable?.asString() in RUNTIME_TYPES) return runtimeTypeSelector(root)
         if (root.parentClassOrNull?.let(::runtimeThrowable) != null) return throwableSelector(root.name.asString())
         if (!root.isOverridable()) return null
+        // A call to an `expect` class's member; see [vmOverridden].
+        if (root.parentClassOrNull?.isExpect == true) return null
         return selectors[root.symbol] ?: importSelector(root) ?: unsupported("overriding ${root.render()} outside the VM modules")
     }
 
@@ -1042,7 +1073,7 @@ class VmModuleGenerator(
     /** How a call reaches [callee]: by selector when it may be overridden, directly otherwise. */
     internal fun callTarget(callee: IrSimpleFunction, isSuperCall: Boolean): CallTarget {
         if (callee.dispatchReceiverParameter == null) return staticTarget(callee)
-        val root = callee.roots().first()
+        val root = callee.vmRoots().first()
         if (!isSuperCall && callee.isOverridable()) {
             val selector = selectorOf(root) ?: unsupported("calling ${root.render()}")
             return CallTarget(VmCallee.Virtual(selector), functionSymbol(root))
@@ -1078,18 +1109,28 @@ class VmModuleGenerator(
         } else if (callee.symbol in definedFunctions) {
             functionSymbol(callee)
         } else {
-            importFunction(callee) ?: unsupported("a call to ${callee.render()} outside the VM modules")
+            importFunction(callee) ?: libraryHostImport(callee) ?: unsupported("a call to ${callee.render()} outside the VM modules")
         }
         return CallTarget(VmCallee.Static(symbol), symbol)
     }
 
     /**
-     * The extern standing for [callee], an `expect` function whose `actual` the host runs: bound by `jvm:` and the JVM
-     * name of [callee], in the facade of the `actual`'s file.
+     * The extern standing for [callee], an `expect` function whose `actual` the host runs, in the facade of the `actual`'s
+     * file.
      */
-    private fun hostImport(callee: IrSimpleFunction): VmFunctionSymbol = hostImports.getOrPut(callee.symbol) {
-        val facade = hostActuals(callee)
-            ?: unsupported("calling ${callee.render()}, whose actual is not a top-level function in a JVM file's own facade")
+    private fun hostImport(callee: IrSimpleFunction): VmFunctionSymbol = hostExtern(
+        callee,
+        hostActuals(callee) ?: unsupported("calling ${callee.render()}, whose actual is not a top-level function in a JVM file's own facade"),
+    )
+
+    /**
+     * The extern standing for [callee], a top-level function of a JVM library, inline ones included: the JVM backend keeps
+     * an inline function's method, so the JVM runs it where the VM has no body to inline. Null for any other function.
+     */
+    private fun libraryHostImport(callee: IrFunction): VmFunctionSymbol? = jvmLibraryFacadeName(callee)?.let { hostExtern(callee, it) }
+
+    /** The extern standing for [callee], which the JVM class [facade] holds: bound by `jvm:` and the JVM name of [callee]. */
+    private fun hostExtern(callee: IrFunction, facade: String): VmFunctionSymbol = hostImports.getOrPut(callee.symbol) {
         val name = jvmBindingName(callee, facade)
             ?: unsupported("calling ${callee.render()} on the JVM, a signature whose JVM name is not covered")
         val symbol = VmFunctionSymbol(name, callee.parameters.map(::heldParameterType), vmType(callee.returnType))
@@ -1097,7 +1138,16 @@ class VmModuleGenerator(
         symbol
     }
 
-    private val hostImports = hashMapOf<IrSimpleFunctionSymbol, VmFunctionSymbol>()
+    private val hostImports = hashMapOf<IrFunctionSymbol, VmFunctionSymbol>()
+
+    /** Whether a call of [callee] is a host import's. */
+    internal fun isHostImport(callee: IrFunction): Boolean = callee.symbol in hostImports
+
+    /** The bridge's `KProperty` named by its argument; see [VmFunctionGenerator.propertyStandIn]. */
+    internal val propertyStandIn: VmFunctionSymbol by lazy {
+        VmFunctionSymbol("jvm:vm/bridge/VmBridge.property(Ljava/lang/String;)Lkotlin/reflect/KProperty;", listOf(stringType), anyType)
+            .also { module.externals += it }
+    }
 
     private fun heldParameterType(parameter: IrValueParameter): VmType = heldType(parameter.type)
 
@@ -1133,7 +1183,7 @@ class VmModuleGenerator(
         when {
             function is IrConstructor -> VmFunctionSymbol(vmName(function), listOf(anyType) + types(function.parameters), null)
             function is IrSimpleFunction && function.dispatchReceiverParameter != null -> {
-                val root = function.roots().first()
+                val root = function.vmRoots().first()
                 val params = types(root.parameters)
                 val returnType = vmType(root.returnType)
                 // Where the override is primitive and the root a reference, the body boxes and unboxes; see

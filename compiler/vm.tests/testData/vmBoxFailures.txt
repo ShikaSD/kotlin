@@ -1,14 +1,13 @@
 # Box tests under compiler/testData/codegen/box expected to fail on the VM; see VmExpectedFailures.
-# 997 failures; the most common reasons:
+# 973 failures; the most common reasons:
 #     264  unsupported: the expression RICH_PROPERTY_REFERENCE …
 #      49  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 #      46  unsupported: a bridge from FUN …
 #      37  unsupported: overriding FUN …
-#      34  link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 #      27  unsupported: the expression CLASS_REFERENCE …
 #      24  unsupported: the expression GET_CLASS …
+#      24  wrong result
 #      19  IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
-#      17  wrong result
 #      16  IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 #      15  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty<*>'.
 #      14  link: Failed to link: UnresolvedImport { symbol: "kotlin.plus_c926e24f1800a711" }
@@ -22,6 +21,7 @@
 #       6  CompilationException: Back-end: Please report this problem https://kotl.in/issue
 #       6  IllegalStateException: EXPECT_REFINEMENT_ANNOTATION_MISSING: 'expect' declaration refinement is an experimental feature. Mark the declaration with the '@ExpectR
 #       6  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
+#       6  run: Uncaught exception: vm.builtin.NoSuchMethod
 #       6  unsupported: `rem` on doubles
 #       6  unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
 #       6  unsupported: calling FUN …
@@ -49,7 +49,7 @@
 #       3  IllegalStateException: UNSUPPORTED: 'Array<Nothing?>' is not supported on the JVM.
 #       3  NoSuchElementException: List contains no element matching the predicate.
 #       3  link: Failed to link: AmbiguousImport { symbol: "K", modules: ["m1", "m12"] }
-#       3  run: Uncaught exception: vm.builtin.NoSuchMethod
+#       3  unsupported: a call to clone
 
 annotations/instances/annotationEqHc.kt: unsupported: the expression CLASS_REFERENCE …
 annotations/instances/annotationFromStdlib.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.SinceKotlin" }
@@ -77,18 +77,15 @@ associatedObjects/findAssociatedObjectAndDCE.kt: IllegalStateException: UNRESOLV
 associatedObjects/findAssociatedObjectInSeparatedFile.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
 associatedObjects/findAssociatedObjectLazyness.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'AssociatedObjectKey'.
 associatedObjects/kt88571.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
-basics/expression_as_statement.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 basics/k42000_1.kt: unsupported: overriding FUN …
 basics/k42000_crossmodule.kt: unsupported: overriding FUN …
-basics/null_check.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
-basics/unchecked_cast10.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
+basics/unchecked_cast10.kt: wrong result
 basics/unchecked_cast12.kt: run: Execution result: RuntimeError(ManagedReference(InvalidReference))
 basics/unchecked_cast13.kt: wrong result
-basics/unchecked_cast2.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
-basics/unchecked_cast4.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
-basics/unchecked_cast7.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
+basics/unchecked_cast2.kt: run: Uncaught exception: vm.builtin.NoSuchMethod
+basics/unchecked_cast7.kt: wrong result
 basics/unchecked_cast8.kt: run: Uncaught exception: vm.builtin.InvalidType
-basics/unchecked_cast9.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
+basics/unchecked_cast9.kt: run: Uncaught exception: vm.builtin.NoSuchMethod
 binaryOp/call.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
 binaryOp/callNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
 binaryOp/eqNullableToPrimitiveWithSideEffects.kt: wrong result
@@ -98,8 +95,6 @@ boxing/boxing12.kt: unsupported: overriding FUN …
 boxing/kt84727_if.kt: run: Uncaught exception: vm.builtin.NullReference
 boxing/missingValueClassUnboxing.kt: IllegalStateException: VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION: Value classes without '@JvmInline' annotation are not yet supported.
 boxingOptimization/checkcastAndInstanceOf.kt: unsupported: a type test against java.lang.Object outside the VM modules
-branching/when7.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
-branching/when_with_try1.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 bridges/fakeCovariantOverride.kt: unsupported: a bridge from FUN …
 bridges/fakeGenericCovariantOverride.kt: unsupported: a bridge from FUN …
 bridges/fakeGenericCovariantOverrideWithDelegation.kt: unsupported: a bridge from FUN …
@@ -127,7 +122,7 @@ bridges/kt46389.kt: run: Load error: Some(ConcreteClassMissingMethod { type_id: 
 bridges/kt46389_jvmDefault.kt: unsupported: a bridge from FUN …
 bridges/kt74377.kt: link: Failed to link: DuplicateSymbol { namespace: Function, symbol: 30 }
 bridges/special.kt: wrong result
-bridges/specialGeneric.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
+bridges/specialGeneric.kt: run: Uncaught exception: vm.builtin.NoSuchMethod
 bridges/test10.kt: unsupported: a bridge from FUN …
 bridges/test11.kt: unsupported: a bridge from FUN …
 bridges/test14.kt: unsupported: a bridge from FUN …
@@ -135,7 +130,7 @@ bridges/test15.kt: unsupported: a bridge from FUN …
 bridges/test19.kt: run: Uncaught exception: vm.builtin.NoSuchMethod
 bridges/test20.kt: unsupported: a bridge from FUN …
 bridges/test21.kt: run: Uncaught exception: vm.builtin.NoSuchMethod
-bridges/test23.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
+bridges/test23.kt: wrong result
 bridges/test24.kt: wrong result
 bridges/test3.kt: unsupported: a bridge from FUN …
 bridges/test4.kt: unsupported: a bridge from FUN …
@@ -181,7 +176,6 @@ callableReference/bound/receiverEvaluatedOnce.kt: IllegalStateException: UNRESOL
 callableReference/bound/simpleProperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/callableReferenceOfCompanionConst.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/callableReferenceOfCompanionProperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-callableReference/callableReferenceOfKotlinNestedClass.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 callableReference/callableReferencetoInnerAndLocal.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/equality/capturedDefaults.kt: run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
 callableReference/equality/capturedVararg.kt: run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
@@ -268,7 +262,6 @@ casts/is.kt: unsupported: a type test against java.lang.Runnable outside the VM 
 casts/kt65197.kt: run: Uncaught exception: vm.builtin.InvalidType
 casts/notIs.kt: unsupported: a type test against java.lang.Runnable outside the VM modules
 casts/objectToPrimitiveWithAssertion.kt: run: Uncaught exception: vm.builtin.ClassCast
-casts/parallelHierarchy.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 checkcastOptimization/kt47851.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'getMethod' on receiver of type 'Any'.
 classDelegation/withBridge.kt: unsupported: a bridge from FUN …
 classLiteral/bareArray.kt: unsupported: the expression GET_CLASS …
@@ -285,7 +278,6 @@ classes/kt1120.kt: unsupported: a call to CONSTRUCTOR …
 classes/kt1535.kt: unsupported: implementing the function type Function0
 classes/kt508.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.plus_c926e24f1800a711" }
 closures/captureInSuperConstructorCall/outerCapturedAsImplicitThisInBoundReference.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-closures/capturedVarsOptimization/closureBoxedVarOptimizations.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 closures/closureOnTopLevel1.kt: unsupported: implementing the function type Function0
 closures/closureOnTopLevel2.kt: unsupported: implementing the function type Function0
 collections/kt41123.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
@@ -351,15 +343,11 @@ contextParameters/contextualCallableReferenceEquality.kt: unsupported: the expre
 contextParameters/withExtensionReceiverInSupertype.kt: unsupported: implementing the function type Function3
 controlStructures/forInArray/forInDelegatedPropertyUpdatedInLoopBody.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 controlStructures/forUserType.kt: run: Uncaught exception: vm.builtin.NullReference
-coroutines/builderInferenceAndGenericArrayAcessCall.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
-coroutines/captureInfixFun.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
-coroutines/captureUnaryOperator.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 coroutines/createCoroutinesOnManualInstances.kt: run: Uncaught exception: vm.builtin.ClassCast
 coroutines/doubleColonExpressionsGenerationInBuilderInference.kt: unsupported: the expression CLASS_REFERENCE …
 coroutines/featureIntersection/callableReference/function/local/equalsHashCode.kt: wrong result
 coroutines/featureIntersection/defaultExpect.kt: IllegalStateException: EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE: withLimit: 'expect' and corresponding 'actual' are declared in the same module.
 coroutines/featureIntersection/delegate.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
-coroutines/featureIntersection/funInterface/kt49294.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 coroutines/featureIntersection/suspendFunctionAsSupertypeIsCheckWithArity.kt: unsupported: implementing the function type SuspendFunction0
 coroutines/featureIntersection/suspendFunctionIsAs.kt: run: Uncaught exception: vm.runtime.AssertionError: kotlin.Unit
 coroutines/functionReference_eqeq_name.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KSuspendFunction1<Int, Int>'.
@@ -385,8 +373,6 @@ defaultArguments/function/topLevelManyArgs.kt: unsupported: defaults for more th
 defaultArguments/implementedByFake.kt: unsupported: a bridge from FUN …
 defaultArguments/implementedByFake2.kt: unsupported: a bridge from FUN …
 defaultArguments/implementedByFake3.kt: unsupported: a bridge from FUN …
-defaultArguments/kt52702.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
-defaultArguments/private/clashingNames.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 defaultArguments/useThisInLambda.kt: unsupported: calling FUN …
 delegatedProperty/accessTopLevelDelegatedPropertyInClinit.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 delegatedProperty/beforeDeclarationContainerOptimization.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -582,7 +568,6 @@ fakeOverride/kt40180_2.kt: unsupported: the supertype Test outside the VM module
 fakeOverride/kt40180_3.kt: AssertionFailedError: Java Compilation failed. Notice: This might be caused by a circular dependency between Java and Kotlin sources, which is not supported sin
 fakeOverride/substitutionInLocal.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.plus_c926e24f1800a711" }
 fieldRename/delegates.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-fir/kt68806.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 fp/remainderMixedFpInfinitiesNans.kt: unsupported: `rem` on doubles
 fp/remainderMixedFpSubnormalDivisor.kt: unsupported: `rem` on doubles
 fp/remainderMixedIntFp.kt: unsupported: `rem` on doubles
@@ -632,8 +617,6 @@ inference/kt39824.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inference/kt49838.kt: unsupported: the expression CLASS_REFERENCE …
 inference/pcla/callableReferencesProperCompletion.kt: unsupported: the expression GET_CLASS …
 inference/pcla/issues/kt45083.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-inference/pcla/issues/kt52838b.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
-inference/pcla/issues/kt52838c.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 inference/pcla/issues/kt54767a.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inference/pcla/issues/kt54767b.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inference/pcla/issues/kt64069.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -643,13 +626,11 @@ inference/pcla/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedCont
 inference/pcla/pclaRootIsTrySyntheticCallWithDelegate.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inference/pcla/specialCallsWithCallableReferencesDontRewriteAtSlice.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inference/pcla/topDownCompletionBreakedByNonBuilderInferenceSession.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-inference/substituteIntersectionTypeInsideCapType.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 inline/callableReferenceOfLocalInline.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
 inline/classDeclarationInsideInline.kt: unsupported: overriding FUN …
 inline/crossinlineLambdaAllocation.kt: unsupported: a captured variable
 inline/fakeOverrideInliningCrossModule.kt: CompilationException: Back-end: Please report this problem https://kotl.in/issue
 inline/getClass.kt: unsupported: the expression GET_CLASS …
-inline/inline12.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 inline/inlineChainCrossModule.kt: CompilationException: Back-end: Please report this problem https://kotl.in/issue
 inline/innerInlineFunCapturesOuter.kt: CompilationException: Back-end: Please report this problem https://kotl.in/issue
 inline/kt67866.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -754,8 +735,8 @@ innerClass/inCallableReferenceLHSclassReference.kt: unsupported: the expression 
 intrinsics/kt8666.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.plus_c926e24f1800a711" }
 intrinsics/nullPlusString.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.plus_c926e24f1800a711" }
 ir/anonymousClassLeak.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-ir/recursiveGeneric.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
-ir/recursiveGeneric2.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
+ir/recursiveGeneric.kt: wrong result
+ir/recursiveGeneric2.kt: wrong result
 ir/serializationRegressions/dispatchReceiverValue.kt: IllegalStateException: EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE: C: 'expect' and corresponding 'actual' are declared in the same module.
 ir/serializationRegressions/transitiveClash.kt: link: Failed to link: AmbiguousImport { symbol: "pkg.foo_f18ce168c5b0fe5d", modules: ["main", "lib1"] }
 javaDirect/inheritedInnerClassFromExplicitlyImportedNestedSupertype.kt: unsupported: overriding FUN …
@@ -881,12 +862,8 @@ reflection/typeOf/noReflect/nonReifiedTypeParameters/equalsOnFunctionParameters.
 reflection/typeOf/noReflect/typeReferenceEqualsHashCode.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 reflection/typeOf/nonReifiedTypeParameters/recursiveBoundWithInline.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 reflection/typeOf/nonReifiedTypeParameters/recursiveBoundWithoutInline.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
-regressions/dataClassInInlineFunctionWithTypeParameters.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
-regressions/dataClassInRegularFunctionWithTypeParameters.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
-regressions/hashCodeNPE.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 regressions/kt2246.kt: IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
 regressions/kt344Runnable.kt: unsupported: the supertype Runnable outside the VM modules
-regressions/kt71119.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 regressions/objectInsideDelegation.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 reified/capture.kt: unsupported: the expression CLASS_REFERENCE …
 reified/kt39256_privateInlineWithAnonymousObject.kt: unsupported: the expression CLASS_REFERENCE …
@@ -908,7 +885,7 @@ sam/kt17765.kt: unsupported: a call to foo
 sam/kt63564.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 sameFileInSourceAndDependencies/differingNumberOfGenericTypeParameters.kt: IllegalStateException: UNRESOLVED_REFERENCE_WRONG_RECEIVER: Candidate 'fun B<*>.foo(): Unit' is inapplicable because of a receiver type mismatch. Actual receive
 sameFileInSourceAndDependencies/functionDeclaration.kt: link: Failed to link: DuplicateExport { name: "jvm:_2Kt.a()Ljava }
-secondaryConstructors/fieldInitializerOptimization.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
+secondaryConstructors/fieldInitializerOptimization.kt: wrong result
 size/add.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'JsExport'.
 size/helloWorldPromise.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'Promise'.
 specialBuiltins/bridgeNotEmptyMap.kt: wrong result
@@ -920,7 +897,7 @@ specialBuiltins/entrySetSOE.kt: IllegalStateException: FINAL_SUPERTYPE: This typ
 specialBuiltins/explicitSuperCall.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 specialBuiltins/irrelevantRemoveAtOverride.kt: unsupported: a bridge from FUN …
 specialBuiltins/notEmptyListAny.kt: wrong result
-specialBuiltins/notEmptyMap.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
+specialBuiltins/notEmptyMap.kt: wrong result
 specialBuiltins/removeSetInt.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 specialBuiltins/throwableComplex.kt: unsupported: calling FUN …
 specialBuiltins/throwableImpl.kt: unsupported: calling FUN …
@@ -946,7 +923,6 @@ strings/twoArgumentNullableStringOperatorPlus.kt: link: Failed to link: Unresolv
 strings/twoArgumentNullableStringPlus.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.plus_c926e24f1800a711" }
 super/basicmethodSuperClass.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 super/interfaceHashCode.kt: unsupported: calling FUN …
-suppressions/suppressInvisible.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Any::_init__b1a680d3b1e10e75" }
 suspendConversion/conversionOfInterfaceInheritingFunctionN.kt: unsupported: overriding FUN …
 suspendConversion/suspendConversionCompatibility.kt: run: Uncaught exception: vm.builtin.ClassCast
 syntheticAccessors/accessorForPrivatePropertyReference.kt: IllegalStateException: DELEGATE_SPECIAL_FUNCTION_MISSING: Type 'KProperty1<A, String>' has no method 'getValue(A.B, KProperty1<*, *>)', so it cannot serve as a 

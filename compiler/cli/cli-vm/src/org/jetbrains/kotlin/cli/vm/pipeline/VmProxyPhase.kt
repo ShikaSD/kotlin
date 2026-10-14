@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.backend.vm.jvmInternalName
 import org.jetbrains.kotlin.backend.vm.jvmMemberName
 import org.jetbrains.kotlin.backend.vm.vmClassName
 import org.jetbrains.kotlin.backend.vm.vmFunctionName
+import org.jetbrains.kotlin.backend.vm.vmOverridden
+import org.jetbrains.kotlin.backend.vm.vmRoots
 import org.jetbrains.kotlin.cli.common.diagnosticsCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.CompileEnvironmentUtil
 import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors
@@ -196,10 +198,7 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
         visibility == DescriptorVisibilities.PUBLIC || visibility == DescriptorVisibilities.PROTECTED
 
     /** The member of `Any` [this] overrides, if it overrides `equals`, `hashCode` or `toString`. */
-    private fun IrSimpleFunction.anyRoot(): IrSimpleFunction? = roots().firstOrNull { it.parent == irBuiltIns.anyClass.owner }
-
-    private fun IrSimpleFunction.roots(): List<IrSimpleFunction> =
-        if (overriddenSymbols.isEmpty()) listOf(this) else overriddenSymbols.flatMap { it.owner.roots() }.distinct()
+    private fun IrSimpleFunction.anyRoot(): IrSimpleFunction? = vmRoots().firstOrNull { it.parent == irBuiltIns.anyClass.owner }
 
     /** [function]'s name in the VM, with the hash of its public signature; see [vmFunctionName]. */
     private fun vmName(function: IrFunction): String = vmFunctionName(function, hash = with(mangler) { function.signatureMangle(false) })
@@ -275,14 +274,14 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
     private fun proxyMember(function: IrSimpleFunction, tokens: Tokens) {
         val binding = jvmMemberName(function) ?: return unsupported(function)
         val receiver = function.dispatchReceiverParameter!!
-        val isOverridable = function.overriddenSymbols.isNotEmpty() ||
+        val isOverridable = function.vmOverridden().isNotEmpty() ||
                 function.modality != Modality.FINAL && function.parentAsClass.modality != Modality.FINAL
         val anyRoot = function.anyRoot()
         if (anyRoot != null && anyRoot.name == OperatorNameConventions.EQUALS) {
             proxyEquals(function, tokens, binding)
         } else if (isOverridable) {
             // The runtime declares `Any`'s selectors, under its own names rather than the module's.
-            val selector = anyRoot?.let { "Any::${it.name}" } ?: vmName(function.roots().first())
+            val selector = anyRoot?.let { "Any::${it.name}" } ?: vmName(function.vmRoots().first())
             proxy(function, tokens, { methodToken(selector, binding) }) { token, arguments ->
                 callMethodToken(token, builder.irGet(receiver), arguments)
             }

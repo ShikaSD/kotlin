@@ -157,6 +157,17 @@ class VmBackendTest {
     }
 
     @Test
+    fun testConstructingAnyMakesAnObjectOfItsOwn(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val a = Any()
+                return if (a != Any() && a == a) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
     fun testRecursiveCall(@TempDir tempDir: File) {
         val source = """
             fun fib(n: Int): Int = if (n < 2) n else fib(n - 1) + fib(n - 2)

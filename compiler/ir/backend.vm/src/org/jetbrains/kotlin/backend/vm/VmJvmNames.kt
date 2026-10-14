@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.backend.jvm.lower.getFileClassInfoFromIrFile
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.load.kotlin.FacadeClassSource
+import org.jetbrains.kotlin.ir.declarations.IrMemberWithContainerSource
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.ir.util.packageFqName
 import org.jetbrains.kotlin.ir.util.getPackageFragment
@@ -21,6 +23,8 @@ import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
+import org.jetbrains.kotlin.ir.types.classifierOrNull
 import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.isNothing
 import org.jetbrains.kotlin.ir.types.isUnit
@@ -53,13 +57,18 @@ private val JVM_SCALARS = mapOf(
 private const val STRING_DESCRIPTOR = "Ljava/lang/String;"
 
 private fun IrType.jvmParameterDescriptor(): String? {
+    // A type parameter is erased to its first bound, as the JVM backend erases it.
+    (classifierOrNull as? IrTypeParameterSymbol)?.let { return it.owner.superTypes.first().jvmParameterDescriptor() }
     val name = classFqName?.asString() ?: return null
     if (name == "kotlin.String") return STRING_DESCRIPTOR
     if (name == "kotlin.Any") return "Ljava/lang/Object;"
     JVM_SCALARS[name]?.let { scalar -> return if (isNullable()) "L${scalar.box};" else scalar.descriptor }
-    // Kotlin's own classes are the JDK's on the JVM, under names this does not map; a value class's methods are mangled.
+    // Kotlin's own classes are the JDK's on the JVM, under names this does not map, but for `kotlin.reflect`'s, which keep
+    // theirs; a value class's methods are mangled.
     val irClass = classOrNull?.owner ?: return null
-    if (irClass.packageFqName?.startsWith(StandardNames.BUILT_INS_PACKAGE_NAME) == true || irClass.isValue) return null
+    val packageName = irClass.packageFqName
+    if (packageName?.startsWith(StandardNames.BUILT_INS_PACKAGE_NAME) == true && packageName != StandardNames.KOTLIN_REFLECT_FQ_NAME) return null
+    if (irClass.isValue) return null
     return "L${irClass.jvmInternalName};"
 }
 
@@ -80,12 +89,22 @@ val IrClass.jvmInternalName: String
  * but the primitives, `String`, `Any`, the classes outside `kotlin`, and, as a result, `Unit`. A constructor is `<init>`,
  * and an accessor has its JVM name, `getX` or `setX`.
  */
-internal fun jvmBindingName(function: IrFunction, owner: String): String? {
+internal fun jvmBindingName(function: IrFunction, owner: String): String? = jvmBindingName(function, owner, function.jvmName(), "")
+
+/**
+ * The binding name of the static method filling in the default arguments of [function], a top-level function the JVM
+ * class [owner] holds: `name$default`, taking its parameters, an `int` mask and an unused `Object`. Null where
+ * [jvmBindingName] would be.
+ */
+internal fun jvmDefaultsBindingName(function: IrFunction, owner: String): String? =
+    jvmBindingName(function, owner, "${function.jvmName()}${JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX}", "ILjava/lang/Object;")
+
+private fun jvmBindingName(function: IrFunction, owner: String, name: String, trailing: String): String? {
     if (function.visibility != DescriptorVisibilities.PUBLIC && function.visibility != DescriptorVisibilities.PROTECTED) return null
     if (function is IrSimpleFunction && function.isSuspend) return null
     val parameters = function.nonDispatchParameters.map { it.type.jvmParameterDescriptor() ?: return null }
     val result = if (function is IrConstructor) "V" else function.returnType.jvmReturnDescriptor() ?: return null
-    return "$JVM_BINDING_PREFIX$owner.${function.jvmName()}(${parameters.joinToString("")})$result"
+    return "$JVM_BINDING_PREFIX$owner.$name(${parameters.joinToString("")}$trailing)$result"
 }
 
 /** The name the JVM gives [this]'s method. */
@@ -108,6 +127,16 @@ fun jvmExportName(function: IrSimpleFunction): String? {
 
 /** The name the JVM calls a member or constructor of a class by; null when [jvmBindingName] does not cover it. */
 fun jvmMemberName(function: IrFunction): String? = jvmBindingName(function, function.parentClassOrNull?.jvmInternalName ?: return null)
+
+/**
+ * The internal name of the JVM class holding [function], a top-level function of a JVM library: its file's facade, or
+ * the multifile class its file is a part of, which declares every part's public functions. Null for any other function.
+ */
+internal fun jvmLibraryFacadeName(function: IrFunction): String? {
+    if (!function.isTopLevel) return null
+    val source = (function as? IrMemberWithContainerSource)?.containerSource as? FacadeClassSource ?: return null
+    return (source.facadeClassName ?: source.className).internalName
+}
 
 /** The internal name of the JVM class holding the top-level functions of [this], or null when they are in a multifile class's parts. */
 internal fun IrFile.jvmFacadeName(): String? {
