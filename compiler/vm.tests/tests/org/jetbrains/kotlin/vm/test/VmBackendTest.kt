@@ -111,10 +111,15 @@ class VmBackendTest {
     private fun dumpIr(tempDir: File, source: String): String = dumpIr(tempDir, mapOf("box.kt" to source))
 
     /** [files] compiled as one module, beside the JVM's [hostFiles], as the VM's `dump_ir` prints it. */
-    private fun dumpIr(tempDir: File, files: Map<String, String>, hostFiles: Map<String, String> = emptyMap()): String {
+    private fun dumpIr(
+        tempDir: File,
+        files: Map<String, String>,
+        hostFiles: Map<String, String> = emptyMap(),
+        extraArgs: List<String> = emptyList(),
+    ): String {
         val repo = System.getProperty("kotlin.vm.repo")
         assumeTrue(repo != null, "KOTLIN_VM_REPO names no VM checkout to run on")
-        val compilation = compile(tempDir, files, hostFiles = hostFiles)
+        val compilation = compile(tempDir, files, hostFiles = hostFiles, extraArgs = extraArgs)
         assertEquals(ExitCode.OK, compilation.exitCode) { "Compilation failed: ${compilation.output}" }
         return run(File(repo, "target/box_tests/dump_ir"), File(tempDir, "main.vir").path)
     }
@@ -4261,6 +4266,87 @@ class VmBackendTest {
         val lookUp = instructions.indexOfFirst { it is MethodInsnNode && it.name == "methodToken" }
 
         assertTrue(test in 0..<lookUp) { "instanceof at $test, look-up at $lookUp" }
+    }
+
+    /** [source] dumped as compiled with proxies, as a module running beside the JVM is. */
+    private fun dumpIrWithProxies(tempDir: File, source: String): String =
+        dumpIr(tempDir, mapOf("box.kt" to source), extraArgs = listOf("-Xvm-proxies=${File(tempDir, "proxies.jar").path}"))
+
+    /** A public interface of a module with proxies is one a JVM class may implement. */
+    @Test
+    fun testPublicInterfaceOfAModuleWithProxiesIsMarkedForTheHost(@TempDir tempDir: File) {
+        val dump = dumpIrWithProxies(tempDir, "package sample\n\ninterface Listener { fun heard(): Int }")
+
+        assertTrue("interface @sample.Listener abstract host {" in dump) { dump }
+    }
+
+    /** An internal interface has no proxy, so no JVM class implements it. */
+    @Test
+    fun testInternalInterfaceIsNotMarkedForTheHost(@TempDir tempDir: File) {
+        val dump = dumpIrWithProxies(tempDir, "package sample\n\ninternal interface Listener { fun heard(): Int }")
+
+        assertTrue("interface @sample.Listener abstract {" in dump) { dump }
+    }
+
+    /** A public interface nested in an internal class has no proxy either. */
+    @Test
+    fun testInterfaceNestedInAnInternalClassIsNotMarkedForTheHost(@TempDir tempDir: File) {
+        val dump = dumpIrWithProxies(tempDir, "package sample\n\ninternal class Outer { interface Listener { fun heard(): Int } }")
+
+        assertTrue("interface @sample.Outer\$Listener abstract {" in dump) { dump }
+    }
+
+    /** Without proxies, the JVM has no interface of the module's to implement. */
+    @Test
+    fun testInterfaceOfAModuleWithoutProxiesIsNotMarkedForTheHost(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, "package sample\n\ninterface Listener { fun heard(): Int }")
+
+        assertTrue("interface @sample.Listener abstract {" in dump) { dump }
+    }
+
+    /** A common class extending an `expect` class, whose JVM half the JVM's `actual` is. */
+    private val paired = mapOf(
+        "Paired.kt" to """
+            package sample
+
+            expect open class Entity(id: String) {
+                open fun label(): String
+            }
+
+            class Item(id: String) : Entity(id) {
+                fun plainLabel(): String = super.label()
+            }
+        """,
+    )
+
+    private val pairedActual = mapOf(
+        "Paired.jvm.kt" to "package sample\n\nactual open class Entity actual constructor(val id: String) { actual open fun label(): String = id }",
+    )
+
+    /** A super call of a JVM superclass's member is a `jvm-super:` import, which the bridge calls without dispatching. */
+    @Test
+    fun testSuperCallOfAJvmSuperclasssMemberIsASuperImport(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, paired, hostFiles = pairedActual)
+
+        assertTrue("binds \"jvm-super:sample/Entity.label()Ljava/lang/String;\"" in dump) { dump }
+    }
+
+    /** The constructor of a class extending a JVM class makes its JVM half by a `jvm-pair:` import of its shell. */
+    @Test
+    fun testCallOfAJvmSuperclasssConstructorIsAPairImport(@TempDir tempDir: File) {
+        val dump = dumpIr(tempDir, paired, hostFiles = pairedActual)
+
+        assertTrue("binds \"jvm-pair:sample/Item.<init>(Ljava/lang/String;)V\"" in dump) { dump }
+    }
+
+    /** The shell of a class extending a JVM class has a pair constructor for each of the JVM superclass's. */
+    @Test
+    fun testShellOfAClassExtendingAJvmClassHasAPairConstructor(@TempDir tempDir: File) {
+        val shell = proxies(tempDir, paired, hostFiles = pairedActual).getValue("sample/Item")
+
+        assertTrue(shell.methods.any { it.name == "<init>" && it.desc == "(Lvm/bridge/VmPaired;JLjava/lang/String;)V" }) {
+            shell.methods.map { it.name + it.desc }.toString()
+        }
     }
 
     /** The lines of the names table in the proxy jar written to [tempDir]. */

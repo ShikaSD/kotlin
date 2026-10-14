@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.ir.builders.declarations.buildClass
 import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
@@ -62,6 +63,7 @@ import org.jetbrains.kotlin.ir.util.DeepCopyTypeRemapper
 import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.createThisReceiverParameter
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.defaultValueForType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.parentAsClass
@@ -201,6 +203,9 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
     /** The chain constructor of each shell class; see [chainConstructor]. */
     private val chains = hashMapOf<IrClass, IrConstructor>()
 
+    /** The pair constructors of each shell class of a paired object; see [pairConstructors]. */
+    private val pairs = hashMapOf<IrClass, List<IrConstructor>>()
+
     /**
      * Keeps what the JVM may call of [module] and replaces every body with a call into the VM. The chain constructors are
      * made first, a superclass's before its subclasses', since every constructor of a shell runs its class's.
@@ -213,11 +218,18 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
         }
         module.files.forEach(::retain)
         val shellClasses = classes.filterTo(hashSetOf()) { it.kind == ClassKind.CLASS }
-        fun chain(irClass: IrClass): IrConstructor = chains[irClass] ?: run {
+        fun chain(irClass: IrClass) {
+            if (irClass in chains || irClass in pairs) return
             val superclass = irClass.superclass()
             if (superclass in shellClasses) chain(superclass)
             makeShell(irClass, holdsHandle = superclass !in shellClasses)
-            chainConstructor(irClass, superclass).also { chains[irClass] = it }
+            // A class extending a JVM class other than `Any` is a paired object's, whose JVM half the VM makes.
+            val isPaired = if (superclass in shellClasses) superclass in pairs else superclass != irBuiltIns.anyClass.owner
+            if (isPaired) {
+                pairs[irClass] = pairConstructors(irClass, superclass)
+            } else {
+                chains[irClass] = chainConstructor(irClass, superclass)
+            }
         }
         shellClasses.forEach(::chain)
 
@@ -283,7 +295,40 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
         return chain
     }
 
-    /** Replaces the body of each function, accessor and constructor of [container], but its chain constructor. */
+    /**
+     * The constructors making a paired object's JVM half for a VM half the VM made, one for each of the JVM superclass's
+     * constructors: `protected Owner(VmPaired unused, long handle, params) { super(params); $vm$handle = handle }`, or
+     * `super(unused, handle, params)` when the superclass is a shell, whose own pair constructor sets the handle. The
+     * bridge calls the one a `jvm-pair:` binding names; see "Construction" in wip/JVM_INTEGRATION_DESIGN.md.
+     */
+    private fun pairConstructors(irClass: IrClass, superclass: IrClass): List<IrConstructor> {
+        val superPairs = pairs[superclass]
+        val superConstructors = superPairs ?: superclass.constructors.filter { it.isVisible() }.toList()
+        val superType = irClass.superTypes.firstOrNull { it.classOrNull?.owner == superclass } as? IrSimpleType
+        val handleField = irClass.declarations.filterIsInstance<IrField>().singleOrNull { it.name.asString() == "\$vm\$handle" }
+        return superConstructors.map { superConstructor ->
+            val pair = irClass.addConstructor {
+                visibility = DescriptorVisibilities.PROTECTED
+                returnType = irClass.defaultType
+            }
+            val unused = pair.addValueParameter("unused", bridge.paired.defaultType.makeNullable())
+            val handle = pair.addValueParameter("handle", irBuiltIns.longType)
+            // A superclass's pair constructor takes the marker and the handle first too.
+            val passed = superConstructor.parameters.drop(if (superPairs != null) 2 else 0)
+            val params = passed.map { pair.addValueParameter(it.name.asString(), it.type) }
+            pair.body = DeclarationIrBuilder(fir2IrResult.pluginContext, pair.symbol).irBlockBody {
+                +irDelegatingConstructorCall(superConstructor).apply {
+                    superType?.arguments?.forEachIndexed { index, argument -> typeArguments[index] = argument.typeOrNull }
+                    val leading = if (superPairs != null) listOf(irGet(unused), irGet(handle)) else emptyList()
+                    (leading + params.map { irGet(it) }).forEachIndexed { index, argument -> arguments[index] = argument }
+                }
+                if (handleField != null) +irSetField(irGet(irClass.thisReceiver!!), handleField, irGet(handle))
+            }
+            pair
+        }
+    }
+
+    /** Replaces the body of each function, accessor and constructor of [container], but its chain and pair constructors. */
     private fun proxyContainer(container: IrDeclarationContainer) {
         val tokens = Tokens(container)
         val isInterface = (container as? IrClass)?.isInterface == true
@@ -301,7 +346,9 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
                     declaration.backingField = null
                     listOfNotNull(declaration.getter, declaration.setter).forEach(::proxy)
                 }
-                is IrConstructor -> if (declaration != chains[container]) proxyConstructor(declaration, tokens)
+                is IrConstructor -> if (declaration != chains[container] && declaration !in pairs[container].orEmpty()) {
+                    proxyConstructor(declaration, tokens)
+                }
                 else -> {}
             }
         }
@@ -370,6 +417,20 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
     /** A constructor runs the chain constructor, then the VM function initializing a new VM object, which the shell adopts. */
     private fun proxyConstructor(constructor: IrConstructor, tokens: Tokens) {
         val irClass = constructor.parentAsClass
+        // A paired object is made from the VM only, so far: the JVM would have to run its superclass's constructor
+        // with arguments computed in the VM. The throw is an argument, which runs before the constructor it is passed to.
+        pairs[irClass]?.let { pairs ->
+            val pair = pairs.firstOrNull() ?: error("${irClass.name}'s JVM superclass has no constructor to pair by")
+            constructor.body = DeclarationIrBuilder(fir2IrResult.pluginContext, constructor.symbol).irBlockBody {
+                +irDelegatingConstructorCall(pair).apply {
+                    arguments[0] = throwUnsupported(constructor)
+                    for (index in 1 until pair.parameters.size) {
+                        arguments[index] = IrConstImpl.defaultValueForType(startOffset, endOffset, pair.parameters[index].type)
+                    }
+                }
+            }
+            return
+        }
         val binding = jvmMemberName(constructor)
         val token = binding?.let { tokens.next() }
         constructor.body = DeclarationIrBuilder(fir2IrResult.pluginContext, constructor.symbol).irBlockBody {
@@ -444,6 +505,9 @@ private class VmBridge(module: IrModuleFragment, private val irBuiltIns: IrBuilt
     }
 
     val shell: IrClass = javaClass("VmShell", ClassKind.INTERFACE)
+
+    /** What a pair constructor takes first; see [Proxies.pairConstructors]. */
+    val paired: IrClass = javaClass("VmPaired", ClassKind.CLASS)
 
     private val bridge: IrClass = javaClass("VmBridge", ClassKind.CLASS)
 

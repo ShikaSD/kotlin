@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.ir.expressions.IrConstKind
 import org.jetbrains.kotlin.ir.expressions.IrSyntheticBody
 import org.jetbrains.kotlin.ir.symbols.IrEnumEntrySymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
@@ -44,6 +45,16 @@ fun IrSimpleFunction.vmOverridden(): List<IrSimpleFunction> =
 /** The declarations [this] overrides in the VM that override nothing themselves, in a stable order; see [vmOverridden]. */
 fun IrSimpleFunction.vmRoots(): List<IrSimpleFunction> =
     vmOverridden().let { overridden -> if (overridden.isEmpty()) listOf(this) else overridden.flatMap { it.vmRoots() }.distinct() }
+
+/**
+ * Whether a JVM object may implement [this] interface, so the VM cannot know every implementation: one of Kotlin's
+ * collection interfaces, which the JVM has as Java's, or, with [hasProxies], one the proxies have, as a public interface
+ * nested in public classes only.
+ */
+internal fun IrClass.isHostInterface(hasProxies: Boolean): Boolean =
+    jvmMappedInternalName != null || hasProxies && generateSequence(this) { it.parent as? IrClass }.all {
+        it.visibility == DescriptorVisibilities.PUBLIC || it.visibility == DescriptorVisibilities.PROTECTED
+    }
 
 internal fun unsupported(what: String): Nothing = throw VmCodegenException("the VM backend does not support $what yet")
 
@@ -133,6 +144,8 @@ class VmModuleGenerator(
     private val hostActuals: (IrSimpleFunction) -> String? = { null },
     /** Told of each declaration of the standard library generated as a stub; see [isStdlib]. */
     private val reportStub: (String) -> Unit = {},
+    /** Whether the module is compiled with proxies, whose interfaces a JVM class may implement; see [isHostInterface]. */
+    private val hasProxies: Boolean = false,
 ) {
     private val module = VmModule(moduleName)
     private lateinit var fragment: IrModuleFragment
@@ -905,13 +918,18 @@ class VmModuleGenerator(
             classIndex(it) ?: unsupported("the supertype ${it.name} outside the VM modules")
         }
         if (declaration.isInterface) {
-            return VmClass(declaration.vmName, null, interfaces, isOpen = true, isAbstract = true, VmClassKind.Interface)
+            return VmClass(
+                declaration.vmName, null, interfaces, isOpen = true, isAbstract = true, VmClassKind.Interface,
+                isHost = declaration.isHostInterface(hasProxies),
+            )
         }
         val superClass = declaration.superClass()
         val superIndex = when {
             superClass == null || superClass.isAny() -> runtimeClass("Any")
             superClass.isEnumBase() -> runtimeClass("vm.runtime.Enum")
             runtimeThrowable(superClass) != null -> runtimeThrowable(superClass)!!
+            // A paired object's JVM superclass is its JVM half's.
+            isHostClass(superClass) -> runtimeClass("Any")
             else -> classIndex(superClass) ?: unsupported("the superclass ${superClass.name} outside the VM modules")
         }
         val fields = ownFields(declaration).map { VmField(it.name.asString(), heldType(it.type)) }
@@ -932,6 +950,8 @@ class VmModuleGenerator(
         for (function in declaration.memberFunctions()) {
             // An abstract declaration resolves to itself, and leaves the selector to a subclass.
             val implementation = function.resolveFakeOverride()?.takeIf { it.modality != Modality.ABSTRACT } ?: continue
+            // A JVM superclass's member is the JVM half's, which a call reaches as a host import; see [hostMember].
+            if (implementation.parentClassOrNull?.let(::isHostClass) == true) continue
             // Only an instance member answers a selector, which leaves out an enum's `values` and `valueOf`.
             if (implementation.dispatchReceiverParameter == null) continue
             val implementationSymbol = when {
@@ -1140,6 +1160,8 @@ class VmModuleGenerator(
     }
 
     private val hostImports = hashMapOf<IrFunctionSymbol, VmFunctionSymbol>()
+    private val superHostImports = hashMapOf<IrFunctionSymbol, VmFunctionSymbol>()
+    private val pairConstructors = hashMapOf<Pair<IrClassSymbol, IrConstructorSymbol>, VmFunctionSymbol>()
 
     /**
      * Whether the JVM owns [declaration], so its instances are JVM objects: an `expect` class, whose `actual` the JVM
@@ -1153,15 +1175,34 @@ class VmModuleGenerator(
      * JVM calls virtually on it; null for any other member, and for one `Any` declares, which the VM answers.
      */
     private fun hostMember(callee: IrSimpleFunction, isSuperCall: Boolean): VmFunctionSymbol? {
-        if (!isHostClass(callee.parentAsClass)) return null
-        if (callee.resolveFakeOverride()?.parentClassOrNull?.isAny() == true) return null
-        if (isSuperCall) unsupported("a super call to ${callee.render()} of a JVM class")
-        return hostImports.getOrPut(callee.symbol) {
-            val name = jvmMemberName(callee) ?: unsupported("calling ${callee.render()} on the JVM, a signature whose JVM name is not covered")
-            val params = listOf(anyType) + callee.nonDispatchParameters.map(::heldParameterType)
-            VmFunctionSymbol(name, params, vmType(callee.returnType)).also { module.externals += it }
+        // A paired object's class inherits a JVM superclass's members, which its JVM half answers.
+        val member = when {
+            isHostClass(callee.parentAsClass) -> callee
+            callee.isFakeOverride -> callee.resolveFakeOverride()?.takeIf { isHostClass(it.parentAsClass) } ?: return null
+            else -> return null
+        }
+        if (member.resolveFakeOverride()?.parentClassOrNull?.isAny() == true) return null
+        val imports = if (isSuperCall) superHostImports else hostImports
+        return imports.getOrPut(member.symbol) {
+            val name = (if (isSuperCall) jvmSuperMemberName(member) else jvmMemberName(member))
+                ?: unsupported("calling ${member.render()} on the JVM, a signature whose JVM name is not covered")
+            val params = listOf(anyType) + member.nonDispatchParameters.map(::heldParameterType)
+            VmFunctionSymbol(name, params, vmType(member.returnType)).also { module.externals += it }
         }
     }
+
+    /**
+     * The extern making the JVM half of a paired object of [declaration], a class of the module whose superclass is
+     * the JVM's [superConstructor] constructs: it runs [superConstructor] in the shell's pair constructor, on the VM
+     * half it takes first; see `jvm-pair:` in vm-jni.
+     */
+    internal fun pairConstructor(declaration: IrClass, superConstructor: IrConstructor): VmFunctionSymbol =
+        pairConstructors.getOrPut(declaration.symbol to superConstructor.symbol) {
+            val name = jvmPairConstructorName(declaration, superConstructor)
+                ?: unsupported("extending ${superConstructor.render()} on the JVM, a signature whose JVM name is not covered")
+            val params = listOf(anyType) + superConstructor.parameters.map(::heldParameterType)
+            VmFunctionSymbol(name, params, null).also { module.externals += it }
+        }
 
     /** The extern standing for [constructor], of a class the JVM owns, which answers the JVM object it makes. */
     internal fun hostConstructor(constructor: IrConstructor): VmFunctionSymbol = hostImports.getOrPut(constructor.symbol) {

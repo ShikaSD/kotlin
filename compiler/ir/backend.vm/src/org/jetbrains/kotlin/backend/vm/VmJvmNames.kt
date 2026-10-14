@@ -168,6 +168,18 @@ fun jvmExportName(function: IrSimpleFunction): String? {
 /** The name the JVM calls a member or constructor of a class by; null when [jvmBindingName] does not cover it. */
 fun jvmMemberName(function: IrFunction): String? = jvmBindingName(function, function.parentClassOrNull?.jvmInternalName ?: return null)
 
+/** The name of [function], a member of a JVM class, called by a `super` call: [jvmMemberName]'s, `jvm-super:` in place of `jvm:`. */
+internal fun jvmSuperMemberName(function: IrFunction): String? =
+    jvmMemberName(function)?.let { "jvm-super:" + it.removePrefix(JVM_BINDING_PREFIX) }
+
+/**
+ * The name of the pair constructor of the shell of [declaration], a class extending the JVM class [superConstructor]
+ * constructs: `jvm-pair:`, the shell's internal name, `<init>`, and [superConstructor]'s parameters, which the
+ * constructor takes after a `vm.bridge.VmPaired` and the VM half's handle. Null where [jvmBindingName] would be.
+ */
+internal fun jvmPairConstructorName(declaration: IrClass, superConstructor: IrConstructor): String? =
+    jvmBindingName(superConstructor, declaration.jvmInternalName)?.let { "jvm-pair:" + it.removePrefix(JVM_BINDING_PREFIX) }
+
 /**
  * The internal name of the JVM class holding [function], a top-level function of a JVM library: its file's facade, or
  * the multifile class its file is a part of, which declares every part's public functions. Null for any other function.

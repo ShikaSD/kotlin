@@ -47,6 +47,8 @@ class VmClass(
     val isOpen: Boolean,
     val isAbstract: Boolean,
     val kind: VmClassKind,
+    /** An interface a JVM object may implement, which the VM asks the JVM about for one. */
+    val isHost: Boolean = false,
 )
 
 sealed interface VmClassKind {

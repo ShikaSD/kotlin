@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.cli.CliDiagnostics.VM_COMPILATION_ERROR
 import org.jetbrains.kotlin.cli.CliDiagnostics.VM_COMPILATION_WARNING
 import org.jetbrains.kotlin.cli.common.diagnosticsCollector
 import org.jetbrains.kotlin.cli.vm.config.vmOutput
+import org.jetbrains.kotlin.cli.vm.config.vmProxies
 import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors
 import org.jetbrains.kotlin.cli.pipeline.PipelinePhase
 import org.jetbrains.kotlin.cli.report
@@ -64,7 +65,9 @@ fun compileModuleToVm(input: VmSerializationArtifact): VmModule {
     val libraries = FirVmLibraries(input.vmLibraries, fir2IrResult.irBuiltIns)
     val context = VmLoweringContext(configuration, fir2IrResult.irBuiltIns, diagnosticReporter, libraries)
     val isStdlib = configuration.languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)
-    return compileToVm(fir2IrResult.irModuleFragment, moduleName, context, isStdlib, input.hostActuals::facadeOf) { stub ->
-        configuration.report(VM_COMPILATION_WARNING, "the VM backend generated a stub for $stub")
-    }
+    return compileToVm(
+        fir2IrResult.irModuleFragment, moduleName, context, isStdlib, input.hostActuals::facadeOf,
+        reportStub = { stub -> configuration.report(VM_COMPILATION_WARNING, "the VM backend generated a stub for $stub") },
+        hasProxies = configuration.vmProxies != null,
+    )
 }

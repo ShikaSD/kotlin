@@ -57,6 +57,7 @@ private object Tag {
 
     const val FLAG_OPEN = 1L
     const val FLAG_ABSTRACT = 2L
+    const val FLAG_HOST = 4L
 
     const val GLOBAL_ZERO = 0L
     const val GLOBAL_CONSTANT = 1L
@@ -272,7 +273,8 @@ private class ModuleEncoder(private val module: VmModule) {
         declaration.interfaces.forEach(::varint)
         val open = if (declaration.isOpen) Tag.FLAG_OPEN else 0L
         val abstract = if (declaration.isAbstract) Tag.FLAG_ABSTRACT else 0L
-        varint(open or abstract)
+        val host = if (declaration.isHost) Tag.FLAG_HOST else 0L
+        varint(open or abstract or host)
         when (val kind = declaration.kind) {
             is VmClassKind.Class -> {
                 varint(Tag.CLASS)

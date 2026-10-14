@@ -1194,6 +1194,15 @@ internal class VmFunctionGenerator private constructor(
             constructThrowable(constructed!!, constructor, constructorArguments(call, constructor))
             return
         }
+        // A JVM superclass's state is a paired object's JVM half's, which the superclass's constructor makes in the
+        // shell's pair constructor.
+        if (gen.isHostClass(constructor.constructedClass)) {
+            if (leavesOutDefaults(call, constructor)) unsupported("a default argument to ${constructor.render()} on the JVM")
+            val declaration = (irFunction as IrConstructor).constructedClass
+            val target = gen.pairConstructor(declaration, constructor)
+            emit(VmInstruction.Call(null, VmCallee.Static(target), listOf(constructed!!) + arguments(call, constructor, target.paramTypes.drop(1))))
+            return
+        }
         val [target, args] = constructorInvocation(call, constructor)
         emit(VmInstruction.Call(null, VmCallee.Static(target), listOf(constructed!!) + args))
     }

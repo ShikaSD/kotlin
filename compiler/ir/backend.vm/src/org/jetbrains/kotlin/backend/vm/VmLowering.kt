@@ -262,7 +262,7 @@ internal fun IrClass.isInlinedValueClass(): Boolean {
 /**
  * Lowers [module] and generates it as one VM module named [moduleName], calling the `expect` functions [hostActuals]
  * names on the JVM; see [VmModuleGenerator]. Compiling the standard library, [isStdlib], [reportStub] is told of each function generated as
- * a stub.
+ * a stub. With [hasProxies], the module's public interfaces are ones a JVM class may implement.
  */
 fun compileToVm(
     module: IrModuleFragment,
@@ -271,7 +271,9 @@ fun compileToVm(
     isStdlib: Boolean = false,
     hostActuals: (IrSimpleFunction) -> String? = { null },
     reportStub: (String) -> Unit = {},
+    hasProxies: Boolean = false,
 ): VmModule {
     lowerForVm(context, module, isStdlib)
-    return VmModuleGenerator(context.irBuiltIns, moduleName, context.libraries, isStdlib, hostActuals, reportStub).generate(module)
+    return VmModuleGenerator(context.irBuiltIns, moduleName, context.libraries, isStdlib, hostActuals, reportStub, hasProxies)
+        .generate(module)
 }
