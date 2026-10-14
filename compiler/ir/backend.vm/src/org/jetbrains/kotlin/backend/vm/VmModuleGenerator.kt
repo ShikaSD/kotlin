@@ -1073,6 +1073,7 @@ class VmModuleGenerator(
     /** How a call reaches [callee]: by selector when it may be overridden, directly otherwise. */
     internal fun callTarget(callee: IrSimpleFunction, isSuperCall: Boolean): CallTarget {
         if (callee.dispatchReceiverParameter == null) return staticTarget(callee)
+        hostMember(callee, isSuperCall)?.let { symbol -> return CallTarget(VmCallee.Static(symbol), symbol) }
         val root = callee.vmRoots().first()
         if (!isSuperCall && callee.isOverridable()) {
             val selector = selectorOf(root) ?: unsupported("calling ${root.render()}")
@@ -1139,6 +1140,34 @@ class VmModuleGenerator(
     }
 
     private val hostImports = hashMapOf<IrFunctionSymbol, VmFunctionSymbol>()
+
+    /**
+     * Whether the JVM owns [declaration], so its instances are JVM objects: an `expect` class, whose `actual` the JVM
+     * fragment has, or a class of a JVM library.
+     */
+    internal fun isHostClass(declaration: IrClass): Boolean =
+        declaration.isExpect || (!isOwn(declaration) && !libraries.isInVmLibrary(declaration) && !isRuntimeImplemented(declaration))
+
+    /**
+     * The extern standing for [callee], a member of a class the JVM owns, which takes the receiver first and which the
+     * JVM calls virtually on it; null for any other member, and for one `Any` declares, which the VM answers.
+     */
+    private fun hostMember(callee: IrSimpleFunction, isSuperCall: Boolean): VmFunctionSymbol? {
+        if (!isHostClass(callee.parentAsClass)) return null
+        if (callee.resolveFakeOverride()?.parentClassOrNull?.isAny() == true) return null
+        if (isSuperCall) unsupported("a super call to ${callee.render()} of a JVM class")
+        return hostImports.getOrPut(callee.symbol) {
+            val name = jvmMemberName(callee) ?: unsupported("calling ${callee.render()} on the JVM, a signature whose JVM name is not covered")
+            val params = listOf(anyType) + callee.nonDispatchParameters.map(::heldParameterType)
+            VmFunctionSymbol(name, params, vmType(callee.returnType)).also { module.externals += it }
+        }
+    }
+
+    /** The extern standing for [constructor], of a class the JVM owns, which answers the JVM object it makes. */
+    internal fun hostConstructor(constructor: IrConstructor): VmFunctionSymbol = hostImports.getOrPut(constructor.symbol) {
+        val name = jvmMemberName(constructor) ?: unsupported("constructing ${constructor.render()} on the JVM, a signature whose JVM name is not covered")
+        VmFunctionSymbol(name, constructor.parameters.map(::heldParameterType), anyType).also { module.externals += it }
+    }
 
     /** Whether a call of [callee] is a host import's. */
     internal fun isHostImport(callee: IrFunction): Boolean = callee.symbol in hostImports

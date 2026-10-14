@@ -3964,7 +3964,7 @@ class VmBackendTest {
         val dump = dumpIr(tempDir, mapOf("Greeting.kt" to """
             package sample
 
-            fun sum(numbers: List<Int>): Int = 0
+            fun sum(numbers: Array<Int>): Int = 0
         """))
         assertEquals(emptyList<String>(), exportsOf(dump)) { dump }
     }
@@ -4085,8 +4085,8 @@ class VmBackendTest {
     fun testCallOfActualOfUncoveredTypeIsReported(@TempDir tempDir: File) {
         val (output, exitCode) = compile(
             tempDir,
-            mapOf("Names.kt" to "expect fun names(): List<String>\n\nfun count(): Int = names().size"),
-            hostFiles = mapOf("Names.jvm.kt" to "actual fun names(): List<String> = emptyList()"),
+            mapOf("Names.kt" to "expect fun names(): Array<String>\n\nfun count(): Int = names().size"),
+            hostFiles = mapOf("Names.jvm.kt" to "actual fun names(): Array<String> = emptyArray()"),
         )
 
         assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
@@ -4147,7 +4147,7 @@ class VmBackendTest {
     /** A function the VM exports under no name, for a type the binding does not cover, has a proxy that throws. */
     @Test
     fun testProxyOfAnUncoveredSignatureThrows(@TempDir tempDir: File) {
-        val classes = proxies(tempDir, mapOf("Names.kt" to "package sample\n\nfun names(): List<String> = listOf(\"a\")"))
+        val classes = proxies(tempDir, mapOf("Names.kt" to "package sample\n\nfun names(): Array<String> = arrayOf(\"a\")"))
         val proxy = classes.getValue("sample/NamesKt").method("names")!!
 
         assertTrue(proxy.instructions.any { it.opcode == Opcodes.ATHROW })
@@ -4263,14 +4263,67 @@ class VmBackendTest {
         assertTrue(test in 0..<lookUp) { "instanceof at $test, look-up at $lookUp" }
     }
 
+    /** The lines of the names table in the proxy jar written to [tempDir]. */
+    private fun nameTable(tempDir: File): List<String> = ZipFile(File(tempDir, "proxies.jar")).use { zip ->
+        zip.getInputStream(zip.getEntry("META-INF/vm.names")).readBytes().decodeToString()
+    }.lines().filter { it.isNotEmpty() }
+
     /** The jar names each shell with the VM class it stands for. */
     @Test
-    fun testShellListNamesEachShellsVmClass(@TempDir tempDir: File) {
+    fun testNameTableNamesEachShellsVmClass(@TempDir tempDir: File) {
         proxies(tempDir, mapOf("Outer.kt" to "package sample\n\nclass Outer { class Nested }"))
-        val shellList = ZipFile(File(tempDir, "proxies.jar")).use { zip ->
-            zip.getInputStream(zip.getEntry("META-INF/vm.shells")).readBytes().decodeToString()
-        }
-        assertEquals(setOf("class sample/Outer sample.Outer", "class sample/Outer\$Nested sample.Outer\$Nested"), shellList.lines().filter { it.isNotEmpty() }.toSet())
+
+        assertEquals(
+            setOf("class sample/Outer sample.Outer", "class sample/Outer\$Nested sample.Outer\$Nested"),
+            nameTable(tempDir).filter { it.startsWith("class ") }.toSet(),
+        )
+    }
+
+    /** The jar names the Java interface a collection interface of Kotlin's is on the JVM. */
+    @Test
+    fun testNameTableNamesACollectionInterfacesJavaInterface(@TempDir tempDir: File) {
+        proxies(tempDir, mapOf("Outer.kt" to "package sample\n\nclass Outer"))
+
+        assertTrue("interface java/util/List kotlin.collections.MutableList" in nameTable(tempDir))
+    }
+
+    /** The jar names the Java method a collection interface's selector is on the JVM. */
+    @Test
+    fun testNameTableNamesACollectionSelectorsJavaMethod(@TempDir tempDir: File) {
+        proxies(tempDir, mapOf("Outer.kt" to "package sample\n\nclass Outer"))
+
+        val members = nameTable(tempDir).filter { it.startsWith("member jvm:java/util/Collection.add(Ljava/lang/Object;)Z ") }
+        assertEquals(1, members.size, members.toString())
+    }
+
+    /** A collection's member the JVM has under another name is named by the JVM's: `MutableList.removeAt` is `remove`. */
+    @Test
+    fun testNameTableNamesARenamedCollectionMemberByItsJvmName(@TempDir tempDir: File) {
+        proxies(tempDir, mapOf("Outer.kt" to "package sample\n\nclass Outer"))
+
+        val members = nameTable(tempDir).filter { it.startsWith("member jvm:java/util/List.remove(I)Ljava/lang/Object; ") }
+        assertEquals(1, members.size, members.toString())
+    }
+
+    /** A collection property's getter is named by the JVM's method: `Collection.size` is `size()`. */
+    @Test
+    fun testNameTableNamesACollectionPropertyByItsJvmGetter(@TempDir tempDir: File) {
+        proxies(tempDir, mapOf("Outer.kt" to "package sample\n\nclass Outer"))
+
+        val members = nameTable(tempDir).filter { it.startsWith("member jvm:java/util/Collection.size()I ") }
+        assertEquals(1, members.size, members.toString())
+    }
+
+    /** The selector names the table gives a collection's members are the names the module calls them by. */
+    @Test
+    fun testCollectionSelectorNamesAreTheModulesNames(@TempDir tempDir: File) {
+        proxies(tempDir, mapOf("Lists.kt" to "package sample\n\nfun add(list: MutableList<String>, value: String) { list.add(value) }"))
+        val module = File(tempDir, "main.vir").readText(Charsets.ISO_8859_1)
+        val add = nameTable(tempDir).single { it.startsWith("member jvm:java/util/Collection.add(Ljava/lang/Object;)Z ") }
+        // A module keeps a selector's symbol apart from its class's.
+        val [selectorClass, selector] = add.substringAfterLast(' ').split("::")
+
+        assertTrue(selectorClass in module && selector in module, add)
     }
 
     /** The VM names a shell's proxies look their calls up by are the names the module gives its functions, but the runtime's. */

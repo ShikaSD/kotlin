@@ -3,7 +3,7 @@
 #     264  unsupported: the expression RICH_PROPERTY_REFERENCE …
 #      49  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 #      46  unsupported: a bridge from FUN …
-#      37  unsupported: overriding FUN …
+#      33  unsupported: overriding FUN …
 #      27  unsupported: the expression CLASS_REFERENCE …
 #      24  unsupported: the expression GET_CLASS …
 #      24  wrong result
@@ -18,25 +18,25 @@
 #      10  run: Uncaught exception: vm.builtin.ClassCast
 #       9  IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE: Declaration annotated with '@OptionalExpectation' can only be used in common module sour
 #       8  IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
+#       7  run: Uncaught exception: vm.builtin.NoSuchMethod
+#       7  unsupported: calling FUN …
+#       7  unsupported: the supertype Runnable outside the VM modules
 #       6  CompilationException: Back-end: Please report this problem https://kotl.in/issue
 #       6  IllegalStateException: EXPECT_REFINEMENT_ANNOTATION_MISSING: 'expect' declaration refinement is an experimental feature. Mark the declaration with the '@ExpectR
 #       6  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Delegates'.
-#       6  run: Uncaught exception: vm.builtin.NoSuchMethod
 #       6  unsupported: `rem` on doubles
 #       6  unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
-#       6  unsupported: calling FUN …
 #       6  unsupported: defaults for more than 64 parameters
 #       5  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AssociatedObjectKey'.
 #       5  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
-#       5  run: Uncaught exception: vm.builtin.InvalidType
 #       4  AssertionFailedError: Java Compilation failed. Notice: This might be caused by a circular dependency between Java and Kotlin sources, which is not supported sin
 #       4  IllegalStateException: INVISIBLE_REFERENCE: Cannot access 'fun assert(value: Boolean): Unit': it is internal in file.
 #       4  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isInitialized' on receiver of type 'KMutableProperty0<String>'.
 #       4  link: Failed to link: UnresolvedImport { symbol: "kotlin.Nothing" }
-#       4  unsupported: a call to CONSTRUCTOR …
+#       4  run: Uncaught exception: vm.builtin.InvalidType
 #       4  unsupported: a type test against java.lang.Runnable outside the VM modules
 #       4  unsupported: implementing the function type SuspendFunction0
-#       4  unsupported: the supertype Runnable outside the VM modules
+#       4  unsupported: the static field out outside the VM modules
 #       3  IllegalStateException: Boxing a value of the non-primitive T of <root>.Z
 #       3  IllegalStateException: CANNOT_INFER_PARAMETER_TYPE: Cannot infer type for type parameter 'T'. Specify it explicitly.
 #       3  IllegalStateException: DELEGATE_SPECIAL_FUNCTION_MISSING: Type 'KProperty0<String>' has no method 'getValue(Nothing?, KProperty0<*>)', so it cannot serve as a d
@@ -49,7 +49,7 @@
 #       3  IllegalStateException: UNSUPPORTED: 'Array<Nothing?>' is not supported on the JVM.
 #       3  NoSuchElementException: List contains no element matching the predicate.
 #       3  link: Failed to link: AmbiguousImport { symbol: "K", modules: ["m1", "m12"] }
-#       3  unsupported: a call to clone
+#       3  unsupported: the multi-field value class A
 
 annotations/instances/annotationEqHc.kt: unsupported: the expression CLASS_REFERENCE …
 annotations/instances/annotationFromStdlib.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.SinceKotlin" }
@@ -84,7 +84,7 @@ basics/unchecked_cast12.kt: run: Execution result: RuntimeError(ManagedReference
 basics/unchecked_cast13.kt: wrong result
 basics/unchecked_cast2.kt: run: Uncaught exception: vm.builtin.NoSuchMethod
 basics/unchecked_cast7.kt: wrong result
-basics/unchecked_cast8.kt: run: Uncaught exception: vm.builtin.InvalidType
+basics/unchecked_cast8.kt: run: Uncaught exception: vm.builtin.NoSuchMethod
 basics/unchecked_cast9.kt: run: Uncaught exception: vm.builtin.NoSuchMethod
 binaryOp/call.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
 binaryOp/callNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
@@ -272,9 +272,9 @@ classLiteral/bound/smartCast.kt: unsupported: the expression GET_CLASS …
 classLiteral/classEquality.kt: unsupported: the expression GET_CLASS …
 classLiteral/java/kt11943.kt: IllegalStateException: RETURN_TYPE_MISMATCH: Return type mismatch: expected 'Class<*>', actual 'Unit'.
 classLiteral/primitiveClassEquality.kt: unsupported: the expression GET_CLASS …
-classes/delegationJava.kt: unsupported: overriding FUN …
+classes/delegationJava.kt: unsupported: the static field out outside the VM modules
 classes/inheritSetAndHashSet.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
-classes/kt1120.kt: unsupported: a call to CONSTRUCTOR …
+classes/kt1120.kt: unsupported: the supertype Runnable outside the VM modules
 classes/kt1535.kt: unsupported: implementing the function type Function0
 classes/kt508.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.plus_c926e24f1800a711" }
 closures/captureInSuperConstructorCall/outerCapturedAsImplicitThisInBoundReference.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -612,7 +612,7 @@ functions/bigArity/subclass.kt: unsupported: implementing the function type Func
 functions/invoke/kt3190.kt: unsupported: implementing the function type Function1
 functions/invoke/kt3822invokeOnThis.kt: unsupported: implementing the function type Function0
 functions/kt1739.kt: unsupported: the supertype Runnable outside the VM modules
-functions/localFunctions/kt4777.kt: unsupported: overriding FUN …
+functions/localFunctions/kt4777.kt: unsupported: the supertype Runnable outside the VM modules
 inference/kt39824.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 inference/kt49838.kt: unsupported: the expression CLASS_REFERENCE …
 inference/pcla/callableReferencesProperCompletion.kt: unsupported: the expression GET_CLASS …
@@ -739,15 +739,15 @@ ir/recursiveGeneric.kt: wrong result
 ir/recursiveGeneric2.kt: wrong result
 ir/serializationRegressions/dispatchReceiverValue.kt: IllegalStateException: EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE: C: 'expect' and corresponding 'actual' are declared in the same module.
 ir/serializationRegressions/transitiveClash.kt: link: Failed to link: AmbiguousImport { symbol: "pkg.foo_f18ce168c5b0fe5d", modules: ["main", "lib1"] }
-javaDirect/inheritedInnerClassFromExplicitlyImportedNestedSupertype.kt: unsupported: overriding FUN …
+javaDirect/inheritedInnerClassFromExplicitlyImportedNestedSupertype.kt: run: Failed to link bytecode: UnboundExternalFunction { binding_name: "jvm:a }
 javaDirect/inheritedNestedClassFromKotlinSupertype.kt: AssertionFailedError: Java Compilation failed. Notice: This might be caused by a circular dependency between Java and Kotlin sources, which is not supported sin
 javaDirect/javaConstantQualifiedByJavaClassVsKotlinTopLevelConst.kt: unsupported: a call to viaJava
 javaDirect/javaConstantQualifiedByKotlinFacade.kt: AssertionFailedError: Java Compilation failed. Notice: This might be caused by a circular dependency between Java and Kotlin sources, which is not supported sin
-javaDirect/packagePrivateInheritedNestedClassNotVisibleAcrossPackages.kt: unsupported: overriding FUN …
+javaDirect/packagePrivateInheritedNestedClassNotVisibleAcrossPackages.kt: run: Failed to link bytecode: UnboundExternalFunction { binding_name: "jvm:b }
 javaDirect/typeAliasNotVisibleFromJava.kt: AssertionFailedError: Java Compilation failed. Notice: This might be caused by a circular dependency between Java and Kotlin sources, which is not supported sin
 javaInterop/objectMethods/cloneCallsConstructor.kt: unsupported: the supertype Cloneable outside the VM modules
-javaInterop/objectMethods/cloneCallsSuper.kt: unsupported: a call to clone
-javaInterop/objectMethods/cloneCallsSuperAndModifies.kt: unsupported: a call to clone
+javaInterop/objectMethods/cloneCallsSuper.kt: unsupported: a super call to FUN …
+javaInterop/objectMethods/cloneCallsSuperAndModifies.kt: unsupported: a super call to FUN …
 javaInterop/objectMethods/cloneableClassWithoutClone.kt: unsupported: a call to clone
 jdk/kt1397.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 kclass/kclass1.kt: unsupported: the expression CLASS_REFERENCE …
@@ -822,8 +822,8 @@ properties/eagerInitializationGlobal2.kt: IllegalStateException: UNRESOLVED_REFE
 properties/eagerInitializationGlobal3.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
 properties/eagerInitializationGlobal4.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
 properties/genericPropertyMultiModule.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-properties/kt1159.kt: unsupported: a call to CONSTRUCTOR …
-properties/kt1714.kt: unsupported: a call to CONSTRUCTOR …
+properties/kt1159.kt: unsupported: the supertype Runnable outside the VM modules
+properties/kt1714.kt: run: Failed to link bytecode: UnboundExternalFunction { binding_name: "jvm:java }
 properties/kt4383.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 properties/kt78962.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'EagerInitialization'.
 properties/lateinit/local/kt23260.kt: unsupported: the expression GET_CLASS …
@@ -877,7 +877,7 @@ reified/reifiedNullableNothing4.kt: IllegalStateException: UNSUPPORTED: 'Array<N
 reified/reifiedTypeArgumentWithIntersectionTypeAsTypeArgument.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 reified/reifiedTypeArgumentWithRecursion.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 safeCall/genericNull.kt: unsupported: overriding FUN …
-sam/constructors/sameWrapperClass.kt: unsupported: a call to getClass
+sam/constructors/sameWrapperClass.kt: unsupported: a type test against java.lang.Object outside the VM modules
 sam/constructors/sameWrapperClass2.kt: unsupported: the expression GET_CLASS …
 sam/funInterfaceExtendsSuspendFunction.kt: unsupported: overriding FUN …
 sam/funInterfaceExtendsSuspendFunction2.kt: unsupported: overriding FUN …
@@ -938,7 +938,7 @@ syntheticAccessors/functionsWithDefaultValues/topLevelFunctionCrossModuleTransit
 syntheticAccessors/protectedMemberReferenceAccessor/kt46597_property.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 topLevelInitializtion/failInInitializer1.kt: unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
 topLevelInitializtion/failInInitializer2.kt: unsupported: a type test against java.lang.ExceptionInInitializerError outside the VM modules
-traits/noPrivateDelegation.kt: unsupported: a call to getDeclaredMethods
+traits/noPrivateDelegation.kt: unsupported: calling FUN …
 typeErasure/funWithReifiedTypeParameter.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 typeErasure/funWithReifiedTypeParameterAndContextParameter.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 typeErasure/funWithReifiedTypeParameterAndExtensionReceiver.kt: IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.

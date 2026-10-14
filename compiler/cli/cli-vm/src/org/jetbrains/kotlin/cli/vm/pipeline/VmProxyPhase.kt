@@ -13,11 +13,14 @@ import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
 import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
 import org.jetbrains.kotlin.backend.vm.jvmExportName
 import org.jetbrains.kotlin.backend.vm.jvmInternalName
+import org.jetbrains.kotlin.backend.vm.jvmMappedInternalName
+import org.jetbrains.kotlin.backend.vm.jvmMappedMemberName
 import org.jetbrains.kotlin.backend.vm.jvmMemberName
 import org.jetbrains.kotlin.backend.vm.vmClassName
 import org.jetbrains.kotlin.backend.vm.vmFunctionName
 import org.jetbrains.kotlin.backend.vm.vmOverridden
 import org.jetbrains.kotlin.backend.vm.vmRoots
+import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.cli.common.diagnosticsCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.CompileEnvironmentUtil
 import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors
@@ -32,6 +35,7 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.backend.jvm.FirJvmBackendClassResolver
 import org.jetbrains.kotlin.fir.backend.jvm.FirJvmBackendExtension
 import org.jetbrains.kotlin.fir.pipeline.Fir2IrActualizedResult
+import org.jetbrains.kotlin.ir.InternalSymbolFinderAPI
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.jklib.JKlibIrMangler
@@ -58,9 +62,11 @@ import org.jetbrains.kotlin.ir.util.DeepCopyTypeRemapper
 import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.createThisReceiverParameter
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.patchDeclarationParents
+import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -73,9 +79,11 @@ import java.io.File
  * the module's own classes; see "Proxies" in wip/JVM_INTEGRATION_DESIGN.md in the VM repository.
  *
  * - A public top-level function calls the export the module has for it, by the name it exports it under.
- * - A public class is a shell, which `META-INF/vm.shells` in the jar names with the VM class it stands for: a member that
- *   may be overridden calls its selector, any other its VM function, and a constructor the VM function initializing a
- *   new VM object of the class, which the shell adopts.
+ * - A public class is a shell, which the jar's names table, `META-INF/vm.names`, names with the VM class it stands for: a
+ *   member that may be overridden calls its selector, any other its VM function, and a constructor the VM function
+ *   initializing a new VM object of the class, which the shell adopts.
+ * - The table also names the Java interface each collection interface of Kotlin's is on the JVM, and the Java method each
+ *   of their selectors is, which the VM calls a JVM object by.
  *
  * Generated from a copy of the IR the klib was written from, which [VmCodegenPhase] then lowers for the VM.
  */
@@ -83,8 +91,8 @@ object VmProxyPhase : PipelinePhase<VmSerializationArtifact, VmSerializationArti
     name = "VmProxyPhase",
     postActions = setOf(CheckCompilationErrors.CheckDiagnosticCollector),
 ) {
-    /** The shell list's path in the jar; see `vm.bridge.ShellList`. */
-    const val SHELL_LIST = "META-INF/vm.shells"
+    /** The names table's path in the jar; see `vm.bridge.NameTable`. */
+    const val NAME_TABLE = "META-INF/vm.names"
 
     override fun executePhase(input: VmSerializationArtifact): VmSerializationArtifact {
         val configuration = input.configuration
@@ -94,6 +102,7 @@ object VmProxyPhase : PipelinePhase<VmSerializationArtifact, VmSerializationArti
         val module = fir2IrResult.irModuleFragment.copyWithMetadata()
         val proxies = Proxies(VmBridge(module, fir2IrResult.irBuiltIns), fir2IrResult)
         proxies.proxyModule(module)
+        proxies.nameCollections()
 
         val state = GenerationState(
             input.projectEnvironment.project,
@@ -112,9 +121,13 @@ object VmProxyPhase : PipelinePhase<VmSerializationArtifact, VmSerializationArti
         }
         val codegenFactory = JvmIrCodegenFactory(configuration)
         codegenFactory.invokeCodegen(codegenFactory.invokeLowerings(state, backendInput))
-        val shellList = proxies.shells.joinToString("") { [jvm, vm] -> "class $jvm $vm\n" }
+        val nameTable = buildString {
+            for ([jvm, vm] in proxies.shells) append("class $jvm $vm\n")
+            for ([jvm, vm] in proxies.interfaces) append("interface $jvm $vm\n")
+            for ([jvm, vm] in proxies.members) append("member $jvm $vm\n")
+        }
         // No runtime, no reflection, reset timestamps, no main class.
-        CompileEnvironmentUtil.writeToJar(File(output), false, true, true, null, state.factory.with(SHELL_LIST, shellList), configuration)
+        CompileEnvironmentUtil.writeToJar(File(output), false, true, true, null, state.factory.with(NAME_TABLE, nameTable), configuration)
         return input
     }
 
@@ -154,6 +167,36 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
 
     /** Each shell class's internal name, with the name of the VM class it stands for. */
     val shells = mutableListOf<Pair<String, String>>()
+
+    /** Each collection interface's Java internal name, with the name of the VM interface it stands for. */
+    val interfaces = mutableListOf<Pair<String, String>>()
+
+    /** The binding name of each Java method a collection interface's selector stands for, with the selector's VM name. */
+    val members = mutableListOf<Pair<String, String>>()
+
+    /**
+     * Names Kotlin's collection interfaces and their selectors for the JVM, whichever the module uses: a module calling
+     * none can still be handed a JVM collection by one that does, and runs the standard library's code on it either way.
+     */
+    @OptIn(InternalSymbolFinderAPI::class)
+    fun nameCollections() {
+        val selectors = sortedMapOf<String, String>()
+        for (mapping in JavaToKotlinClassMap.mutabilityMappings) {
+            for (classId in listOf(mapping.kotlinReadOnly, mapping.kotlinMutable)) {
+                val irClass = irBuiltIns.symbolFinder.findClass(classId)?.owner ?: continue
+                val jvm = irClass.jvmMappedInternalName ?: continue
+                interfaces += jvm to vmClassName(irClass)
+                for (function in irClass.functions + irClass.properties.mapNotNull { it.getter }) {
+                    for (root in function.vmRoots()) {
+                        if (root.parent == irBuiltIns.anyClass.owner) continue
+                        val name = jvmMappedMemberName(root) ?: continue
+                        selectors[vmName(root)] = name
+                    }
+                }
+            }
+        }
+        for ([vm, jvm] in selectors) members += jvm to vm
+    }
 
     /** The chain constructor of each shell class; see [chainConstructor]. */
     private val chains = hashMapOf<IrClass, IrConstructor>()

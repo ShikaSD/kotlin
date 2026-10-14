@@ -10,7 +10,13 @@ import org.jetbrains.kotlin.backend.jvm.ir.getJvmNameFromAnnotation
 import org.jetbrains.kotlin.backend.jvm.lower.getFileClassInfoFromIrFile
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.declarations.IrFile
+import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
+import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
+import org.jetbrains.kotlin.ir.util.isInterface
+import org.jetbrains.kotlin.load.java.BuiltinSpecialProperties
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.load.java.SpecialGenericSignatures
+import org.jetbrains.kotlin.load.kotlin.internalName
 import org.jetbrains.kotlin.load.kotlin.FacadeClassSource
 import org.jetbrains.kotlin.ir.declarations.IrMemberWithContainerSource
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
@@ -63,9 +69,10 @@ private fun IrType.jvmParameterDescriptor(): String? {
     if (name == "kotlin.String") return STRING_DESCRIPTOR
     if (name == "kotlin.Any") return "Ljava/lang/Object;"
     JVM_SCALARS[name]?.let { scalar -> return if (isNullable()) "L${scalar.box};" else scalar.descriptor }
-    // Kotlin's own classes are the JDK's on the JVM, under names this does not map, but for `kotlin.reflect`'s, which keep
-    // theirs; a value class's methods are mangled.
     val irClass = classOrNull?.owner ?: return null
+    irClass.jvmMappedInternalName?.let { return "L$it;" }
+    // Kotlin's other classes are the JDK's on the JVM, under names this does not map, but for `kotlin.reflect`'s, which
+    // keep theirs; a value class's methods are mangled.
     val packageName = irClass.packageFqName
     if (packageName?.startsWith(StandardNames.BUILT_INS_PACKAGE_NAME) == true && packageName != StandardNames.KOTLIN_REFLECT_FQ_NAME) return null
     if (irClass.isValue) return null
@@ -73,6 +80,39 @@ private fun IrType.jvmParameterDescriptor(): String? {
 }
 
 private fun IrType.jvmReturnDescriptor(): String? = if (isUnit()) "V" else if (isNothing()) null else jvmParameterDescriptor()
+
+/**
+ * The internal name of the Java interface the JVM has [this], a collection interface of Kotlin's, as: both
+ * `kotlin.collections.List` and `MutableList` are `java/util/List`. Null for any other class.
+ */
+val IrClass.jvmMappedInternalName: String?
+    get() {
+        if (!isInterface) return null
+        val name = fqNameWhenAvailable ?: return null
+        val mapped = JavaToKotlinClassMap.mutabilityMappings.firstOrNull {
+            it.kotlinReadOnly.asSingleFqName() == name || it.kotlinMutable.asSingleFqName() == name
+        } ?: return null
+        return mapped.javaClass.internalName
+    }
+
+/**
+ * The binding name of the Java method [function], a member of a collection interface of Kotlin's, stands for on the
+ * JVM: held by its interface's Java one, under the name the JVM gives it, as `size` for the property and `remove` for
+ * `removeAt`. Null where [jvmBindingName] would be.
+ */
+fun jvmMappedMemberName(function: IrSimpleFunction): String? {
+    val owner = function.parentClassOrNull?.jvmMappedInternalName ?: return null
+    val described = jvmBindingName(function, owner, function.name.asString(), "") ?: return null
+    val descriptor = described.substring(described.indexOf('('))
+    val property = function.correspondingPropertySymbol?.owner
+    val name = when {
+        property != null -> BuiltinSpecialProperties.PROPERTY_FQ_NAME_TO_JVM_GETTER_NAME_MAP[property.fqNameWhenAvailable]?.asString()
+            ?: function.jvmName()
+        else -> SpecialGenericSignatures.SIGNATURE_TO_JVM_REPRESENTATION_NAME["$owner.${function.name}$descriptor"]?.asString()
+            ?: function.name.asString()
+    }
+    return "$JVM_BINDING_PREFIX$owner.$name$descriptor"
+}
 
 /** The JVM's internal name of [this] class: its package's path, then its name after those of the classes nesting it, joined by `$`. */
 val IrClass.jvmInternalName: String

@@ -1154,6 +1154,12 @@ internal class VmFunctionGenerator private constructor(
             }
             return builder
         }
+        // A JVM object, which the JVM makes.
+        if (gen.isHostClass(constructor.constructedClass)) {
+            if (leavesOutDefaults(call, constructor)) unsupported("a default argument to ${constructor.render()} on the JVM")
+            val target = gen.hostConstructor(constructor)
+            return newValue(gen.anyType).also { emit(VmInstruction.Call(it, VmCallee.Static(target), arguments(call, constructor, target.paramTypes))) }
+        }
         if (gen.isSharedVariableBox(constructor.constructedClass)) {
             val boxClass = gen.sharedVariableBoxClass
             val box = newValue(VmType.Ref(boxClass)).also { emit(VmInstruction.NewObject(it, boxClass)) }
