@@ -1,5 +1,5 @@
 # Box tests under compiler/testData/codegen/box expected to fail on the VM; see VmExpectedFailures.
-# 931 failures; the most common reasons:
+# 902 failures; the most common reasons:
 #     266  unsupported: the expression RICH_PROPERTY_REFERENCE …
 #      49  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 #      46  unsupported: a bridge from FUN …
@@ -264,15 +264,10 @@ classes/kt508.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.plus_
 closures/captureInSuperConstructorCall/outerCapturedAsImplicitThisInBoundReference.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 collections/kt41123.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 companion/delegatedPropertyOnCompanion.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-companionBlocksAndExtensions/abstractClasses.kt: unsupported: the static property baseVal
-companionBlocksAndExtensions/basicBlockAndExtension.kt: unsupported: the static property compBlockVal
 companionBlocksAndExtensions/callableReferencesGenericCompanionBlockMembers.kt: unsupported: the static property marker
 companionBlocksAndExtensions/callableReferences_block.kt: unsupported: the static property readonly
 companionBlocksAndExtensions/callableReferences_extensions.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-companionBlocksAndExtensions/companionBlock.kt: unsupported: the static property readonly
 companionBlocksAndExtensions/companionBlockAccessCrossModuleInline.kt: unsupported: the static property token
-companionBlocksAndExtensions/constProperties.kt: unsupported: the static property BLOCK_CONST
-companionBlocksAndExtensions/ebf.kt: unsupported: the static property foo
 companionBlocksAndExtensions/initializersBlocksAndEnum.kt: unsupported: the static property blockProp
 companionBlocksAndExtensions/initializersBlocksAndEnumTriggeredByBlock.kt: unsupported: the static property blockProp
 companionBlocksAndExtensions/initializersBlocksAndObject.kt: unsupported: the static property blockProp1
@@ -280,38 +275,16 @@ companionBlocksAndExtensions/initializersCompanionObjectInitMigration.kt: unsupp
 companionBlocksAndExtensions/initializersEnumImplementingInterface.kt: unsupported: the static property markerProp
 companionBlocksAndExtensions/initializersEnumImplementingInterfaceWithDefaultMember.kt: unsupported: the static property markerProp
 companionBlocksAndExtensions/initializersEnumTriggeredByCompanionBlockMember.kt: unsupported: the static property blockValue
-companionBlocksAndExtensions/initializersExtensions.kt: unsupported: the static property staticProp
-companionBlocksAndExtensions/initializersInParentInAnotherModule.kt: unsupported: the static property grandparentProp
-companionBlocksAndExtensions/initializersInParentNotInChild.kt: unsupported: the static property parentProp1
-companionBlocksAndExtensions/initializersInheritance.kt: unsupported: the static property parentProp1
 companionBlocksAndExtensions/initializersInheritanceMixedWithObject.kt: unsupported: the static property parentBlock1
-companionBlocksAndExtensions/initializersInheritanceMultiLevel.kt: unsupported: the static property gpProp1
 companionBlocksAndExtensions/initializersInheritanceMultipleSupertypes.kt: unsupported: the static property barProp1
 companionBlocksAndExtensions/initializersInheritanceMultipleSupertypesMixedOrder.kt: unsupported: the static property barProp1
-companionBlocksAndExtensions/initializersSequenceInParentVersusChild.kt: unsupported: the static property parentValue
-companionBlocksAndExtensions/initializersSuperclassSeparateModule.kt: unsupported: the static property parentValue
 companionBlocksAndExtensions/initializersTransitiveSuperInterface.kt: unsupported: the static property i0Value
 companionBlocksAndExtensions/initializersTriggeredByObject.kt: unsupported: the static property blockProp1
-companionBlocksAndExtensions/inline_block.kt: unsupported: the static property compBlockVal
-companionBlocksAndExtensions/innerClasses.kt: unsupported: the static property outerVal
 companionBlocksAndExtensions/interfaceCompanionBlockAndObject.kt: unsupported: the static property blockA
-companionBlocksAndExtensions/interfaceCompanionBlockBackingField.kt: unsupported: the static property interfaceVal
-companionBlocksAndExtensions/interfaceProperties.kt: unsupported: the static property O
 companionBlocksAndExtensions/lateinit.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'isInitialized' on receiver of type 'KMutableProperty0<String>'.
-companionBlocksAndExtensions/membersWithNameOfEnumSpecial.kt: unsupported: the static property entries
-companionBlocksAndExtensions/multiModule.kt: unsupported: the static property bar
-companionBlocksAndExtensions/multipleBlocks.kt: unsupported: the static property compBlockVal
-companionBlocksAndExtensions/nestedClasses.kt: unsupported: the static property outerVal
-companionBlocksAndExtensions/nestedObjectDoesNotTriggerOuterInitializer.kt: unsupported: the static property outerValue
 companionBlocksAndExtensions/propertyDelegation_block.kt: unsupported: the static property a
 companionBlocksAndExtensions/propertyDelegation_extensions.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-companionBlocksAndExtensions/resolutionPriority.kt: unsupported: the static property value
-companionBlocksAndExtensions/staticInitializerSyntheticNameCollision.kt: unsupported: the static property trigger
-companionBlocksAndExtensions/staticInitializerSyntheticNameCollisionCrossKinds.kt: unsupported: the static property trigger
-companionBlocksAndExtensions/staticInitializerSyntheticNameCollisionInheritance.kt: unsupported: the static property parentTrigger
 companionBlocksAndExtensions/throwingInitializers.kt: unsupported: the static property never
-companionBlocksAndExtensions/topLevelInitTriggersCompanionBlock.kt: unsupported: the static property bar
-companionBlocksAndExtensions/visibility.kt: unsupported: the static property privateProp
 compileKotlinAgainstKotlin/inlineClasses/internalWithInlineClass.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'a'.
 compileKotlinAgainstKotlin/internalSetterOverridden.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'Derived'.
 compileKotlinAgainstKotlin/internalWithDefaultArgs.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'a'.
@@ -522,7 +495,6 @@ enum/throwingEntryInitializer.kt: unsupported: a type test against java.lang.Exc
 enum/valueOf2.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.enumValueOf_494a7f06ff1f1ac6" }
 enum/values.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.enumValues_b789507c0dd37d97" }
 evaluate/inJavaLangPackage.kt: IllegalStateException: TYPE_CANT_BE_USED_FOR_CONST_VAL: Const 'val' has type 'Double'. Only primitive types and 'String' are allowed.
-evaluate/intrinsicConst/companions.kt: unsupported: the static property x
 evaluate/intrinsicConst/kCallableName.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty1<A, Int>'.
 evaluate/intrinsicConst/kCallableNameWithSideEffect.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty1<A, String>'.
 evaluate/intrinsicConst/kt58717.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction0<Unit>'.
@@ -732,7 +704,6 @@ multiplatform/k2/commonFakeOverridePropertyRef.kt: unsupported: the expression R
 multiplatform/k2/commonInternal.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AnnInFriend'.
 multiplatform/k2/defaultArguments/superCall.kt: IllegalStateException: SUPER_CALL_WITH_DEFAULT_PARAMETERS: Super-calls with default arguments are prohibited. Specify all arguments of 'super.foo' explicitly.
 multiplatform/k2/expectRefinement.kt: IllegalStateException: EXPECT_REFINEMENT_ANNOTATION_MISSING: 'expect' declaration refinement is an experimental feature. Mark the declaration with the '@ExpectR
-multiplatform/k2/expectStatic.kt: unsupported: the static property a
 multiplatform/k2/expectValInInlineClass.kt: IllegalStateException: VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION: Value classes without '@JvmInline' annotation are not yet supported.
 multiplatform/k2/fullValueClasses/expectBasicAndFullValueClasses.kt: unsupported: the multi-field value class Value2
 multiplatform/k2/hmpp/arrayDeque.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'ArrayDeque'.

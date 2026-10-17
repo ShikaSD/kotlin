@@ -353,12 +353,17 @@ class VmModuleGenerator(
 
     /**
      * Declares the globals classes own and the initializer that creates them: each enum class's entries, then each
-     * object's `INSTANCE`. The enum's entries are its initializer's to create, as on the JVM, so a use of the class runs
-     * it. An object's instance is stored before its constructor runs, so the constructor sees it. A companion's belongs
-     * to its outer class, as it is that class's static on the JVM: creating the outer class creates the companion.
+     * object's `INSTANCE`, then the static fields it computes. The enum's entries are its initializer's to create, as on
+     * the JVM, so a use of the class runs it. An object's instance is stored before its constructor runs, so the
+     * constructor sees it. A companion's belongs to its outer class, as it is that class's static on the JVM: creating
+     * the outer class creates the companion.
+     *
+     * Only a plugin gives a class static fields, as Compose gives each its `$stable` and a singleton lambda's holder. One
+     * whose initializer is a constant starts as it, and one without starts as zero, so neither needs the initializer.
      */
     private fun declareClassGlobals(classes: List<IrClass>): List<() -> Unit> {
         val parts = LinkedHashMap<IrClass, MutableList<IrClass>>()
+        val computed = HashMap<IrClass, List<IrField>>()
         for (declaration in classes) {
             val outer = declaration.parent as? IrClass
             when {
@@ -367,10 +372,23 @@ class VmModuleGenerator(
                 declaration.isCompanion && outer != null -> parts.getOrPut(outer) { mutableListOf() } += declaration
                 else -> parts.getOrPut(declaration) { mutableListOf() } += declaration
             }
+            val statics = declaration.properties.mapNotNull { it.backingField }.filter { it.isStatic }.toList()
+            for (field in statics.filter { it.initializer == null || constantStart(it) != null }) {
+                val start = constantStart(field)?.let(VmGlobalStart::Constant) ?: VmGlobalStart.Zero
+                globals[field.symbol] = declareGlobal(definedGlobalName(field), heldType(field.type), start)
+            }
+            statics.filter { it.initializer != null && constantStart(it) == null }.takeIf { it.isNotEmpty() }?.let { fields ->
+                computed[declaration] = fields
+                parts.getOrPut(declaration) { mutableListOf() }
+            }
         }
         return parts.map { entry ->
             val ownerClass = entry.key
             val owner = VmOwner.Class(classIndices.getValue(ownerClass.symbol))
+            val fields = computed[ownerClass].orEmpty()
+            for (field in fields) {
+                globals[field.symbol] = declareGlobal(definedGlobalName(field), heldType(field.type), VmGlobalStart.Owned(owner))
+            }
             for (declaration in entry.value) {
                 if (declaration.kind == ClassKind.ENUM_CLASS) {
                     for (enumEntry in declaration.declarations.filterIsInstance<IrEnumEntry>()) {
@@ -381,7 +399,7 @@ class VmModuleGenerator(
                 }
             }
             val symbol = declareInitializer("${ownerClass.vmName}::init", owner)
-            return@map { module.functions += VmFunctionGenerator.classInitializer(this, symbol, entry.value) }
+            return@map { module.functions += VmFunctionGenerator.classInitializer(this, symbol, entry.value, fields) }
         }
     }
 
@@ -438,7 +456,8 @@ class VmModuleGenerator(
      * see [jvmLibraryDefaultStub].
      */
     internal fun defaultStub(function: IrFunction): VmFunctionSymbol = defaultStubs.getOrPut(function.symbol) {
-        jvmLibraryFacadeName(function)?.let { return@getOrPut jvmLibraryDefaultStub(function, it) }
+        jvmLibraryFacadeName(function)?.let { return@getOrPut jvmLibraryDefaultStub(function, jvmDefaultsBindingName(function, it)) }
+        hostMemberOwner(function)?.let { return@getOrPut jvmLibraryDefaultStub(function, jvmMemberDefaultsBindingName(function, it)) }
         if (function.parameters.size > Long.SIZE_BITS) unsupported("defaults for more than ${Long.SIZE_BITS} parameters")
         val original = functionSymbol(function)
         val symbol = VmFunctionSymbol(vmSanitized("${original.name}\$default"), original.paramTypes + VmType.I64, original.returnType)
@@ -453,22 +472,25 @@ class VmModuleGenerator(
     private val defaultStubs = hashMapOf<IrFunctionSymbol, VmFunctionSymbol>()
 
     /**
-     * The JVM's `$default` method of [function], a top-level function of a JVM library the class [facade] holds. It takes
-     * a mask of the regular parameters only, as an `int`, and a trailing `Object` the call passes null; see
-     * [VmFunctionGenerator.defaultArguments].
+     * The JVM's `$default` method of [function], bound by [name]: a top-level function of a JVM library, or a member of a
+     * class the JVM owns, whose stub is static and takes the receiver first. It takes a mask of the regular parameters
+     * only, as an `int`, and a trailing `Object` the call passes null; see [VmFunctionGenerator.defaultArguments].
      */
-    private fun jvmLibraryDefaultStub(function: IrFunction, facade: String): VmFunctionSymbol {
+    private fun jvmLibraryDefaultStub(function: IrFunction, name: String?): VmFunctionSymbol {
         if (function.parameters.count { it.kind == IrParameterKind.Regular } > Int.SIZE_BITS) {
             unsupported("defaults for more than ${Int.SIZE_BITS} parameters of a JVM function")
         }
-        val name = jvmDefaultsBindingName(function, facade)
-            ?: unsupported("the defaults of ${function.render()} on the JVM, a signature whose JVM name is not covered")
+        name ?: unsupported("the defaults of ${function.render()} on the JVM, a signature whose JVM name is not covered")
         val params = function.parameters.map(::heldParameterType) + VmType.I64 + anyType
         return VmFunctionSymbol(name, params, vmType(function.returnType)).also { module.externals += it }
     }
 
     /** Whether the stub of [function]'s defaults is the JVM's, whose mask counts only regular parameters. */
-    internal fun hasJvmDefaultStub(function: IrFunction): Boolean = jvmLibraryFacadeName(function) != null
+    internal fun hasJvmDefaultStub(function: IrFunction): Boolean = jvmLibraryFacadeName(function) != null || hostMemberOwner(function) != null
+
+    /** The class the JVM owns that declares [function], a member with a body or abstract, or null for any other function. */
+    private fun hostMemberOwner(function: IrFunction): IrClass? =
+        function.takeIf { it is IrSimpleFunction && it.dispatchReceiverParameter != null }?.parentClassOrNull?.takeIf(::isHostClass)
 
     /** Adds a function only code generation creates, such as a lambda's body. */
     internal fun addFunction(function: VmFunction) {
@@ -503,7 +525,6 @@ class VmModuleGenerator(
                 is IrSimpleFunction -> if (member.isGenerated()) functions += member
                 is IrProperty -> {
                     listOfNotNull(member.getter, member.setter).filterTo(functions) { it.isGenerated() }
-                    if (member.backingField?.isStatic == true) unsupported("the static property ${member.name}")
                 }
                 is IrAnonymousInitializer -> if (member.isStatic) unsupported("a static initializer in ${declaration.name}")
                 is IrField -> if (member.isStatic) unsupported("the static field ${member.name}")
@@ -1155,9 +1176,24 @@ class VmModuleGenerator(
         } else if (callee.symbol in definedFunctions) {
             functionSymbol(callee)
         } else {
-            importFunction(callee) ?: libraryHostImport(callee) ?: unsupported("a call to ${callee.render()} outside the VM modules")
+            importFunction(callee) ?: libraryHostImport(callee) ?: hostStaticGetter(callee)
+                ?: unsupported("a call to ${callee.render()} outside the VM modules")
         }
         return CallTarget(VmCallee.Static(symbol), symbol)
+    }
+
+    /**
+     * The extern reading the static field [callee] gets, a static getter of a class the JVM owns, as Compose's plugin
+     * gives each class one for its `$stable`; null for any other function.
+     */
+    private fun hostStaticGetter(callee: IrFunction): VmFunctionSymbol? {
+        if (callee !is IrSimpleFunction || callee.dispatchReceiverParameter != null) return null
+        val owner = callee.parentClassOrNull?.takeIf(::isHostClass) ?: return null
+        val field = callee.correspondingPropertySymbol?.owner?.backingField?.takeIf { it.isStatic && callee.parameters.isEmpty() } ?: return null
+        return hostImports.getOrPut(callee.symbol) {
+            val name = jvmStaticFieldName(field, owner) ?: unsupported("reading ${field.render()} on the JVM, a type whose JVM name is not covered")
+            VmFunctionSymbol(name, emptyList(), vmType(callee.returnType)).also { module.externals += it }
+        }
     }
 
     /**
@@ -1192,6 +1228,21 @@ class VmModuleGenerator(
      * Whether the JVM owns [declaration], so its instances are JVM objects: an `expect` class, whose `actual` the JVM
      * fragment has, or a class of a JVM library.
      */
+    /**
+     * The extern answering the JVM's instance of [declaration], an object of a class the JVM owns, or null for any other
+     * object: the static field of its outer class, or of an interface, that a companion is, and any other's `INSTANCE`.
+     */
+    internal fun hostObject(declaration: IrClass): VmFunctionSymbol? {
+        if (!isHostClass(declaration)) return null
+        return hostObjects.getOrPut(declaration.symbol) {
+            val outer = declaration.parentClassOrNull?.takeIf { declaration.isCompanion }
+            val name = jvmObjectFieldName(declaration, outer)
+            VmFunctionSymbol(name, emptyList(), anyType).also { module.externals += it }
+        }
+    }
+
+    private val hostObjects = hashMapOf<IrClassSymbol, VmFunctionSymbol>()
+
     internal fun isHostClass(declaration: IrClass): Boolean =
         declaration.isExpect || (!isOwn(declaration) && !libraries.isInVmLibrary(declaration) && !isRuntimeImplemented(declaration))
 

@@ -6,7 +6,11 @@
 package org.jetbrains.kotlin.backend.vm
 
 import java.io.File
+import org.jetbrains.kotlin.backend.jvm.InlineClassAbi
+import org.jetbrains.kotlin.backend.jvm.hasMangledParameters
+import org.jetbrains.kotlin.backend.jvm.hasMangledReturnType
 import org.jetbrains.kotlin.backend.jvm.ir.getJvmNameFromAnnotation
+import org.jetbrains.kotlin.backend.jvm.ir.inlineClassRepresentation
 import org.jetbrains.kotlin.backend.jvm.lower.getFileClassInfoFromIrFile
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.declarations.IrFile
@@ -27,6 +31,7 @@ import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrField
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.types.IrType
@@ -73,11 +78,15 @@ private fun IrType.jvmParameterDescriptor(): String? {
     val irClass = classOrNull?.owner ?: return null
     irClass.jvmMappedInternalName?.let { return "L$it;" }
     if (isFunction()) irClass.functionInterfaceArity()?.let { return "L${jvmFunctionInterfaceName(it)};" }
+    // A value class is its underlying type, but where that cannot be null, as a nullable one over a primitive is its box.
+    if (irClass.isValue) {
+        if (irClass.inlineClassRepresentation == null) return null
+        return InlineClassAbi.unboxType(this)?.jvmParameterDescriptor() ?: "L${irClass.jvmInternalName};"
+    }
     // Kotlin's other classes are the JDK's on the JVM, under names this does not map, but for `kotlin.reflect`'s, which
-    // keep theirs; a value class's methods are mangled.
+    // keep theirs.
     val packageName = irClass.packageFqName
     if (packageName?.startsWith(StandardNames.BUILT_INS_PACKAGE_NAME) == true && packageName != StandardNames.KOTLIN_REFLECT_FQ_NAME) return null
-    if (irClass.isValue) return null
     return "L${irClass.jvmInternalName};"
 }
 
@@ -109,7 +118,7 @@ fun jvmMappedMemberName(function: IrSimpleFunction): String? {
     val property = function.correspondingPropertySymbol?.owner
     val name = when {
         property != null -> BuiltinSpecialProperties.PROPERTY_FQ_NAME_TO_JVM_GETTER_NAME_MAP[property.fqNameWhenAvailable]?.asString()
-            ?: function.jvmName()
+            ?: function.jvmName() ?: return null
         else -> SpecialGenericSignatures.SIGNATURE_TO_JVM_REPRESENTATION_NAME["$owner.${function.name}$descriptor"]?.asString()
             ?: function.name.asString()
     }
@@ -134,11 +143,12 @@ val IrClass.jvmInternalName: String
 
 /**
  * The binding name of [function], held by the JVM class [owner] (an internal name), or null for what this does not
- * cover: a function that is neither public nor protected, one with a suspend or generic-typed signature, and any type
+ * cover: a function that is neither public nor protected nor internal and top-level, one with a suspend or generic-typed signature, and any type
  * but the primitives, `String`, `Any`, the classes outside `kotlin`, and, as a result, `Unit`. A constructor is `<init>`,
  * and an accessor has its JVM name, `getX` or `setX`.
  */
-internal fun jvmBindingName(function: IrFunction, owner: String): String? = jvmBindingName(function, owner, function.jvmName(), "")
+internal fun jvmBindingName(function: IrFunction, owner: String): String? =
+    jvmBindingName(function, owner, function.jvmName() ?: return null, "")
 
 /**
  * The binding name of the static method filling in the default arguments of [function], a top-level function the JVM
@@ -146,23 +156,65 @@ internal fun jvmBindingName(function: IrFunction, owner: String): String? = jvmB
  * [jvmBindingName] would be.
  */
 internal fun jvmDefaultsBindingName(function: IrFunction, owner: String): String? =
-    jvmBindingName(function, owner, "${function.jvmName()}${JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX}", "ILjava/lang/Object;")
+    jvmBindingName(function, owner, "${function.jvmName() ?: return null}${JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX}", "ILjava/lang/Object;")
 
 private fun jvmBindingName(function: IrFunction, owner: String, name: String, trailing: String): String? {
-    if (function.visibility != DescriptorVisibilities.PUBLIC && function.visibility != DescriptorVisibilities.PROTECTED) return null
+    // An internal top-level function is public on the JVM under its own name, as Compose's plugin calls one of its
+    // runtime's; an internal member's name carries its module's.
+    val isInternalTopLevel = function.visibility == DescriptorVisibilities.INTERNAL && function.parentClassOrNull == null
+    if (function.visibility != DescriptorVisibilities.PUBLIC && function.visibility != DescriptorVisibilities.PROTECTED && !isInternalTopLevel) {
+        return null
+    }
     if (function is IrSimpleFunction && function.isSuspend) return null
     val parameters = function.nonDispatchParameters.map { it.type.jvmParameterDescriptor() ?: return null }
     val result = if (function is IrConstructor) "V" else function.returnType.jvmReturnDescriptor() ?: return null
     return "$JVM_BINDING_PREFIX$owner.$name(${parameters.joinToString("")}$trailing)$result"
 }
 
-/** The name the JVM gives [this]'s method. */
-private fun IrFunction.jvmName(): String {
-    if (this is IrConstructor) return "<init>"
+/**
+ * The name the JVM gives [this]'s method, or null for a constructor taking a value class, which the JVM gives a marker
+ * parameter instead. A function taking a value class, or a member returning one, is mangled with a hash of its signature;
+ * a top-level one returning one is not, as its facade's members are not.
+ */
+private fun IrFunction.jvmName(): String? {
+    if (this is IrConstructor) return if (hasMangledParameters()) null else "<init>"
     getJvmNameFromAnnotation()?.let { return it }
+    val isMember = parentClassOrNull != null
+    if (hasMangledParameters() || isMember && hasMangledReturnType) {
+        return InlineClassAbi.mangledNameFor(this, mangleReturnTypes = isMember, useOldMangleRules = false).asString()
+    }
     val property = (this as? IrSimpleFunction)?.correspondingPropertySymbol?.owner ?: return name.asString()
     val propertyName = property.name.asString()
     return if (this == property.setter) JvmAbi.setterName(propertyName) else JvmAbi.getterName(propertyName)
+}
+
+/**
+ * The binding name of the static method filling in the default arguments of [function], a member of the JVM class
+ * [owner] holds: `name$default`, taking the receiver, its parameters, an `int` mask and an unused `Object`. Null where
+ * [jvmBindingName] would be.
+ */
+internal fun jvmMemberDefaultsBindingName(function: IrFunction, owner: IrClass): String? {
+    val described = jvmDefaultsBindingName(function, owner.jvmInternalName) ?: return null
+    val open = described.indexOf('(') + 1
+    return described.substring(0, open) + "L${owner.jvmInternalName};" + described.substring(open)
+}
+
+/** The binding name of the static [field] of the JVM class [owner], or null for a type the descriptor does not cover. */
+internal fun jvmStaticFieldName(field: IrField, owner: IrClass): String? =
+    field.type.jvmParameterDescriptor()?.let { "jvm-field:${owner.jvmInternalName}.${field.name.asString()}:$it" }
+
+/**
+ * The binding name of the static field holding the object [declaration]: `jvm-field:`, the class holding it, `.`, its
+ * name and `:` its type. A companion is a field of its [outer] class named after it, and any other object its own
+ * `INSTANCE`.
+ */
+internal fun jvmObjectFieldName(declaration: IrClass, outer: IrClass?): String {
+    val type = "L${declaration.jvmInternalName};"
+    return if (outer != null) {
+        "jvm-field:${outer.jvmInternalName}.${declaration.name.asString()}:$type"
+    } else {
+        "jvm-field:${declaration.jvmInternalName}.${JvmAbi.INSTANCE_FIELD}:$type"
+    }
 }
 
 /**

@@ -338,13 +338,17 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
         }
     }
 
-    /** Replaces the body of each function, accessor and constructor of [container], but its chain and pair constructors. */
+    /**
+     * Replaces the body of each function, accessor and constructor of [container], but its chain and pair constructors
+     * and a class's statics: a plugin's constant, Compose's `$stable`, which JVM code reads from the class itself.
+     */
     private fun proxyContainer(container: IrDeclarationContainer) {
         val tokens = Tokens(container)
         val isInterface = (container as? IrClass)?.isInterface == true
         fun proxy(function: IrSimpleFunction) = when {
             function.body == null -> {}
             container is IrFile -> proxyExport(function, tokens)
+            function.dispatchReceiverParameter == null -> {}
             // A default body runs on any implementation, which the JVM may have; none crosses yet.
             isInterface -> unsupported(function)
             else -> proxyMember(function, tokens)
@@ -352,7 +356,7 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
         for (declaration in container.declarations.toList()) {
             when (declaration) {
                 is IrSimpleFunction -> proxy(declaration)
-                is IrProperty -> {
+                is IrProperty -> if (declaration.backingField?.isStatic != true || container is IrFile) {
                     declaration.backingField = null
                     listOfNotNull(declaration.getter, declaration.setter).forEach(::proxy)
                 }

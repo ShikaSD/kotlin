@@ -4150,6 +4150,72 @@ class VmBackendTest {
         assertTrue("binds \"jvm:sample/Run_jvmKt.run(Lkotlin/jvm/functions/Function1;)I\"" in dump) { dump }
     }
 
+    /** A host import taking a value class takes its underlying type, under the name the JVM mangles for it. */
+    @Test
+    fun testHostImportTakingAValueClassIsMangledAndUnboxed(@TempDir tempDir: File) {
+        val dump = dumpIr(
+            tempDir,
+            mapOf("Run.kt" to "package sample\n\n@JvmInline value class Meters(val value: Int)\n\nexpect fun measure(m: Meters): Int\n\nfun one(): Int = measure(Meters(1))"),
+            hostFiles = mapOf("Run.jvm.kt" to "package sample\n\nactual fun measure(m: Meters): Int = m.value"),
+        )
+        assertTrue(Regex("binds \"jvm:sample/Run_jvmKt\\.measure-[\\w-]+\\(I\\)I\"").containsMatchIn(dump)) { dump }
+    }
+
+    /** A nullable value class over a primitive is its box on the JVM. */
+    @Test
+    fun testHostImportTakingANullableValueClassOverAPrimitiveTakesItsBox(@TempDir tempDir: File) {
+        val dump = dumpIr(
+            tempDir,
+            mapOf("Run.kt" to "package sample\n\n@JvmInline value class Meters(val value: Int)\n\nexpect fun measure(m: Meters?): Int\n\nfun none(): Int = measure(null)"),
+            hostFiles = mapOf("Run.jvm.kt" to "package sample\n\nactual fun measure(m: Meters?): Int = m?.value ?: 0"),
+        )
+        assertTrue(Regex("binds \"jvm:sample/Run_jvmKt\\.measure-[\\w-]+\\(Lsample/Meters;\\)I\"").containsMatchIn(dump)) { dump }
+    }
+
+    /** An internal top-level `actual` is public on the JVM under its own name. */
+    @Test
+    fun testInternalTopLevelActualIsBoundByItsName(@TempDir tempDir: File) {
+        val dump = dumpIr(
+            tempDir,
+            mapOf("Secret.kt" to "package sample\n\ninternal expect fun secret(): Int\n\nfun reveal(): Int = secret()"),
+            hostFiles = mapOf("Secret.jvm.kt" to "package sample\n\ninternal actual fun secret(): Int = 7"),
+        )
+        assertTrue("binds \"jvm:sample/Secret_jvmKt.secret()I\"" in dump) { dump }
+    }
+
+    /** An object the JVM owns is read from its class's `INSTANCE`. */
+    @Test
+    fun testJvmObjectIsReadFromItsInstanceField(@TempDir tempDir: File) {
+        val dump = dumpIr(
+            tempDir,
+            mapOf("Clock.kt" to "package sample\n\nexpect object Clock {\n    fun now(): Int\n}\n\nfun read(): Int = Clock.now()"),
+            hostFiles = mapOf("Clock.jvm.kt" to "package sample\n\nactual object Clock {\n    actual fun now(): Int = 1\n}"),
+        )
+        assertTrue("binds \"jvm-field:sample/Clock.INSTANCE:Lsample/Clock;\"" in dump) { dump }
+    }
+
+    /** A companion the JVM owns is read from the static field its outer class holds it in. */
+    @Test
+    fun testJvmCompanionIsReadFromItsOuterClassesField(@TempDir tempDir: File) {
+        val dump = dumpIr(
+            tempDir,
+            mapOf("Units.kt" to "package sample\n\nexpect class Units {\n    companion object {\n        fun one(): Int\n    }\n}\n\nfun read(): Int = Units.one()"),
+            hostFiles = mapOf("Units.jvm.kt" to "package sample\n\nactual class Units {\n    actual companion object {\n        actual fun one(): Int = 1\n    }\n}"),
+        )
+        assertTrue("binds \"jvm-field:sample/Units.Companion:Lsample/Units\$Companion;\"" in dump) { dump }
+    }
+
+    /** A call leaving out a default of a member of a JVM class calls the static `$default` method taking the receiver first. */
+    @Test
+    fun testDefaultOfJvmClassMemberCallsItsStaticDefaultMethod(@TempDir tempDir: File) {
+        val dump = dumpIr(
+            tempDir,
+            mapOf("Box.kt" to "package sample\n\nexpect class Box() {\n    fun scale(x: Int, by: Int = 2): Int\n}\n\nfun scaled(box: Box): Int = box.scale(1)"),
+            hostFiles = mapOf("Box.jvm.kt" to "package sample\n\nactual class Box actual constructor() {\n    actual fun scale(x: Int, by: Int): Int = x * by\n}"),
+        )
+        assertTrue("binds \"jvm:sample/Box.scale\$default(Lsample/Box;IIILjava/lang/Object;)I\"" in dump) { dump }
+    }
+
     /** A call of an `actual` whose JVM name is not covered is reported. */
     @Test
     fun testCallOfActualOfUncoveredTypeIsReported(@TempDir tempDir: File) {

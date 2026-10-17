@@ -234,10 +234,11 @@ internal class VmFunctionGenerator private constructor(
     }
 
     /**
-     * The body of a class's initializer: an enum class's entries, then the objects it owns. An entry gets its name and
-     * ordinal before its constructor runs, and is stored once it has run, as the JVM stores it.
+     * The body of a class's initializer: an enum class's entries, then the objects it owns, then its computed static
+     * [fields]. An entry gets its name and ordinal before its constructor runs, and is stored once it has run, as the JVM
+     * stores it.
      */
-    private fun generateClassInitializer(parts: List<IrClass>): VmFunction {
+    private fun generateClassInitializer(parts: List<IrClass>, fields: List<IrField>): VmFunction {
         for (declaration in parts) {
             if (declaration.kind == ClassKind.ENUM_CLASS) {
                 declaration.declarations.filterIsInstance<IrEnumEntry>().forEachIndexed { ordinal, entry ->
@@ -250,6 +251,9 @@ internal class VmFunctionGenerator private constructor(
                 emit(VmInstruction.StoreGlobal(gen.objectInstance(declaration), instance))
                 emit(VmInstruction.Call(null, gen.staticTarget(constructor).callee, listOf(instance)))
             }
+        }
+        for (field in fields) {
+            emit(VmInstruction.StoreGlobal(gen.globalOf(field), operandAs(field.initializer!!.expression, field.type)))
         }
         terminate(VmTerminator.Return(null))
         return finish()
@@ -274,8 +278,8 @@ internal class VmFunctionGenerator private constructor(
         fun defaultStub(gen: VmModuleGenerator, function: IrFunction, symbol: VmFunctionSymbol): VmFunction =
             VmFunctionGenerator(gen, function, symbol, owner = null).generateDefaultStub()
 
-        fun classInitializer(gen: VmModuleGenerator, symbol: VmFunctionSymbol, parts: List<IrClass>): VmFunction =
-            VmFunctionGenerator(gen, null, symbol, owner = null).generateClassInitializer(parts)
+        fun classInitializer(gen: VmModuleGenerator, symbol: VmFunctionSymbol, parts: List<IrClass>, fields: List<IrField>): VmFunction =
+            VmFunctionGenerator(gen, null, symbol, owner = null).generateClassInitializer(parts, fields)
 
         /** Unowned, as every initializer is: an owned function is one whose calls run the initializer. */
         fun fileInitializer(gen: VmModuleGenerator, symbol: VmFunctionSymbol, fields: List<IrField>): VmFunction =
@@ -469,7 +473,9 @@ internal class VmFunctionGenerator private constructor(
                 return constant(gen.heldType(field.type), 0)
             }
             val dst = newValue(gen.heldType(field.type))
-            if (receiver == null) {
+            if (receiver == null || field.isStatic) {
+                // A static read through a receiver, as a plugin writes one, evaluates it only for what it does.
+                if (receiver != null) expression(receiver)
                 emit(VmInstruction.LoadGlobal(dst, gen.globalOf(field)))
             } else if (field.parentClassOrNull?.isInlinedValueClass() == true && gen.vmType(receiver.type) !is VmType.Ref) {
                 // The field of a value class held unboxed is the value itself.
@@ -486,7 +492,8 @@ internal class VmFunctionGenerator private constructor(
             if (!gen.hasStorage(field)) {
                 if (receiver != null) expression(receiver)
                 expression(expression.value)
-            } else if (receiver == null) {
+            } else if (receiver == null || field.isStatic) {
+                if (receiver != null) expression(receiver)
                 emit(VmInstruction.StoreGlobal(gen.globalOf(field), operandAs(expression.value, field.type)))
             } else {
                 val obj = operand(receiver)
@@ -502,6 +509,9 @@ internal class VmFunctionGenerator private constructor(
             } else if (gen.isStatelessCompanion(expression.symbol.owner)) {
                 // Only an extension of it takes such a companion, which it has nothing to read from.
                 constant(gen.anyType, 0)
+            } else if (gen.hostObject(expression.symbol.owner) != null) {
+                val read = gen.hostObject(expression.symbol.owner)!!
+                newValue(gen.anyType).also { emit(VmInstruction.Call(it, VmCallee.Static(read), emptyList())) }
             } else {
                 newValue(gen.anyType).also { emit(VmInstruction.LoadGlobal(it, gen.objectInstance(expression.symbol.owner))) }
             }
@@ -1282,6 +1292,9 @@ internal class VmFunctionGenerator private constructor(
                 // `arrayOf` and `intArrayOf` and the like, whose vararg is the array they return.
                 if (callee.isArrayOf()) return Intrinsic(operand(args[0]))
                 when (callee.fqNameWhenAvailable?.asString()) {
+                    // The JVM's cast between a value class and its underlying type, which Compose's plugin calls: a
+                    // value class held unboxed is that type already.
+                    "kotlin.jvm.internal.<unsafe-coerce>" -> return Intrinsic(operandAs(args[0], call.type))
                     // What the frontend calls when an exhaustive `when` matches nothing; the message is the JVM's.
                     "kotlin.internal.throwNoWhenBranchMatchedException" -> {
                         val prefix = newValue(gen.stringType)
