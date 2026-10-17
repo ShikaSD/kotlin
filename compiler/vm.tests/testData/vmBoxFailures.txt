@@ -1,22 +1,20 @@
 # Box tests under compiler/testData/codegen/box expected to fail on the VM; see VmExpectedFailures.
-# 973 failures; the most common reasons:
-#     264  unsupported: the expression RICH_PROPERTY_REFERENCE …
+# 931 failures; the most common reasons:
+#     266  unsupported: the expression RICH_PROPERTY_REFERENCE …
 #      49  IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 #      46  unsupported: a bridge from FUN …
-#      34  unsupported: overriding FUN …
+#      29  unsupported: overriding FUN …
 #      27  unsupported: the expression CLASS_REFERENCE …
 #      24  unsupported: the expression GET_CLASS …
-#      24  wrong result
+#      23  wrong result
 #      19  IllegalStateException: UNRESOLVED_IMPORT: Unresolved reference 'typeOf'.
 #      16  IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 #      15  IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KProperty<*>'.
 #      14  link: Failed to link: UnresolvedImport { symbol: "kotlin.plus_c926e24f1800a711" }
-#      14  unsupported: implementing the function type Function1
 #      13  IllegalStateException: MISSING_BUILT_IN_DECLARATION: Cannot access built-in declaration 'kotlin.EqualityBound'. Ensure that you have a dependency on the Kotlin 
 #      13  run: Uncaught exception: vm.runtime.AssertionError: vm.builtin.Function and vm.builtin.Function should be equal
-#      11  unsupported: implementing the function type Function0
-#      10  run: Uncaught exception: vm.builtin.ClassCast
 #       9  IllegalStateException: OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE: Declaration annotated with '@OptionalExpectation' can only be used in common module sour
+#       9  run: Uncaught exception: vm.builtin.ClassCast
 #       8  IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
 #       7  unsupported: calling FUN …
 #       7  unsupported: the supertype Runnable outside the VM modules
@@ -50,6 +48,8 @@
 #       3  IllegalStateException: UNSUPPORTED: 'Array<Nothing?>' is not supported on the JVM.
 #       3  NoSuchElementException: List contains no element matching the predicate.
 #       3  link: Failed to link: AmbiguousImport { symbol: "K", modules: ["m1", "m12"] }
+#       3  unsupported: the multi-field value class A
+#       3  unsupported: the static property compBlockVal
 
 annotations/instances/annotationEqHc.kt: unsupported: the expression CLASS_REFERENCE …
 annotations/instances/annotationFromStdlib.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.SinceKotlin" }
@@ -153,15 +153,11 @@ callableReference/adaptedReferences/contextTypeWithSam.kt: unsupported: the expr
 callableReference/adaptedReferences/extensionFunctionAnonymous.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/adaptedReferences/extensionPropertyWithAnonymousContextFun.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/adaptedReferences/extensionPropertyWithAnonymousExtensionFun.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-callableReference/adaptedReferences/suspendConversion/extensionFunctionAsASuperType.kt: unsupported: implementing the function type Function1
 callableReference/adaptedReferences/suspendConversion/extensionTypeProperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/adaptedReferences/suspendConversion/inlineWithContextParameterAsAPropertyType.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-callableReference/adaptedReferences/suspendConversion/inlineWithContextParameterAsASupertype.kt: unsupported: implementing the function type Function1
-callableReference/adaptedReferences/suspendConversion/inlineWithExtensionAsASuperType.kt: unsupported: implementing the function type Function1
 callableReference/adaptedReferences/suspendConversion/inlineWithExtensionProperty.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/adaptedReferences/suspendConversion/propertyReferenceToSuspendFunction.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/adaptedReferences/suspendConversion/withContextParameterAsAPropertyType.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-callableReference/adaptedReferences/suspendConversion/withContextParametersAsASupertype.kt: unsupported: implementing the function type Function1
 callableReference/adaptedReferences/varargViewedAsPrimitiveArray.kt: unsupported: overriding FUN …
 callableReference/bound/array.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/bound/companionObjectReceiverInheritsFromOuter.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -196,12 +192,10 @@ callableReference/equality/varargWithDefaults.kt: run: Uncaught exception: vm.ru
 callableReference/funInterfaceConstructor/funInterfaceConstructedObjectsEquality.kt: run: Uncaught exception: vm.runtime.Exception: ks11Foo == ks12Foo (same ctor, different source files): equals: sam$KSupplier$0@2 != sam$KSupplier$0@e
 callableReference/funInterfaceConstructor/funInterfaceConstructorEquality.kt: run: Uncaught exception: vm.runtime.Exception: ks1 == ks2 (same file, same SAM type): equals: vm.builtin.Function != vm.builtin.Function
 callableReference/function/classMemberFromCompanionObject.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<C, Unit>'.
-callableReference/function/extensionFunctionAsASuperTypePassToSAMInterface.kt: unsupported: implementing the function type Function1
 callableReference/function/genericCallableReferenceArgumentsNonJVM.kt: IllegalStateException: TYPE_INTERSECTION_AS_REIFIED_ERROR: Type argument for reified type parameter 'R' was inferred to the intersection of ['Comparable<*>' & '
 callableReference/function/local/equalsHashCode.kt: wrong result
 callableReference/function/local/localFunctionName.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction0<Unit>'.
 callableReference/function/overloadedFunVsVal.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-callableReference/function/referenceToCompanionMember.kt: run: Uncaught exception: vm.builtin.ClassCast
 callableReference/functionAndKFunctionSharedClassSplit.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<String, Int>'.
 callableReference/kt21014.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/kt21092a.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -221,7 +215,7 @@ callableReference/property/extensionPropertyWithExtensionType.kt: unsupported: t
 callableReference/property/extensionToArray.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/property/inEnum.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/property/inReceiverOfAnother.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-callableReference/property/invokePropertyReference.kt: unsupported: overriding FUN …
+callableReference/property/invokePropertyReference.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/property/javaBeanConvention.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/property/kClassInstanceIsInitializedFirst.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 callableReference/property/kt12044.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -246,16 +240,7 @@ casts/as.kt: unsupported: a type test against java.lang.Runnable outside the VM 
 casts/asSafe.kt: unsupported: a type test against java.lang.Runnable outside the VM modules
 casts/asToNothing.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Nothing" }
 casts/functions/asFunKBig.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
-casts/functions/asFunKSmall.kt: unsupported: implementing the function type Function
-casts/functions/isFunKBig.kt: run: Uncaught exception: vm.runtime.IllegalArgumentException: x !is Function1<*, *>: failed for vm.builtin.Function
 casts/functions/reifiedAsFunKBig.kt: IllegalStateException: NONE_APPLICABLE: None of the following candidates is applicable:
-casts/functions/reifiedAsFunKSmall.kt: run: Uncaught exception: vm.runtime.AssertionError: f0 as Function1<*, *>: should fail with CCE, no exception thrown
-casts/functions/reifiedIsFunKBig.kt: run: Uncaught exception: vm.runtime.IllegalArgumentException: vm.builtin.Function !is Function1<*, *>: failed
-casts/functions/reifiedIsFunKSmall.kt: run: Uncaught exception: vm.runtime.IllegalArgumentException: vm.builtin.Function !is Function0<*>: failed
-casts/functions/reifiedSafeAsFunKBig.kt: run: Uncaught exception: vm.runtime.AssertionError: x as? Function1<*, *>: should return null, got vm.builtin.Function
-casts/functions/reifiedSafeAsFunKSmall.kt: run: Uncaught exception: vm.runtime.AssertionError: f0 as Function1<*, *>: should return null, got vm.builtin.Function
-casts/functions/safeAsFunKBig.kt: run: Uncaught exception: vm.runtime.AssertionError: x as? Function1<*, *>: should not throw exceptions, got java.lang.IllegalArgumentException: x as? Function1<*, *>: should return null, got vm.builti
-casts/functions/safeAsFunKSmall.kt: run: Uncaught exception: vm.runtime.AssertionError: f0 as? Function1<*, *>: should not throw exceptions, got java.lang.IllegalArgumentException: f0 as? Function1<*, *>: should return null, got vm.buil
 casts/intersectionTypeMultipleBounds.kt: unsupported: a bridge from FUN …
 casts/intersectionTypeSmartcast.kt: unsupported: a bridge from FUN …
 casts/is.kt: unsupported: a type test against java.lang.Runnable outside the VM modules
@@ -275,18 +260,15 @@ classLiteral/primitiveClassEquality.kt: unsupported: the expression GET_CLASS �
 classes/delegationJava.kt: unsupported: the static field out outside the VM modules
 classes/inheritSetAndHashSet.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 classes/kt1120.kt: unsupported: the supertype Runnable outside the VM modules
-classes/kt1535.kt: unsupported: implementing the function type Function0
 classes/kt508.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.plus_c926e24f1800a711" }
 closures/captureInSuperConstructorCall/outerCapturedAsImplicitThisInBoundReference.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-closures/closureOnTopLevel1.kt: unsupported: implementing the function type Function0
-closures/closureOnTopLevel2.kt: unsupported: implementing the function type Function0
 collections/kt41123.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 companion/delegatedPropertyOnCompanion.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 companionBlocksAndExtensions/abstractClasses.kt: unsupported: the static property baseVal
 companionBlocksAndExtensions/basicBlockAndExtension.kt: unsupported: the static property compBlockVal
 companionBlocksAndExtensions/callableReferencesGenericCompanionBlockMembers.kt: unsupported: the static property marker
 companionBlocksAndExtensions/callableReferences_block.kt: unsupported: the static property readonly
-companionBlocksAndExtensions/callableReferences_extensions.kt: unsupported: overriding FUN …
+companionBlocksAndExtensions/callableReferences_extensions.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 companionBlocksAndExtensions/companionBlock.kt: unsupported: the static property readonly
 companionBlocksAndExtensions/companionBlockAccessCrossModuleInline.kt: unsupported: the static property token
 companionBlocksAndExtensions/constProperties.kt: unsupported: the static property BLOCK_CONST
@@ -340,7 +322,6 @@ compileKotlinAgainstKotlin/specialBridgesInDependencies.kt: IllegalStateExceptio
 constants/numberLiteralCoercionToInferredType.kt: IllegalStateException: TYPE_INTERSECTION_AS_REIFIED_ERROR: Type argument for reified type parameter 'T' was inferred to the intersection of ['Comparable<*>?' & 
 contextParameters/contextualCallableReference.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'name' on receiver of type 'KFunction1<Int, String>'.
 contextParameters/contextualCallableReferenceEquality.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-contextParameters/withExtensionReceiverInSupertype.kt: unsupported: implementing the function type Function3
 controlStructures/forInArray/forInDelegatedPropertyUpdatedInLoopBody.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 controlStructures/forUserType.kt: run: Uncaught exception: vm.builtin.NullReference
 coroutines/createCoroutinesOnManualInstances.kt: run: Uncaught exception: vm.builtin.ClassCast
@@ -356,9 +337,6 @@ coroutines/illegalStateOnInvalidLabel.kt: IllegalStateException: UNRESOLVED_REFE
 coroutines/kt51530.kt: unsupported: defaults for more than 64 parameters
 coroutines/localDelegate.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 coroutines/multiModule/inlineMultiModuleOverride.kt: run: Load error: Some(ConcreteClassMissingMethod { type_id: 7, selector_id: 0 })
-coroutines/suspendConversion/intersectionTypeToSubtypeConversion.kt: unsupported: implementing the function type Function0
-coroutines/suspendConversion/subtypeOfFunctionalTypeToSuspendConversion.kt: unsupported: implementing the function type Function0
-coroutines/suspendConversion/suspendConversionBetweenFunInterfaces.kt: unsupported: overriding FUN …
 coroutines/suspendFunctionAsSupertype.kt: unsupported: implementing the function type SuspendFunction0
 coroutines/suspendFunctionAsSupertypeCall.kt: unsupported: implementing the function type SuspendFunction0
 coroutines/suspendFunctionAsSupertypeWithInlinedFunInKlib.kt: unsupported: implementing the function type SuspendFunction0
@@ -553,12 +531,7 @@ evaluate/serialization/intrinsicConst.kt: unsupported: the expression RICH_PROPE
 evaluate/serialization/typeAnnotation.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 evaluate/stdlibConst.kt: IllegalStateException: CONST_VAL_WITH_NON_CONST_INITIALIZER: Const 'val' initializer must be a constant value.
 extensionFunctions/delegatedPropertyWithExtensionType.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-extensionFunctions/extensionFunctionAsASupertypeOfValueClass.kt: unsupported: implementing the function type Function1
-extensionFunctions/extensionFunctionAsATypeLocal.kt: unsupported: implementing the function type Function1
-extensionFunctions/extensionFunctionAsSupertype.kt: unsupported: implementing the function type Function1
 extensionFunctions/extensionFunctionInValueClass.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
-extensionFunctions/nestedExtensionFunctionAsASupertype.kt: unsupported: implementing the function type Function2
-extensionFunctions/suspendConversionForExtensionFunAsASuperType.kt: unsupported: implementing the function type Function1
 extensionProperties/extensionPropertyDelegated.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 extensionProperties/extensionPropertyWithInline.kt: unsupported: the expression CLASS_REFERENCE …
 fakeOverride/internalFromFriendModule.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'o' on receiver of type 'Derived'.
@@ -598,19 +571,10 @@ funInterface/equality/functionReferencesBound.kt: run: Uncaught exception: vm.ru
 funInterface/equality/functionReferencesUnbound.kt: run: Uncaught exception: vm.runtime.AssertionError: sam$FunInterface$0@3 and sam$FunInterface$0@5 should be equal
 funInterface/equality/lambdaRuntimeConversion.kt: run: Uncaught exception: vm.runtime.AssertionError: sam$FunInterface$0@3 and sam$FunInterface$0@2 should be equal
 funInterface/equality/localFunctionReferences.kt: run: Uncaught exception: vm.runtime.AssertionError: sam$FunInterface$0@3 and sam$FunInterface$0@5 should be equal
-funInterface/intersectionTypeToFunInterfaceConversion.kt: unsupported: implementing the function type Function0
-funInterface/kt46908_functionSupertype.kt: unsupported: overriding FUN …
 funInterface/kt77685-sam.kt: unsupported: overriding FUN …
 funInterface/kt77685.kt: unsupported: overriding FUN …
 funInterface/multimodule.kt: CompilationException: Back-end: Please report this problem https://kotl.in/issue
-funInterface/noConversionForSubtype.kt: unsupported: implementing the function type Function1
-funInterface/noConversionForSubtypeGeneric.kt: unsupported: implementing the function type Function1
-funInterface/subtypeOfFunctionalTypeToFunInterfaceConversion.kt: unsupported: implementing the function type Function0
 function/sum.kt: unsupported: `rem` on doubles
-functions/bigArity/instanceOfCallableReference.kt: wrong result
-functions/bigArity/subclass.kt: unsupported: implementing the function type Function42
-functions/invoke/kt3190.kt: unsupported: implementing the function type Function1
-functions/invoke/kt3822invokeOnThis.kt: unsupported: implementing the function type Function0
 functions/kt1739.kt: unsupported: the supertype Runnable outside the VM modules
 functions/localFunctions/kt4777.kt: unsupported: the supertype Runnable outside the VM modules
 inference/kt39824.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -640,7 +604,6 @@ inline/localInlineFunctionComplex.kt: IllegalStateException: NOT_YET_SUPPORTED_L
 inline/localInlineFunctionDeclaredInLambda.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
 inline/localInlineFunctionNameClash.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
 inline/localInlineFunctionReference.kt: IllegalStateException: NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION: Local inline functions are not yet supported.
-inline/localObjectReturnedFromWhen.kt: unsupported: implementing the function type Function0
 inline/multipleInheritanceClash.kt: CompilationException: Back-end: Please report this problem https://kotl.in/issue
 inline/typeSubstitutionInFakeOverride.kt: unsupported: the expression CLASS_REFERENCE …
 inlineArgsInPlace/kt49370.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'mod' on receiver of type 'Long'.
@@ -764,8 +727,6 @@ mangling/internal.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved re
 multiplatform/k2/basic/delegatedByExpectExtensionProperty.kt: IllegalStateException: DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE: Property delegate must have a 'getValue(B, KProperty1<*, *>)' method. None of the following fu
 multiplatform/k2/basic/expectActualFakeOverridesWithTypeParameters2.kt: NoSuchElementException: List contains no element matching the predicate.
 multiplatform/k2/basic/expectActualNullabilityBasedOverloads.kt: NoSuchElementException: List contains no element matching the predicate.
-multiplatform/k2/basic/extensionFunctionAsASupertype.kt: unsupported: implementing the function type Function1
-multiplatform/k2/basic/extensionFunctionAsASupertypeConversion.kt: unsupported: implementing the function type Function1
 multiplatform/k2/basic/interfaceMethodFromSuperTypeIsImplementedInOtherExpectSuperClass.kt: NoSuchElementException: List contains no element matching the predicate.
 multiplatform/k2/commonFakeOverridePropertyRef.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 multiplatform/k2/commonInternal.kt: IllegalStateException: UNRESOLVED_REFERENCE: Unresolved reference 'AnnInFriend'.
@@ -923,7 +884,6 @@ strings/twoArgumentNullableStringOperatorPlus.kt: link: Failed to link: Unresolv
 strings/twoArgumentNullableStringPlus.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.plus_c926e24f1800a711" }
 super/basicmethodSuperClass.kt: IllegalStateException: FINAL_SUPERTYPE: This type is final, so it cannot be extended.
 super/interfaceHashCode.kt: unsupported: calling FUN …
-suspendConversion/conversionOfInterfaceInheritingFunctionN.kt: unsupported: overriding FUN …
 suspendConversion/suspendConversionCompatibility.kt: run: Uncaught exception: vm.builtin.ClassCast
 syntheticAccessors/accessorForPrivatePropertyReference.kt: IllegalStateException: DELEGATE_SPECIAL_FUNCTION_MISSING: Type 'KProperty1<A, String>' has no method 'getValue(A.B, KProperty1<*, *>)', so it cannot serve as a 
 syntheticAccessors/accessorForProtectedPropertyReference.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
@@ -958,8 +918,6 @@ typeMapping/nullNothing.kt: link: Failed to link: UnresolvedImport { symbol: "ko
 typeMapping/nullableNothing.kt: link: Failed to link: UnresolvedImport { symbol: "kotlin.Nothing" }
 unaryOp/call.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte', actual 'Int'.
 unaryOp/callNullable.kt: IllegalStateException: INITIALIZER_TYPE_MISMATCH: Initializer type mismatch: expected 'Byte?', actual 'Int'.
-unitConversion/unitConversionForSubtype.kt: unsupported: implementing the function type Function0
-unitConversion/unitConversionWithSamSubtype.kt: unsupported: implementing the function type Function0
 unsignedTypes/kt25784.kt: unsupported: the expression RICH_PROPERTY_REFERENCE …
 versionOverloads/basicWrappers.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.
 versionOverloads/callableRefDefault.kt: IllegalStateException: ANNOTATION_ARGUMENT_MUST_BE_CONST: Annotation argument must be a compile-time constant.

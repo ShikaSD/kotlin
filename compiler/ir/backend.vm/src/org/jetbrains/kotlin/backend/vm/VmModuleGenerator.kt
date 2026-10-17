@@ -85,6 +85,16 @@ internal fun isRuntimeMirror(declaration: IrDeclarationWithName): Boolean =
 internal fun IrType.isFunctionValueType(): Boolean = isFunctionOrKFunction() || isSuspendFunctionOrKFunction()
 
 /**
+ * The arity of [this] when it is a function type a class may implement, `kotlin.FunctionN` or `kotlin.reflect.KFunctionN`,
+ * which the VM's function interface of that arity stands for; see "Function interfaces" in wip/FUNCTION_VALUES_DESIGN.md.
+ */
+internal fun IrClass.functionInterfaceArity(): Int? {
+    // `kotlin.Function` is every function type's supertype, of no arity.
+    if (!defaultType.isFunctionOrKFunction() || fqNameWhenAvailable?.asString() == "kotlin.Function") return null
+    return typeParameters.size - 1
+}
+
+/**
  * The JVM's throwables the runtime implements, by the runtime class standing for each. The Kotlin names are the
  * standard library's own classes; its other exceptions are aliases of the Java ones. The VM raises the `vm.builtin.` classes
  * itself, which is what makes a `catch` of the JVM class catch the VM's failure.
@@ -548,6 +558,15 @@ class VmModuleGenerator(
     }
 
     internal val anyType: VmType get() = VmType.Ref(runtimeClass("Any"))
+
+    /** The VM's function interface of [arity], which the linker declares once a module names it. */
+    private fun functionInterface(arity: Int): Int = runtimeClass("vm.builtin.Function$arity")
+
+    /** The `invoke` of the function interface of [arity], taking and returning references as the JVM's erased one does. */
+    private fun functionInvokeSelector(arity: Int): Int = runtimeSelectors.getOrPut("vm.builtin.Function$arity::invoke") {
+        module.selectors += VmSelector("invoke", imported = true, functionInterface(arity), List(arity) { anyType }, anyType)
+        module.selectors.size - 1
+    }
     internal val stringType: VmType get() = VmType.Ref(runtimeClass("vm.builtin.String"))
 
     /** The class the VM raises for a null dereference, which Kotlin throws for a failed null check too. */
@@ -721,6 +740,8 @@ class VmModuleGenerator(
     private fun mirrorType(type: IrType): VmType? {
         val vmType = vmType(type)
         if (vmType != anyType) return vmType
+        // A built-in takes a function value, which is what the runtime declares, whatever its arity.
+        if (type.isFunctionValueType()) return VmType.Ref(runtimeClass("vm.builtin.Function"))
         val index = arrayClassOf(type) ?: type.classOrNull?.owner?.let(::classIndex) ?: return vmType
         return VmType.Ref(index)
     }
@@ -740,7 +761,9 @@ class VmModuleGenerator(
             declaration.isEnumBase() -> runtimeClass("vm.runtime.Enum")
             isSharedVariableBox(declaration) -> sharedVariableBoxClass
             declaration.defaultType.isPrimitiveType() -> boxClass(declaration.defaultType.getPrimitiveType()!!)
-            // Every function value is an instance of `vm.builtin.Function`, whatever its arity; see wip/FUNCTION_VALUES_DESIGN.md.
+            // The linker declares the function interface of each arity a module names; see wip/FUNCTION_VALUES_DESIGN.md.
+            declaration.functionInterfaceArity() != null -> functionInterface(declaration.functionInterfaceArity()!!)
+            // Every function value is an instance of `vm.builtin.Function`, whatever its arity.
             fqName == "kotlin.Function" || declaration.defaultType.isFunctionValueType() -> runtimeClass("vm.builtin.Function")
             isRuntimeMirror(declaration) -> runtimeClass(fqName!!)
             else -> RUNTIME_TYPES[fqName]?.let(::runtimeClass) ?: runtimeThrowable(declaration)
@@ -909,12 +932,13 @@ class VmModuleGenerator(
             if (it.isMarkerOutsideVm()) return@mapNotNull null
             // An `expect` interface is the JVM's: the class's shell implements its `actual`, and the JVM calls it there.
             if (it.isExpect) return@mapNotNull null
-            // A function type stands for `vm.builtin.Function`, the class every function value has, which an interface cannot
-            // extend and a class gains nothing by naming: a value is a function value only when the VM made it one.
-            // A class calling itself one is what the VM cannot express.
-            val isFunctionType = it.fqNameWhenAvailable?.asString() == "kotlin.Function" || it.defaultType.isFunctionValueType()
-            if (isFunctionType && (declaration.isInterface || !it.defaultType.isFunctionValueType())) return@mapNotNull null
-            if (isFunctionType) unsupported("implementing the function type ${it.name}")
+            // Every function type extends `kotlin.Function`, which declares nothing to answer.
+            if (it.fqNameWhenAvailable?.asString() == "kotlin.Function") return@mapNotNull null
+            // A suspend function type has no function interface: its value is a function value run under a continuation.
+            if (it.defaultType.isSuspendFunctionOrKFunction()) {
+                if (declaration.isInterface) return@mapNotNull null
+                unsupported("implementing the function type ${it.name}")
+            }
             classIndex(it) ?: unsupported("the supertype ${it.name} outside the VM modules")
         }
         if (declaration.isInterface) {
@@ -1061,6 +1085,7 @@ class VmModuleGenerator(
     /** The selector dispatching a call to [root], or null when nothing can override it. */
     private fun selectorOf(root: IrSimpleFunction): Int? {
         if (root.parentClassOrNull?.isAny() == true) return runtimeSelector(root.name.asString())
+        root.parentClassOrNull?.functionInterfaceArity()?.let { return functionInvokeSelector(it) }
         if (root.parentClassOrNull?.fqNameWhenAvailable?.asString() in RUNTIME_TYPES) return runtimeTypeSelector(root)
         if (root.parentClassOrNull?.let(::runtimeThrowable) != null) return throwableSelector(root.name.asString())
         if (!root.isOverridable()) return null

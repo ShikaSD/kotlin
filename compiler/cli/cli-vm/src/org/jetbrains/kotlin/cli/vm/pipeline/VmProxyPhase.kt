@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
 import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
 import org.jetbrains.kotlin.backend.vm.jvmExportName
+import org.jetbrains.kotlin.backend.vm.jvmFunctionInterfaceName
+import org.jetbrains.kotlin.backend.vm.jvmFunctionInvokeName
 import org.jetbrains.kotlin.backend.vm.jvmInternalName
 import org.jetbrains.kotlin.backend.vm.jvmMappedInternalName
 import org.jetbrains.kotlin.backend.vm.jvmMappedMemberName
@@ -20,6 +22,7 @@ import org.jetbrains.kotlin.backend.vm.vmClassName
 import org.jetbrains.kotlin.backend.vm.vmFunctionName
 import org.jetbrains.kotlin.backend.vm.vmOverridden
 import org.jetbrains.kotlin.backend.vm.vmRoots
+import org.jetbrains.kotlin.builtins.functions.BuiltInFunctionArity
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.cli.common.diagnosticsCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.CompileEnvironmentUtil
@@ -170,15 +173,16 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
     /** Each shell class's internal name, with the name of the VM class it stands for. */
     val shells = mutableListOf<Pair<String, String>>()
 
-    /** Each collection interface's Java internal name, with the name of the VM interface it stands for. */
+    /** Each collection and function interface's Java internal name, with the name of the VM interface it stands for. */
     val interfaces = mutableListOf<Pair<String, String>>()
 
-    /** The binding name of each Java method a collection interface's selector stands for, with the selector's VM name. */
+    /** The binding name of each Java method such an interface's selector stands for, with the selector's VM name. */
     val members = mutableListOf<Pair<String, String>>()
 
     /**
-     * Names Kotlin's collection interfaces and their selectors for the JVM, whichever the module uses: a module calling
-     * none can still be handed a JVM collection by one that does, and runs the standard library's code on it either way.
+     * Names Kotlin's collection and function interfaces and their selectors for the JVM, whichever the module uses: a
+     * module calling none can still be handed a JVM collection by one that does, and runs the standard library's code on
+     * it either way.
      */
     @OptIn(InternalSymbolFinderAPI::class)
     fun nameCollections() {
@@ -196,6 +200,12 @@ private class Proxies(private val bridge: VmBridge, private val fir2IrResult: Fi
                     }
                 }
             }
+        }
+        // A JVM function object reaches the VM at whatever arity the program names, and the JVM has an interface below
+        // the big arity only.
+        for (arity in 0 until BuiltInFunctionArity.BIG_ARITY) {
+            interfaces += jvmFunctionInterfaceName(arity) to "vm.builtin.Function$arity"
+            selectors["vm.builtin.Function$arity::invoke"] = jvmFunctionInvokeName(arity)
         }
         for ([vm, jvm] in selectors) members += jvm to vm
     }

@@ -2441,6 +2441,60 @@ class VmBackendTest {
         assertTrue(runBox(tempDir, source))
     }
 
+    /** A class implementing a function type is called through a value of it, which runs the class's `invoke`. */
+    @Test
+    fun testClassImplementingAFunctionTypeIsCalledThroughAValue(@TempDir tempDir: File) {
+        val source = """
+            class Doubler : (Int) -> Int {
+                override fun invoke(x: Int): Int = x * 2
+            }
+
+            fun apply(f: (Int) -> Int, x: Int) = f(x)
+
+            fun box(): String = if (apply(Doubler(), 21) == 42) "OK" else "fail"
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    @Test
+    fun testClassImplementingAFunctionTypeIsAnInstanceOfIt(@TempDir tempDir: File) {
+        val source = """
+            class Doubler : (Int) -> Int {
+                override fun invoke(x: Int): Int = x * 2
+            }
+
+            fun box(): String {
+                val doubler: Any = Doubler()
+                return if (doubler is Function1<*, *>) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** A lambda is an instance of the function type of its arity and of no other, as it is on the JVM. */
+    @Test
+    fun testLambdaIsAnInstanceOfTheFunctionTypeOfItsArityOnly(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val next: Any = { x: Int -> x + 1 }
+                return if (next is Function1<*, *> && next !is Function2<*, *, *>) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
+    /** `Function` is every function type's supertype, whatever the arity, and no function interface of its own. */
+    @Test
+    fun testLambdaIsAnInstanceOfFunction(@TempDir tempDir: File) {
+        val source = """
+            fun box(): String {
+                val next: Any = { x: Int -> x + 1 }
+                return if (next is Function<*>) "OK" else "fail"
+            }
+        """
+        assertTrue(runBox(tempDir, source))
+    }
+
     /** A lambda converted to a `fun interface` is an instance of it, which calls the lambda. */
     @Test
     fun testLambdaConvertsToAFunInterface(@TempDir tempDir: File) {
@@ -4085,6 +4139,17 @@ class VmBackendTest {
         assertTrue("binds \"jvm:sample/Environment.home()Ljava/lang/String;\"" in dump) { dump }
     }
 
+    /** A function type is the JVM's function interface of its arity in a JVM name. */
+    @Test
+    fun testHostImportNamesAFunctionTypeByTheJvmsFunctionInterface(@TempDir tempDir: File) {
+        val dump = dumpIr(
+            tempDir,
+            mapOf("Run.kt" to "package sample\n\nexpect fun run(block: (Int) -> Int): Int\n\nfun twice(): Int = run { it * 2 }"),
+            hostFiles = mapOf("Run.jvm.kt" to "package sample\n\nactual fun run(block: (Int) -> Int): Int = block(1)"),
+        )
+        assertTrue("binds \"jvm:sample/Run_jvmKt.run(Lkotlin/jvm/functions/Function1;)I\"" in dump) { dump }
+    }
+
     /** A call of an `actual` whose JVM name is not covered is reported. */
     @Test
     fun testCallOfActualOfUncoveredTypeIsReported(@TempDir tempDir: File) {
@@ -4398,6 +4463,25 @@ class VmBackendTest {
 
         val members = nameTable(tempDir).filter { it.startsWith("member jvm:java/util/Collection.size()I ") }
         assertEquals(1, members.size, members.toString())
+    }
+
+    /** The jar names the JVM's function interface each of the VM's stands for. */
+    @Test
+    fun testNameTableNamesTheJvmFunctionInterfaces(@TempDir tempDir: File) {
+        proxies(tempDir, mapOf("Outer.kt" to "package sample\n\nclass Outer"))
+
+        assertTrue("interface kotlin/jvm/functions/Function1 vm.builtin.Function1" in nameTable(tempDir))
+    }
+
+    /** The jar names the JVM's erased `invoke` each function interface's selector stands for. */
+    @Test
+    fun testNameTableNamesTheJvmFunctionInvoke(@TempDir tempDir: File) {
+        proxies(tempDir, mapOf("Outer.kt" to "package sample\n\nclass Outer"))
+
+        assertTrue(
+            "member jvm:kotlin/jvm/functions/Function2.invoke(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; vm.builtin.Function2::invoke"
+                    in nameTable(tempDir)
+        )
     }
 
     /** The selector names the table gives a collection's members are the names the module calls them by. */

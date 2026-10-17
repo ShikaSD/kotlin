@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
+import org.jetbrains.kotlin.ir.util.isFunction
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.load.java.BuiltinSpecialProperties
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -71,6 +72,7 @@ private fun IrType.jvmParameterDescriptor(): String? {
     JVM_SCALARS[name]?.let { scalar -> return if (isNullable()) "L${scalar.box};" else scalar.descriptor }
     val irClass = classOrNull?.owner ?: return null
     irClass.jvmMappedInternalName?.let { return "L$it;" }
+    if (isFunction()) irClass.functionInterfaceArity()?.let { return "L${jvmFunctionInterfaceName(it)};" }
     // Kotlin's other classes are the JDK's on the JVM, under names this does not map, but for `kotlin.reflect`'s, which
     // keep theirs; a value class's methods are mangled.
     val packageName = irClass.packageFqName
@@ -113,6 +115,13 @@ fun jvmMappedMemberName(function: IrSimpleFunction): String? {
     }
     return "$JVM_BINDING_PREFIX$owner.$name$descriptor"
 }
+
+/** The JVM's function interface of [arity], which the VM's of that arity stands for; see [IrClass.functionInterfaceArity]. */
+fun jvmFunctionInterfaceName(arity: Int): String = "kotlin/jvm/functions/Function$arity"
+
+/** The binding name of the erased `invoke` of the JVM's function interface of [arity]. */
+fun jvmFunctionInvokeName(arity: Int): String =
+    "$JVM_BINDING_PREFIX${jvmFunctionInterfaceName(arity)}.invoke(${"Ljava/lang/Object;".repeat(arity)})Ljava/lang/Object;"
 
 /** The JVM's internal name of [this] class: its package's path, then its name after those of the classes nesting it, joined by `$`. */
 val IrClass.jvmInternalName: String
